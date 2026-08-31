@@ -12,6 +12,11 @@ dependencies = [
   "faiss-cpu>=1.9,<2",
   "fastapi>=0.115,<1",
   "fastembed>=0.4,<1",
+  # The orchestration runtime (plan section 5 and Phase 5). The graph is
+  # assembled here; nothing in `meridian.graph` may import a provider SDK,
+  # so LangGraph is used for topology, state, and checkpointing only.
+  "langgraph>=0.3,<1",
+  "langgraph-checkpoint-sqlite>=2,<3",
   # The official MCP Python SDK. Section 12 exposes services through it; the
   # services themselves never import it, so the tool layer stays testable
   # without a transport.

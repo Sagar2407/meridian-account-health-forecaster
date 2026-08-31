@@ -123,6 +123,33 @@ Safety spans:
 
 Prior assessments are context, not truth. Every new assessment must re-query point-in-time evidence.
 
+## As built, after Phase 5
+
+| Concern | Module |
+| --- | --- |
+| Section 9.1 typed contracts | `meridian.contracts` |
+| Shared state and budgets | `meridian.graph.state` |
+| Node implementations | `meridian.graph.nodes` |
+| Deterministic edges and review bands | `meridian.graph.routing` |
+| Evidence-aware confidence | `meridian.graph.confidence` |
+| Topology, checkpointer, run API | `meridian.graph.builder` |
+| Safe trace events | `meridian.graph.tracing` |
+| The four agents | `meridian.agents.*` |
+| Intake rules and the high-value policy | `meridian.guardrails.*` |
+
+The contracts sit at the package root rather than inside `meridian.graph`
+because the agents, the guardrails, and the graph all depend on them: an agent
+that had to import the graph package to name its own return type would make the
+graph a dependency of the agents it is built from.
+
+One deviation from the description above is worth stating plainly. The graph's
+agents call `ToolRegistry` directly rather than the in-process MCP client. The
+per-role allowlist, the argument validation, the timeout, and the audit line all
+live in the registry, so a protocol round trip to ourselves would add a hop
+without adding a control -- and would make every node async to do it. MCP
+remains the external tool surface, and a contract test compares the two paths on
+a real call so the shortcut cannot quietly diverge.
+
 ## Superseded implementation details
 
 The Checkpoint 4.1 table mapped generator and critic roles to CrewAI and LangChain and described MCP as a state manager. The latest implementation plan supersedes that mapping:

@@ -6,9 +6,9 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 4 are complete.** Every exit gate passes. None of them needs an API key: the
-first four involve no language model at all, and Phase 4 adds the interface to one rather than a
-dependency on it.
+**Phases 0 through 5 are complete.** Every exit gate passes, and none of them needs an API key.
+The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
+completes without one, producing a deterministic explanation and saying so in its own limitations.
 
 Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
 validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
@@ -38,7 +38,40 @@ SDK with an in-process client; plus a provider-neutral structured-generation int
 OpenAI-compatible adapter, deterministic fakes, and skeletons that say exactly what to configure.
 Evidence is in `docs/PHASE_4_STATUS.md`.
 
-Phase 5, the four agents and the LangGraph fast path, is next.
+Phase 5 delivered the four agents and the LangGraph fast path: typed shared state with explicit
+reducers, intake guardrails, a bounded planner over a closed sub-goal vocabulary, quantitative and
+retrieval lanes that genuinely run in parallel, a deterministic coverage gate with one targeted
+evidence retry, adjudication whose numeric claims and citations are replayed against verified
+evidence, deterministic confidence and human-review routing, a SQLite checkpointer, and a streamed
+safe trace. Run one assessment with `make assess ACCOUNT=ACC-1042 OFFLINE=1`; evidence is in
+`docs/PHASE_5_STATUS.md`.
+
+Phase 6, the conflict gate and the bounded Tree-of-Thought subgraph, is next.
+
+### What one assessment does
+
+```text
+validate_request ─► load_context ─► plan_sub_goals ─┬─► quantitative_lane ─┬─► merge_evidence
+       │ blocked                                    └─► retrieval_lane  ───┘        │
+       ▼                                                                  ┌─────────┴─────────┐
+  safe_refusal                              targeted_retry ◄─ recoverable─┤  coverage gate    │
+                                                    │                     └───┬───────────┬───┘
+                                                    └────────────────────►    │ critical  │ sufficient
+                                                                              ▼           ▼
+                                                                    degraded_result   conflict_gate
+                                                                              │           │
+                                                                              │           ▼
+                                                                              │   fast_adjudication
+                                                                              │           │
+                                                                              │           ▼
+                                                                              │    verify_output
+                                                                              │      │ pass │ fail
+                                                                              └──────┴──►assign_route ─► persist
+```
+
+The outcome label always comes from the calibrated forecaster. A language model, when one is
+configured, writes the rationale, the limitations, and the recommended action -- and every number
+and citation it writes is replayed against the verified evidence before release.
 
 ## Quick start
 
@@ -100,6 +133,7 @@ make predict ACCOUNT=ACC-1042            # forecast one account (Docker)
 make index             # build the FAISS retrieval index (Docker, several minutes)
 make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk"   # retrieve evidence as JSON (Docker)
 make evaluate-retrieval  # retrieval benchmark and chunking ablation (Docker, ~20 minutes)
+make assess ACCOUNT=ACC-1042 OFFLINE=1   # one end-to-end assessment, no provider (Docker)
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)

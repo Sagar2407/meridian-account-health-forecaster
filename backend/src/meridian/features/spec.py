@@ -20,6 +20,15 @@ class FeatureSpec:
     model_input: bool = True
 
 
+CALCULATION_VERSION: Final[str] = "features-1.0.0"
+"""Version of the feature definitions in this module (plan section 9.1).
+
+Every `MetricObservation` carries it, so a stored assessment can be replayed
+against the code that produced it. Bump it whenever a formula or a window
+changes: a metric whose definition moved is a different metric, and comparing
+the two silently would make a regression look like a real change in an account.
+"""
+
 ADOPTION_WINDOW_WEEKS: Final[int] = 13
 SUPPORT_WINDOW_WEEKS: Final[int] = 26
 EVENT_WINDOW_WEEKS: Final[int] = 26

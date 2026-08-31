@@ -48,7 +48,7 @@ This matrix separates verified facts from provisional design choices and unresol
 
 | Choice | Why provisional | Resolution method |
 | --- | --- | --- |
-| Confidence weights and route thresholds | Initial policy values only | Development calibration and route-cost analysis |
+| Confidence weights and route thresholds | Implemented in `meridian.graph.confidence` and `meridian.graph.routing`, but still the plan's initial policy values | Development calibration and route-cost analysis, frozen before held-out evaluation |
 | Tool timeout of 20 seconds and one transient retry | Chosen before any latency measurement | Measure tool latency in Phase 10 observability |
 | Render hosting | Portfolio recommendation, not a course mandate | Deployment feasibility and cost review |
 | Fast-path latency target | Provisional target | Measure after implementation |
@@ -61,6 +61,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | BGE small embedding model | Curated four-family retrieval benchmark | Retained; see `docs/PHASE_3_STATUS.md` |
 | FAISS configuration and MMR parameters | Chunking ablation holding corpus, encoder, filters, top-k, and queries constant | Flat inner-product index and parent-child chunking retained on recall and citation quality, not on ranking metrics; see `docs/PHASE_3_STATUS.md` |
 | Provider-neutral LLM adapter | Offline structured-generation tests plus an opt-in live check | Anthropic reached through OpenRouter's OpenAI-compatible endpoint; strict `json_schema` with one repair attempt; see `docs/PHASE_4_STATUS.md` |
+| Whether the two evidence lanes run in parallel | Instrumented lanes recording entry and exit, checked for interval overlap | Confirmed concurrent; adjacent trace events were not treated as evidence; see `docs/PHASE_5_STATUS.md` |
+| Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 
 ## Unresolved inputs
 
@@ -70,6 +72,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | Repository license not selected | Public-release blocker | Choose license before publication |
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
+| The packaged 36-case guardrail set has not been run | Intake rule quality is unmeasured | Phase 7 runs it as its exit gate; running it now would tune the rules against the sentences they will be scored on |
+| Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Consider a numeral-word pass in Phase 7's output guardrail |
 
 ## Deferred inputs
 

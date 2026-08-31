@@ -284,6 +284,54 @@ class ExternalEventsResponse(ToolResponse):
     events: tuple[ExternalEvent, ...]
 
 
+#: Which way a piece of evidence points. Derived only from structured source
+#: metadata -- the ticket's category and priority, the note's type, the event's
+#: recorded polarity -- and never by reading the excerpt. A sentiment model over
+#: retrieved text would be a second, unvalidated classifier deciding which
+#: evidence counts as contradicting a forecast, and the dataset already records
+#: the polarity of every external event exactly.
+EvidenceSignal = Literal["adverse", "favorable", "neutral"]
+
+ADVERSE_TICKET_CATEGORIES: frozenset[str] = frozenset(
+    {"Escalation", "Bug / Defect", "Performance / Outage"}
+)
+ADVERSE_TICKET_PRIORITIES: frozenset[str] = frozenset({"P1", "P2"})
+ADVERSE_NOTE_TYPES: frozenset[str] = frozenset({"Escalation / Save Play"})
+FAVORABLE_NOTE_TYPES: frozenset[str] = frozenset({"Expansion Discussion"})
+
+
+def evidence_signal(source_type: str, subtype: str, source_severity: str | None) -> EvidenceSignal:
+    """Return the direction a source document points, from its metadata alone.
+
+    Args:
+        source_type: The source family, for example `support_ticket`.
+        subtype: The ticket category, note type, or event type.
+        source_severity: Ticket priority for tickets, recorded polarity for
+            external events, empty for notes and knowledge articles.
+
+    Returns:
+        `adverse`, `favorable`, or `neutral`.
+    """
+
+    severity = (source_severity or "").strip()
+    if source_type == "external_event":
+        # The document builder already renders the dataset's +1/0/-1 polarity
+        # into these words, so this is the generator's own label, not a guess.
+        if severity in ("adverse", "favorable"):
+            return "adverse" if severity == "adverse" else "favorable"
+        return "neutral"
+    if source_type == "support_ticket":
+        if subtype in ADVERSE_TICKET_CATEGORIES or severity in ADVERSE_TICKET_PRIORITIES:
+            return "adverse"
+        return "neutral"
+    if source_type == "csm_note":
+        if subtype in ADVERSE_NOTE_TYPES:
+            return "adverse"
+        if subtype in FAVORABLE_NOTE_TYPES:
+            return "favorable"
+    return "neutral"
+
+
 class EvidenceCitation(BaseModel):
     """A citation flattened for transport, with its provenance intact."""
 
@@ -295,6 +343,7 @@ class EvidenceCitation(BaseModel):
     doc_date: date | None
     score: float
     excerpt: str
+    signal: EvidenceSignal = "neutral"
 
 
 class AccountEvidenceResponse(ToolResponse):

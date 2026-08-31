@@ -72,6 +72,10 @@ Do not proceed to the next phase until the current exit gate passes or the user 
 
 ## Current status
 
-Source onboarding and context verification are complete. The raw dataset is extracted under `data/raw/meridian-account-health/`. Phase 0 implementation is present, but its exit gate remains open until dependency-backed checks, lockfile generation, and the Docker health-page test pass. Do not start Phase 1 without closing that gate or receiving an explicit user scope change.
+Phases 0 through 5 are complete and every exit gate passes; evidence is in `docs/PHASE_<n>_STATUS.md`. The raw dataset is extracted under `data/raw/meridian-account-health/`. Phase 6 -- the conflict gate and the bounded Tree-of-Thought subgraph -- is next. Do not start it without closing the current gate or receiving an explicit user scope change.
+
+Run `make phase0-verify` before declaring any phase finished: it is the only check that builds the locked images and runs the suite the way CI does. A host-only run has passed while the container run failed more than once.
+
+Nothing in the repository requires an API key. When one is configured in `.env`, `GraphRuntime.build()` will use it and bill the account, so pass `--offline` (or `OFFLINE=1` to `make assess`) unless a live call is what you intend.
 
 The user has intentionally deferred the official report template, presentation outline, and any separate detailed grading rubric. Do not raise, search for, or treat those items as blockers unless the user reactivates them.

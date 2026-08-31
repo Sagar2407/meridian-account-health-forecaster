@@ -42,6 +42,7 @@ from meridian.tools.contracts import (
     UsagePoint,
     UsageSeriesResponse,
     WindowedRequest,
+    evidence_signal,
 )
 
 ESCALATION_CATEGORY = "Escalation"
@@ -68,6 +69,7 @@ def _to_evidence(citation: Citation) -> EvidenceCitation:
         doc_date=citation.doc_date,
         score=round(citation.score, 6),
         excerpt=citation.excerpt[:MAX_EXCERPT_CHARACTERS],
+        signal=evidence_signal(citation.doc_type, citation.subtype, citation.source_severity),
     )
 
 

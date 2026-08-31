@@ -9,48 +9,29 @@ from pathlib import Path
 import pytest
 
 from meridian.data.constants import FORBIDDEN_RUNTIME_FIELDS
-from meridian.data.loader import RawDataset
 from meridian.data.repository import RuntimeRepository
-from meridian.features.builder import build_feature_frame
 from meridian.features.spec import MODEL_INPUT_FEATURES
 from meridian.model.artifacts import (
     ArtifactBoundaryError,
     ModelArtifact,
-    ModelMetadata,
     assert_servable,
     load_artifact,
-    save_artifact,
 )
 from meridian.model.predict import predict_account
-from meridian_eval.modeling import HealthIndexRuleBaseline, fit_calibrated_model
-from meridian_eval.repository import EvaluationRepository
+from meridian_eval.modeling import HealthIndexRuleBaseline
 
 pytestmark = pytest.mark.requires_dataset
 
 
 @pytest.fixture(scope="module")
-def artifact(dataset: RawDataset, tmp_path_factory: pytest.TempPathFactory) -> ModelArtifact:
-    """Fit and persist a small calibrated model, then load it back."""
+def artifact(forecaster_artifact: ModelArtifact) -> ModelArtifact:
+    """Return the shared calibrated model built in `conftest.py`.
 
-    repository = RuntimeRepository(dataset)
-    accounts = repository.account_ids()[:150]
-    features = build_feature_frame(repository, accounts)
-    labels = EvaluationRepository(dataset).labels().loc[list(accounts)]
+    It moved there when the graph suite needed the same artifact; building two
+    would double the slowest fixture in the suite to no benefit.
+    """
 
-    estimator = fit_calibrated_model("logistic_regression", features, labels)
-    metadata = ModelMetadata(
-        model_name="logistic_regression",
-        calibration_method="isotonic",
-        classes=tuple(str(name) for name in estimator.classes_),
-        feature_names=MODEL_INPUT_FEATURES,
-        project_seed=20260721,
-        dataset_version="test",
-        split_digest="0" * 64,
-        package_versions={},
-    )
-    directory = tmp_path_factory.mktemp("model")
-    save_artifact(ModelArtifact(estimator=estimator, metadata=metadata), directory)
-    return load_artifact(directory)
+    return forecaster_artifact
 
 
 def test_artifact_round_trips(artifact: ModelArtifact) -> None:

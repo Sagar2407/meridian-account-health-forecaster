@@ -161,3 +161,21 @@ async def test_results_are_a_single_json_object(registry: ToolRegistry, account_
         payload = await client.call("get_account_profile", {"account_id": account_id})
     assert isinstance(payload, dict)
     assert json.dumps(payload)
+
+
+async def test_the_protocol_and_the_registry_return_the_same_answer(
+    registry: ToolRegistry, account_id: str
+) -> None:
+    """The graph calls the registry directly; MCP is the external surface.
+
+    Phase 5's agents call `ToolRegistry` rather than speaking a protocol to
+    themselves, because the allowlist, the validation, and the audit all live in
+    the registry and a protocol round trip would add a hop without adding a
+    control. That choice is only safe while the two paths agree, so this test
+    compares them rather than assuming it.
+    """
+
+    direct = registry.call_json(ANALYST, "compute_account_metrics", {"account_id": account_id})
+    async with connect(registry, ANALYST) as client:
+        over_mcp = await client.call("compute_account_metrics", {"account_id": account_id})
+    assert over_mcp == direct

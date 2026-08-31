@@ -50,6 +50,11 @@ data/eval/*
 models/
 artifacts/
 logs/
+# Application state this system writes about itself: assessment snapshots,
+# review cases, and LangGraph checkpoints (plan sections 12.2 and 17). It is
+# per-deployment, not source, and a committed copy would put one machine's run
+# history in every clone.
+data/app/
 
 # The source archive and extracted raw dataset are retained locally, not committed.
 # The synthetic dataset is the author's own work, so the archive itself is

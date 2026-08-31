@@ -10,12 +10,16 @@ sets `MERIDIAN_REQUIRE_DATASET=1`, which turns the skip into a hard error.
 
 import os
 from collections.abc import Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 
 from meridian.data.loader import RawDataset, load_raw_dataset
 from meridian.data.paths import raw_tables_directory
 from meridian.data.repository import RuntimeRepository
+
+if TYPE_CHECKING:
+    from meridian.model.artifacts import ModelArtifact
 
 REQUIRE_DATASET_ENV_VAR = "MERIDIAN_REQUIRE_DATASET"
 _MISSING_ARCHIVE_REASON = (
@@ -70,3 +74,42 @@ def sample_account_ids(dataset: RawDataset) -> Iterator[list[str]]:
 
     ids = sorted(dataset.accounts["account_id"])
     yield ids[::20]
+
+
+@pytest.fixture(scope="session")
+def forecaster_artifact(
+    dataset: RawDataset, tmp_path_factory: pytest.TempPathFactory
+) -> "ModelArtifact":
+    """Fit, persist, and load a small calibrated forecaster.
+
+    Shared by the model suite and the graph suite. It is built here rather than
+    read from `models/` because that directory is excluded from the runtime
+    image, so a fixture that loaded it would silently skip wherever the tests
+    matter most.
+    """
+
+    from meridian.features.builder import build_feature_frame
+    from meridian.features.spec import MODEL_INPUT_FEATURES
+    from meridian.model.artifacts import ModelArtifact, ModelMetadata, load_artifact, save_artifact
+    from meridian_eval.modeling import fit_calibrated_model
+    from meridian_eval.repository import EvaluationRepository
+
+    repository = RuntimeRepository(dataset)
+    accounts = repository.account_ids()[:150]
+    features = build_feature_frame(repository, accounts)
+    labels = EvaluationRepository(dataset).labels().loc[list(accounts)]
+
+    estimator = fit_calibrated_model("logistic_regression", features, labels)
+    metadata = ModelMetadata(
+        model_name="logistic_regression",
+        calibration_method="isotonic",
+        classes=tuple(str(name) for name in estimator.classes_),
+        feature_names=MODEL_INPUT_FEATURES,
+        project_seed=20260721,
+        dataset_version="test",
+        split_digest="0" * 64,
+        package_versions={},
+    )
+    directory = tmp_path_factory.mktemp("model")
+    save_artifact(ModelArtifact(estimator=estimator, metadata=metadata), directory)
+    return load_artifact(directory)
