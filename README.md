@@ -6,7 +6,8 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phase 0 and Phase 1 are complete.** Both exit gates pass.
+**Phases 0 through 3 are complete.** Every exit gate passes. No language model is involved in any
+of them, and none needs an API key.
 
 Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
 validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
@@ -18,7 +19,19 @@ cutoffs, a sanitized runtime boundary separated from evaluation labels, determin
 provenance manifest. Verify it with `make validate-data`; evidence is in `docs/PHASE_1_STATUS.md` and
 `docs/DATA_LINEAGE.md`.
 
-Phase 2, the calibrated forecasting model, is next.
+Phase 2 delivered the calibrated forecaster: features recomputed from observable telemetry at an
+arbitrary cutoff, five candidates including two documented baselines, one-standard-error selection,
+and isotonic calibration. Train with `make train` and forecast one account with
+`make predict ACCOUNT=ACC-1042`; evidence is in `docs/PHASE_2_STATUS.md` and `docs/MODEL_CARD.md`.
+
+Phase 3 delivered point-in-time-safe semantic retrieval: parent-child chunking over sanitized text,
+a local FAISS index governed by a SQLite metadata store, dual-lane account and knowledge-base search
+with MMR reranking, deterministic relevance grading with one bounded rewrite and retry, and a
+four-family retrieval benchmark with a chunking ablation. Build the index with `make index`, query it
+with `make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk"`, and reproduce every number with
+`make evaluate-retrieval`; evidence is in `docs/PHASE_3_STATUS.md`.
+
+Phase 4, the MCP-compatible tool layer and provider adapter, is next.
 
 ## Quick start
 
@@ -71,9 +84,15 @@ The command leaves the verified application running so the UI remains available.
 ## Quality gates
 
 ```bash
-make data           # build sanitized tables, manifest, and the account split (Docker)
-make validate-data  # the complete data-safety gate, including reproducibility (Docker)
-make phase0-verify  # the complete Phase 0 acceptance suite (Docker)
+make data              # build sanitized tables, manifest, and the account split (Docker)
+make validate-data     # the complete data-safety gate, including reproducibility (Docker)
+make phase0-verify     # the complete Phase 0 acceptance suite (Docker)
+
+make train             # train, calibrate, and persist the forecaster (Docker)
+make predict ACCOUNT=ACC-1042            # forecast one account (Docker)
+make index             # build the FAISS retrieval index (Docker, several minutes)
+make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk"   # retrieve evidence as JSON (Docker)
+make evaluate-retrieval  # retrieval benchmark and chunking ablation (Docker, ~20 minutes)
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)
@@ -82,8 +101,8 @@ make test           # backend and frontend tests       (needs a host toolchain)
 make check          # all non-formatting local gates   (needs a host toolchain)
 ```
 
-`make data` and `make validate-data` run through `scripts/python_in_docker.sh`, so they work without
-a host Python. `make validate-data` sets `MERIDIAN_REQUIRE_DATASET=1`, which turns a missing dataset
+Every Docker-marked target runs through `scripts/python_in_docker.sh`, so they work without a host
+Python. `make validate-data` sets `MERIDIAN_REQUIRE_DATASET=1`, which turns a missing dataset
 into an error rather than silently skipping the data-safety tests.
 
 GitHub Actions applies locked installs, format checks, linting, typing, tests, coverage thresholds,
@@ -148,6 +167,11 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/Meridian_Autonomous_System_Implementation_Plan.md` — full phased build specification
 - `docs/adr/` — accepted architecture decision records
 - `docs/PHASE_0_STATUS.md` — exit-gate evidence and remaining validation
+- `docs/PHASE_1_STATUS.md` — data-layer exit-gate evidence
+- `docs/PHASE_2_STATUS.md` — model exit-gate evidence and the two documented departures from the plan
+- `docs/PHASE_3_STATUS.md` — retrieval exit-gate evidence, benchmark, and chunking ablation
+- `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
+- `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments
 
 ## Repository boundaries

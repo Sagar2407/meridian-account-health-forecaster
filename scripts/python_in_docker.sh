@@ -5,6 +5,10 @@
 # data builds and the data-safety gate run in the same image the Phase 0
 # verifier uses. Caches go to the ignored .phase0-cache/ directory because /tmp
 # is not writable by the mapped host UID inside the image.
+#
+# Output is unbuffered: index builds and evaluations run for minutes, and with
+# Python's default block buffering on a pipe their progress lines only appear
+# at exit, which reads as a hang.
 set -Eeuo pipefail
 
 script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,7 +20,7 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-mkdir -p "$cache_directory/uv" "$cache_directory/mpl"
+mkdir -p "$cache_directory/uv" "$cache_directory/mpl" "$cache_directory/hf"
 
 exec docker run --rm \
   --user "$(id -u):$(id -g)" \
@@ -25,6 +29,9 @@ exec docker run --rm \
   --env UV_PYTHON=/usr/local/bin/python3.12 \
   --env UV_PYTHON_DOWNLOADS=0 \
   --env MPLCONFIGDIR=/workspace/.phase0-cache/mpl \
+  --env PYTHONUNBUFFERED=1 \
+  --env HF_HOME=/workspace/.phase0-cache/hf \
+  --env FASTEMBED_CACHE_PATH=/workspace/.phase0-cache/hf \
   --env MYPY_CACHE_DIR=/workspace/.phase0-cache/mypy \
   --env MERIDIAN_REQUIRE_DATASET="${MERIDIAN_REQUIRE_DATASET:-}" \
   --mount "type=bind,src=$project_directory,dst=/workspace" \

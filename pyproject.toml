@@ -9,7 +9,9 @@ description = "Point-in-time-safe autonomous account-health forecasting capstone
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+  "faiss-cpu>=1.9,<2",
   "fastapi>=0.115,<1",
+  "fastembed>=0.4,<1",
   # numpy is capped below 2.5 for two reasons: 2.5 alters one generated note
   # body, breaking byte-exact dataset reproduction, and its stubs require
   # Python 3.12 while this project supports 3.11. See docs/DATA_LINEAGE.md.

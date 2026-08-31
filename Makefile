@@ -4,7 +4,7 @@ PYTHON ?= python3
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict phase0-verify docker-up docker-down
+.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval phase0-verify docker-up docker-down
 
 help:
 	@awk 'BEGIN {FS = ":.*## "; print "Meridian development commands:"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -52,6 +52,15 @@ train: ## Train, calibrate, and persist the forecaster (Docker).
 
 predict: ## Forecast one account, e.g. make predict ACCOUNT=ACC-1042 (Docker).
 	./scripts/python_in_docker.sh python scripts/predict_account.py $(ACCOUNT)
+
+index: ## Build the FAISS retrieval index from sanitized documents (Docker).
+	./scripts/python_in_docker.sh python scripts/build_index.py
+
+retrieve: ## Retrieve evidence, e.g. make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk".
+	./scripts/python_in_docker.sh python scripts/retrieve.py "$(ACCOUNT)" "$(QUERY)"
+
+evaluate-retrieval: ## Run the retrieval benchmark and chunking ablation (Docker).
+	./scripts/python_in_docker.sh python scripts/evaluate_retrieval.py
 
 check: lint typecheck test security ## Run every local quality gate.
 

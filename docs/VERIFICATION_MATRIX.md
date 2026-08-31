@@ -46,12 +46,17 @@ This matrix separates verified facts from provisional design choices and unresol
 
 | Choice | Why provisional | Resolution method |
 | --- | --- | --- |
-| BGE small embedding model | Reasonable design, not yet benchmarked in this repository | Retrieval evaluation |
-| FAISS configuration and MMR parameters | Submitted design but performance unknown | Chunking/retrieval ablation |
-| Predictive model family | Dataset is small and class-imbalanced | Repeated stratified CV and calibration |
 | Confidence weights and route thresholds | Initial policy values only | Development calibration and route-cost analysis |
 | Render hosting | Portfolio recommendation, not a course mandate | Deployment feasibility and cost review |
 | Fast-path latency target | Provisional target | Measure after implementation |
+
+## Resolved by measurement
+
+| Choice | How it was resolved | Outcome |
+| --- | --- | --- |
+| Predictive model family | Repeated stratified CV, one-standard-error rule, calibration study | Logistic regression with isotonic calibration; see `docs/PHASE_2_STATUS.md` |
+| BGE small embedding model | Curated four-family retrieval benchmark | Retained; see `docs/PHASE_3_STATUS.md` |
+| FAISS configuration and MMR parameters | Chunking ablation holding corpus, encoder, filters, top-k, and queries constant | Flat inner-product index and parent-child chunking retained on recall and citation quality, not on ranking metrics; see `docs/PHASE_3_STATUS.md` |
 
 ## Unresolved inputs
 

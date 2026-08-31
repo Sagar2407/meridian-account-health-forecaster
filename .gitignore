@@ -31,9 +31,13 @@ frontend/coverage/
 .DS_Store
 .idea/
 .vscode/
+# Scratch file dropped in the working tree by an external editor session; no
+# code in this repository creates or reads it.
+:memory:.ses
 
 # Runtime-generated data and model artifacts
 data/processed/
+data/indexes/
 # The deterministic account split IS committed: it is small, holds account ids
 # only (never labels), and lets a reviewer reproduce every reported metric.
 !data/splits/account_split.json
