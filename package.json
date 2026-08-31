@@ -1,0 +1,16 @@
+{
+  "name": "meridian-autonomous-agent",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "pnpm --dir frontend build",
+    "format": "pnpm --dir frontend format",
+    "lint": "pnpm --dir frontend lint",
+    "test": "pnpm --dir frontend test",
+    "typecheck": "pnpm --dir frontend typecheck"
+  },
+  "engines": {
+    "node": ">=22.12 <25"
+  },
+  "packageManager": "pnpm@11.24.0"
+}

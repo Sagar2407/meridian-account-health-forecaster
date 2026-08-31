@@ -1,0 +1,53 @@
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# JavaScript
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+*.tsbuildinfo
+
+# Phase 0 verification helper cache
+.phase0-cache/
+
+# IDE and operating system
+.DS_Store
+.idea/
+.vscode/
+
+# Runtime-generated data and model artifacts
+data/processed/
+data/knowledge_base/*
+data/rag_corpus/*
+data/eval/*
+!data/knowledge_base/.gitkeep
+!data/rag_corpus/.gitkeep
+!data/eval/.gitkeep
+models/
+artifacts/
+logs/
+
+# The source archive and extracted raw dataset are retained locally, not committed.
+meridian-account-health.zip
+data/raw/
+
+# Local course source artifacts are preserved for traceability, not public distribution.
+/Capstone*.docx
+/Meridian_Autonomous_System_Implementation_Plan.md
