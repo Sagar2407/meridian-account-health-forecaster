@@ -52,7 +52,12 @@ artifacts/
 logs/
 
 # The source archive and extracted raw dataset are retained locally, not committed.
-meridian-account-health.zip
+# The synthetic dataset is the author's own work, so the archive itself is
+# committed: it is 4.2 MB, and it is the reference the byte-exact
+# reproducibility test compares the regenerated tables against. The extracted
+# copy under data/raw/ stays ignored -- it is 38 MB, 27.5 MB of which is
+# re-serialized JSONL no code in this repository reads. See dataset/ for the
+# generator source in browsable form.
 data/raw/
 
 # Local course source artifacts are preserved for traceability, not public distribution.

@@ -38,7 +38,7 @@ Phase 4, the MCP-compatible tool layer and provider adapter, is next.
 **Docker Compose v2 and GNU Make are the only hard prerequisites.** Every gate runs in containers,
 so no host Python or Node toolchain is required.
 
-First extract the synthetic dataset, which is deliberately not committed:
+First extract the committed synthetic dataset (see [The dataset](#the-dataset) for what it is):
 
 ```bash
 unzip meridian-account-health.zip -d data/raw/
@@ -185,19 +185,47 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `config/` — non-secret configuration examples
 - `data/` — immutable raw inputs and ignored generated artifacts
 
-## Dataset location
+## The dataset
 
-The unchanged source archive remains at the repository root. Its extracted contents are available under:
+Every account, company, person, usage record, ticket, note, event, and outcome in this project is
+synthetic and was written for it. Nothing here describes a real company or a real person.
 
-```text
-data/raw/meridian-account-health/
+`meridian-account-health.zip` (4.2 MB) is committed, so a fresh clone can run every gate after one
+command:
+
+```bash
+unzip meridian-account-health.zip -d data/raw/
 ```
 
-Raw data must remain immutable. Processed runtime-safe data, indexes, splits, models, and evaluation results will be generated into separate directories during later phases.
+The extracted tree under `data/raw/` is git-ignored: it is 38 MB, and 27.5 MB of that is
+re-serialized JSONL that no code in this repository reads. Raw data is immutable by policy —
+`meridian.data.paths` writes only to `data/processed/`, `data/splits/`, `data/indexes/`, `models/`,
+and `artifacts/`.
 
-The source archive and extracted raw dataset are intentionally ignored by Git. A later data phase
-will preserve the supplied deterministic generator in the public repository and document dataset
-regeneration without publishing redundant generated artifacts.
+`dataset/` holds the generator source, data dictionary, validation report, and all 32 knowledge-base
+articles as ordinary files, so how the data was produced is readable on GitHub without downloading
+anything:
+
+```text
+dataset/
+  build_dataset.py          entry point
+  generators.py             account, usage, ticket, note, and event synthesis
+  config.py                 seed 20260721, the 2026-06-28 as-of date, distributions
+  text_banks.py             the phrase banks behind note and ticket prose
+  build_knowledge_base.py   the 32 KB articles
+  build_guardrail_eval.py   the 36 packaged guardrail cases
+  DATA_DICTIONARY.md        column-level reference
+  eval/validation_report.md the generator's own validation summary
+  knowledge_base/           KB-001 … KB-032
+```
+
+Those files are byte-exact copies of what is inside the archive, and
+`backend/tests/test_dataset_source.py` fails the build if the two ever diverge.
+
+The generator is deterministic: `test_every_table_reproduces_the_shipped_archive` re-runs it at seed
+`20260721` and asserts every table reproduces the committed archive byte for byte. That requires
+`numpy < 2.5` — 2.5 alters one generated note body — which is why `pyproject.toml` caps it. See
+`docs/DATA_LINEAGE.md`.
 
 ## Module 7 deliverables
 

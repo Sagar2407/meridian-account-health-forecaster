@@ -19,6 +19,12 @@ SKIP_DIRECTORIES = {
     "node_modules",
 }
 SKIP_PREFIXES = {Path("data/raw")}
+# `dataset/` is a byte-exact copy of files inside the committed archive, kept
+# browsable on GitHub. `test_dataset_source.py` fails the build if the two
+# diverge, so this project's authoring conventions cannot be applied to it --
+# adding a final newline here would break that check. Secret and absolute-path
+# scanning still applies: those are safety, not style.
+VERBATIM_PREFIXES = {Path("dataset")}
 # Files git ignores are never distributed, so they are outside this policy.
 # `.env` in particular is *supposed* to hold real credentials locally.
 FALLBACK_SKIP_NAMES = {".env"}
@@ -74,6 +80,13 @@ def ignored_paths(candidates: list[Path]) -> set[Path]:
     return {ROOT / line for line in result.stdout.splitlines() if line}
 
 
+def is_verbatim(path: Path) -> bool:
+    """Return whether this file is a byte-exact copy that must not be reformatted."""
+
+    relative = path.relative_to(ROOT)
+    return any(prefix in relative.parents for prefix in VERBATIM_PREFIXES)
+
+
 def source_files() -> list[Path]:
     """Return text-like repository files while excluding generated and source-data areas."""
 
@@ -103,11 +116,12 @@ def main() -> int:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        if text and not text.endswith("\n"):
-            findings.append(f"{path.relative_to(ROOT)}: missing final newline")
-        for line_number, line in enumerate(text.splitlines(), start=1):
-            if line.endswith((" ", "\t")):
-                findings.append(f"{path.relative_to(ROOT)}:{line_number}: trailing whitespace")
+        if not is_verbatim(path):
+            if text and not text.endswith("\n"):
+                findings.append(f"{path.relative_to(ROOT)}: missing final newline")
+            for line_number, line in enumerate(text.splitlines(), start=1):
+                if line.endswith((" ", "\t")):
+                    findings.append(f"{path.relative_to(ROOT)}:{line_number}: trailing whitespace")
         for label, pattern in PATTERNS.items():
             for match in pattern.finditer(text):
                 line = text.count("\n", 0, match.start()) + 1
