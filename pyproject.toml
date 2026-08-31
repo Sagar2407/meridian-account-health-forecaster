@@ -12,6 +12,10 @@ dependencies = [
   "faiss-cpu>=1.9,<2",
   "fastapi>=0.115,<1",
   "fastembed>=0.4,<1",
+  # The official MCP Python SDK. Section 12 exposes services through it; the
+  # services themselves never import it, so the tool layer stays testable
+  # without a transport.
+  "mcp>=1.2,<2",
   # numpy is capped below 2.5 for two reasons: 2.5 alters one generated note
   # body, breaking byte-exact dataset reproduction, and its stubs require
   # Python 3.12 while this project supports 3.11. See docs/DATA_LINEAGE.md.
@@ -20,6 +24,11 @@ dependencies = [
   "pandera[pandas]>=0.20,<1",
   "pyarrow>=18,<22",
   "scikit-learn>=1.5,<2",
+  # The OpenAI SDK is the transport for the OpenAI-compatible adapter (ADR
+  # 0004), reached only from meridian.llm.openai_compatible. Graph and tool
+  # code import the provider interface instead; test_import_boundary enforces
+  # that.
+  "openai>=1.60,<3",
   "pydantic-settings>=2.7,<3",
   "uvicorn[standard]>=0.34,<1",
 ]
@@ -46,6 +55,7 @@ testpaths = ["backend/tests"]
 markers = [
   "slow: regenerates the dataset from the supplied generator",
   "requires_dataset: needs the extracted raw archive under data/raw/",
+  "live: calls a real language-model provider; opt in with MERIDIAN_LLM_LIVE=1",
 ]
 
 [tool.ruff]

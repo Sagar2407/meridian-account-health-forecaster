@@ -49,3 +49,15 @@ def splits_directory() -> Path:
     """Return the directory for the deterministic account split."""
 
     return data_root() / "splits"
+
+
+def application_directory() -> Path:
+    """Return the directory for application state this system writes itself.
+
+    Plan section 12.2 separates internal application writes -- assessment
+    snapshots, review cases -- from Meridian source data, which is immutable.
+    Keeping them under their own directory makes that separation visible on
+    disk rather than only in policy.
+    """
+
+    return data_root() / "app"

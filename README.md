@@ -6,8 +6,9 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 3 are complete.** Every exit gate passes. No language model is involved in any
-of them, and none needs an API key.
+**Phases 0 through 4 are complete.** Every exit gate passes. None of them needs an API key: the
+first four involve no language model at all, and Phase 4 adds the interface to one rather than a
+dependency on it.
 
 Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
 validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
@@ -31,7 +32,13 @@ four-family retrieval benchmark with a chunking ablation. Build the index with `
 with `make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk"`, and reproduce every number with
 `make evaluate-retrieval`; evidence is in `docs/PHASE_3_STATUS.md`.
 
-Phase 4, the MCP-compatible tool layer and provider adapter, is next.
+Phase 4 delivered the tool and provider boundary: eight read-only services with a per-role
+allowlist, Pydantic validation, bounded retries and an audit trail, exposed over the official MCP
+SDK with an in-process client; plus a provider-neutral structured-generation interface with an
+OpenAI-compatible adapter, deterministic fakes, and skeletons that say exactly what to configure.
+Evidence is in `docs/PHASE_4_STATUS.md`.
+
+Phase 5, the four agents and the LangGraph fast path, is next.
 
 ## Quick start
 
@@ -170,6 +177,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_1_STATUS.md` — data-layer exit-gate evidence
 - `docs/PHASE_2_STATUS.md` — model exit-gate evidence and the two documented departures from the plan
 - `docs/PHASE_3_STATUS.md` — retrieval exit-gate evidence, benchmark, and chunking ablation
+- `docs/PHASE_4_STATUS.md` — tool-layer and provider-adapter exit-gate evidence
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments

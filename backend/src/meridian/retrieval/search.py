@@ -338,6 +338,38 @@ class RetrievalService:
             rejected=tuple(rejected),
         )
 
+    def search_knowledge(self, query: str) -> tuple[Citation, ...]:
+        """Return knowledge-base guidance only, with no account lane at all.
+
+        `search` needs an account id to resolve a cutoff for its account lane.
+        Guidance is not account scoped, so a caller that wants only guidance
+        would otherwise have to invent an account id and discard half the work.
+        """
+
+        normalized_query = self._normalise_query(query)
+        query_vector = self._encoder.encode_queries([normalized_query])[0]
+        hits = self._rank(
+            query_vector,
+            self._index.store.candidate_rows(
+                None,
+                None,
+                knowledge_base_only=True,
+                allowed_doc_types=(KNOWLEDGE_TYPE,),
+            ),
+            MAX_KNOWLEDGE_CITATIONS,
+        )
+        citations: list[Citation] = []
+        for record, score in hits:
+            if record.account_id is not None or record.doc_type != KNOWLEDGE_TYPE:
+                continue
+            if record.doc_date is not None:
+                continue
+            parent = self._index.store.parent(record.parent_id)
+            if parent is None or parent.account_id is not None:
+                continue
+            citations.append(_to_citation(record, score, parent))
+        return tuple(citations)
+
     def retrieve(
         self,
         account_id: str,

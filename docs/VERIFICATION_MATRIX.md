@@ -19,6 +19,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | Region code `NA` must not parse as null | 116 rows verified with `keep_default_na=False` | Verified |
 | External events reach `2026-07-02` | `external_events.csv` | Verified |
 | Two external events occur after dataset as-of date | `external_events.csv` | Verified |
+| The eight section 12.1 tools refuse path, SQL, URL, shell, over-wide window, and role-spoofing arguments | 48 tests in `test_tools_registry.py` | Verified in Phase 4 |
+| No module outside `meridian.llm.openai_compatible` imports a provider SDK | `test_only_the_named_adapter_may_import_a_provider_sdk` | Verified in Phase 4 |
 | Raw sources include records after per-account effective cutoffs | Direct point-in-time audit | Verified |
 | The final logical architecture has four agents | Checkpoint 5.1 and implementation plan | Verified |
 | ToT is conflict-only, depth 2, beam width 2, with four root outcomes | Checkpoint 4.1 and implementation plan | Verified |
@@ -47,6 +49,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | Choice | Why provisional | Resolution method |
 | --- | --- | --- |
 | Confidence weights and route thresholds | Initial policy values only | Development calibration and route-cost analysis |
+| Tool timeout of 20 seconds and one transient retry | Chosen before any latency measurement | Measure tool latency in Phase 10 observability |
 | Render hosting | Portfolio recommendation, not a course mandate | Deployment feasibility and cost review |
 | Fast-path latency target | Provisional target | Measure after implementation |
 
@@ -57,6 +60,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | Predictive model family | Repeated stratified CV, one-standard-error rule, calibration study | Logistic regression with isotonic calibration; see `docs/PHASE_2_STATUS.md` |
 | BGE small embedding model | Curated four-family retrieval benchmark | Retained; see `docs/PHASE_3_STATUS.md` |
 | FAISS configuration and MMR parameters | Chunking ablation holding corpus, encoder, filters, top-k, and queries constant | Flat inner-product index and parent-child chunking retained on recall and citation quality, not on ranking metrics; see `docs/PHASE_3_STATUS.md` |
+| Provider-neutral LLM adapter | Offline structured-generation tests plus an opt-in live check | Anthropic reached through OpenRouter's OpenAI-compatible endpoint; strict `json_schema` with one repair attempt; see `docs/PHASE_4_STATUS.md` |
 
 ## Unresolved inputs
 
@@ -64,6 +68,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | --- | --- | --- |
 | Deadline year/timezone absent from pasted text | Submission scheduling risk | Verify Canvas deadline directly |
 | Repository license not selected | Public-release blocker | Choose license before publication |
+| Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
 
 ## Deferred inputs
