@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +19,9 @@ SKIP_DIRECTORIES = {
     "node_modules",
 }
 SKIP_PREFIXES = {Path("data/raw")}
+# Files git ignores are never distributed, so they are outside this policy.
+# `.env` in particular is *supposed* to hold real credentials locally.
+FALLBACK_SKIP_NAMES = {".env"}
 SKIP_SUFFIXES = {
     ".csv",
     ".docx",
@@ -44,6 +48,32 @@ PATTERNS = {
 }
 
 
+def ignored_paths(candidates: list[Path]) -> set[Path]:
+    """Return the subset of `candidates` that git ignores.
+
+    The policy is "no secrets in tracked source". Anything git ignores is never
+    published, so scanning it produces false positives -- most importantly for a
+    local `.env`. Falls back to a small static list when git is unavailable.
+    """
+
+    if not candidates:
+        return set()
+    try:
+        result = subprocess.run(
+            ["git", "check-ignore", "--stdin"],
+            cwd=ROOT,
+            input="\n".join(str(path) for path in candidates),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return {path for path in candidates if path.name in FALLBACK_SKIP_NAMES}
+    if result.returncode not in (0, 1):
+        return {path for path in candidates if path.name in FALLBACK_SKIP_NAMES}
+    return {ROOT / line for line in result.stdout.splitlines() if line}
+
+
 def source_files() -> list[Path]:
     """Return text-like repository files while excluding generated and source-data areas."""
 
@@ -59,7 +89,8 @@ def source_files() -> list[Path]:
         if path.suffix.lower() in SKIP_SUFFIXES:
             continue
         files.append(path)
-    return files
+    ignored = ignored_paths(files)
+    return [path for path in files if path not in ignored]
 
 
 def main() -> int:
@@ -76,9 +107,7 @@ def main() -> int:
             findings.append(f"{path.relative_to(ROOT)}: missing final newline")
         for line_number, line in enumerate(text.splitlines(), start=1):
             if line.endswith((" ", "\t")):
-                findings.append(
-                    f"{path.relative_to(ROOT)}:{line_number}: trailing whitespace"
-                )
+                findings.append(f"{path.relative_to(ROOT)}:{line_number}: trailing whitespace")
         for label, pattern in PATTERNS.items():
             for match in pattern.finditer(text):
                 line = text.count("\n", 0, match.start()) + 1

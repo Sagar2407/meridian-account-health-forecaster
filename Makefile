@@ -4,7 +4,7 @@ PYTHON ?= python3
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check phase0-verify docker-up docker-down
+.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data phase0-verify docker-up docker-down
 
 help:
 	@awk 'BEGIN {FS = ":.*## "; print "Meridian development commands:"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -40,6 +40,12 @@ test: ## Run backend and frontend tests.
 
 security: ## Scan source for common secrets and machine-specific paths.
 	$(PYTHON) scripts/check_repository.py
+
+data: ## Build sanitized runtime tables, the dataset manifest, and the account split.
+	./scripts/python_in_docker.sh python scripts/build_data.py
+
+validate-data: ## Run the complete data-safety gate, including generator reproducibility.
+	MERIDIAN_REQUIRE_DATASET=1 ./scripts/python_in_docker.sh pytest -q
 
 check: lint typecheck test security ## Run every local quality gate.
 

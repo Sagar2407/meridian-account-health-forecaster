@@ -16,6 +16,11 @@ mkdir -p \
   "$phase0_cache_directory/uv" \
   "$phase0_cache_directory/xdg-cache"
 
+if [ ! -f "$project_directory/data/raw/meridian-account-health/data/accounts.csv" ]; then
+  echo "Raw dataset missing. Extract meridian-account-health.zip into data/raw/ first." >&2
+  exit 1
+fi
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "Docker is required. Start Docker Desktop and open a new terminal." >&2
   exit 1
@@ -57,9 +62,15 @@ echo "[4/6] Building the locked application images"
 docker compose build
 
 echo "[5/6] Running backend and frontend quality gates"
-docker compose run --rm --no-deps backend sh -c '
-  uv run --locked ruff check backend &&
-  uv run --locked ruff format --check backend &&
+# The raw archive is git-ignored and excluded from the image, so it is mounted
+# read-only for the test run. MERIDIAN_REQUIRE_DATASET=1 turns a missing archive
+# into an error instead of silently skipping the data-safety tests.
+docker compose run --rm --no-deps \
+  --volume "$project_directory/data:/app/data:ro" \
+  --env MERIDIAN_REQUIRE_DATASET=1 \
+  backend sh -c '
+  uv run --locked ruff check backend evaluation &&
+  uv run --locked ruff format --check backend evaluation &&
   uv run --locked mypy &&
   uv run --locked pytest
 '

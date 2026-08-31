@@ -22,12 +22,16 @@ jobs:
           uv sync --locked --extra dev
       - name: Lint and format check
         run: |
-          uv run ruff check backend
-          uv run ruff format --check backend
+          uv run ruff check backend evaluation
+          uv run ruff format --check backend evaluation
       - name: Type check
         run: uv run mypy
-      - name: Test
-        run: uv run pytest
+      # The synthetic archive is git-ignored, so CI cannot exercise the data
+      # layer: those tests skip here and the coverage threshold is not
+      # meaningful. The full data gate is `make validate-data`, which sets
+      # MERIDIAN_REQUIRE_DATASET=1 so it cannot pass without the dataset.
+      - name: Test (data-layer tests skip without the archive)
+        run: uv run pytest --cov-fail-under=0
       - name: Scan repository
         run: python scripts/check_repository.py
 

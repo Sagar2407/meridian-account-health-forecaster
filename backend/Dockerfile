@@ -13,6 +13,10 @@ WORKDIR /app
 COPY --from=uv /uv /uvx /bin/
 COPY pyproject.toml uv.lock README.md ./
 COPY backend ./backend
+# The evaluation package holds labels and ground truth. It is present because the
+# quality gate type-checks and tests it; `test_import_boundary.py` guarantees no
+# runtime module can import it. The Phase 11 production image will omit it.
+COPY evaluation ./evaluation
 
 RUN uv sync --locked --extra dev
 

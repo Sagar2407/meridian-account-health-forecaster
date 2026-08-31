@@ -34,6 +34,9 @@ frontend/coverage/
 
 # Runtime-generated data and model artifacts
 data/processed/
+# The deterministic account split IS committed: it is small, holds account ids
+# only (never labels), and lets a reviewer reproduce every reported metric.
+!data/splits/account_split.json
 data/knowledge_base/*
 data/rag_corpus/*
 data/eval/*

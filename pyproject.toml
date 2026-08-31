@@ -10,6 +10,13 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
   "fastapi>=0.115,<1",
+  # numpy is capped below 2.5 for two reasons: 2.5 alters one generated note
+  # body, breaking byte-exact dataset reproduction, and its stubs require
+  # Python 3.12 while this project supports 3.11. See docs/DATA_LINEAGE.md.
+  "numpy>=2,<2.5",
+  "pandas>=2.2,<3",
+  "pandera[pandas]>=0.20,<1",
+  "pyarrow>=18,<22",
   "pydantic-settings>=2.7,<3",
   "uvicorn[standard]>=0.34,<1",
 ]
@@ -17,7 +24,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "httpx>=0.28,<1",
+  "matplotlib>=3.9,<4",
   "mypy>=1.14,<2",
+  "pandas-stubs>=2.2,<3",
   "pre-commit>=4,<5",
   "pytest>=8.3,<9",
   "pytest-cov>=6,<7",
@@ -25,23 +34,33 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["backend/src/meridian"]
+packages = ["backend/src/meridian", "evaluation/meridian_eval"]
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers --cov=meridian --cov-report=term-missing --cov-fail-under=90"
-pythonpath = ["backend/src"]
+pythonpath = ["backend/src", "evaluation"]
 testpaths = ["backend/tests"]
+markers = [
+  "slow: regenerates the dataset from the supplied generator",
+  "requires_dataset: needs the extracted raw archive under data/raw/",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-src = ["backend/src", "backend/tests"]
+src = ["backend/src", "backend/tests", "evaluation"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.isort]
+# Declared explicitly so import order does not depend on which directories are
+# present. The backend image copies `evaluation/`, but a future production image
+# will not, and ruff must classify these identically either way.
+known-first-party = ["meridian", "meridian_eval"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["backend/src", "backend/tests"]
+files = ["backend/src", "backend/tests", "evaluation"]
 plugins = ["pydantic.mypy"]

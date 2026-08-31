@@ -6,18 +6,40 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-Source onboarding is complete and the Phase 0 engineering foundation is implemented. The repository
-now contains a typed FastAPI service, a React/TypeScript health UI, validated environment settings,
-Docker Compose, local quality commands, CI, pre-commit hooks, and architecture decision records.
+**Phase 0 and Phase 1 are complete.** Both exit gates pass.
 
-The user-confirmed Docker health page passes. The remaining automated checks and lockfile generation
-are consolidated in `make phase0-verify`; see `docs/PHASE_0_STATUS.md` for the exact evidence. Phase 1
-has not started.
+Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
+validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
+architecture decision records. Verify it with `make phase0-verify`; evidence is in
+`docs/PHASE_0_STATUS.md`.
+
+Phase 1 delivered the point-in-time-safe data layer: a central validating loader, enforced per-account
+cutoffs, a sanitized runtime boundary separated from evaluation labels, deterministic splits, and a
+provenance manifest. Verify it with `make validate-data`; evidence is in `docs/PHASE_1_STATUS.md` and
+`docs/DATA_LINEAGE.md`.
+
+Phase 2, the calibrated forecasting model, is next.
 
 ## Quick start
 
-Prerequisites for native development: Python 3.11 or 3.12, uv 0.12, Node.js 22.12 or newer, pnpm 11,
-and GNU Make. Docker Compose v2 is the recommended self-contained path.
+**Docker Compose v2 and GNU Make are the only hard prerequisites.** Every gate runs in containers,
+so no host Python or Node toolchain is required.
+
+First extract the synthetic dataset, which is deliberately not committed:
+
+```bash
+unzip meridian-account-health.zip -d data/raw/
+```
+
+Then start the application:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Native development additionally needs Python 3.11 or 3.12, uv 0.12, Node.js 22.12 or newer, and
+pnpm 11. With those installed:
 
 ```bash
 cp .env.example .env
@@ -49,12 +71,20 @@ The command leaves the verified application running so the UI remains available.
 ## Quality gates
 
 ```bash
-make format     # apply source formatting
-make lint       # Python and TypeScript linting
-make typecheck  # strict Python and TypeScript checks
-make test       # backend and frontend tests with coverage
-make check      # all non-formatting local gates
+make data           # build sanitized tables, manifest, and the account split (Docker)
+make validate-data  # the complete data-safety gate, including reproducibility (Docker)
+make phase0-verify  # the complete Phase 0 acceptance suite (Docker)
+
+make format         # apply source formatting          (needs a host toolchain)
+make lint           # Python and TypeScript linting    (needs a host toolchain)
+make typecheck      # strict Python and TypeScript     (needs a host toolchain)
+make test           # backend and frontend tests       (needs a host toolchain)
+make check          # all non-formatting local gates   (needs a host toolchain)
 ```
+
+`make data` and `make validate-data` run through `scripts/python_in_docker.sh`, so they work without
+a host Python. `make validate-data` sets `MERIDIAN_REQUIRE_DATASET=1`, which turns a missing dataset
+into an error rather than silently skipping the data-safety tests.
 
 GitHub Actions applies locked installs, format checks, linting, typing, tests, coverage thresholds,
 the frontend production build, the repository policy scan, and both Docker builds. Dependency ranges
