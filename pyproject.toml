@@ -17,6 +17,7 @@ dependencies = [
   "pandas>=2.2,<3",
   "pandera[pandas]>=0.20,<1",
   "pyarrow>=18,<22",
+  "scikit-learn>=1.5,<2",
   "pydantic-settings>=2.7,<3",
   "uvicorn[standard]>=0.34,<1",
 ]
@@ -53,11 +54,27 @@ src = ["backend/src", "backend/tests", "evaluation"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
 
+[tool.ruff.lint.per-file-ignores]
+# scikit-learn's estimator API fixes the parameter name `X`; renaming it would
+# diverge from every other estimator in the ecosystem.
+"evaluation/meridian_eval/modeling.py" = ["N803"]
+
 [tool.ruff.lint.isort]
 # Declared explicitly so import order does not depend on which directories are
 # present. The backend image copies `evaluation/`, but a future production image
 # will not, and ruff must classify these identically either way.
 known-first-party = ["meridian", "meridian_eval"]
+
+[[tool.mypy.overrides]]
+# scikit-learn, joblib, and matplotlib ship no type information.
+module = ["sklearn.*", "joblib.*", "matplotlib.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The rule baseline must subclass sklearn's estimator base classes, which are
+# untyped, to work with Pipeline and cross_validate.
+module = ["meridian_eval.modeling"]
+disallow_subclassing_any = false
 
 [tool.mypy]
 python_version = "3.11"
