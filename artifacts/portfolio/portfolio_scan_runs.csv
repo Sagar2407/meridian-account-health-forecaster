@@ -1,0 +1,7 @@
+account_id,status,route,outcome,confidence,abstained,review_case_id,assessment_id,model_calls,tokens,latency_ms,error
+ACC-1077,completed,red,,,True,CASE-ACC-1077-0068-01,ASMT-ACC-1077-0068,0,0,16265.53634100128,
+ACC-1184,completed,amber,Churned,0.728245,False,,ASMT-ACC-1184-0010,0,0,15906.109673989704,
+ACC-1010,completed,amber,Contracted,0.718766,False,,ASMT-ACC-1010-0016,0,0,15969.345131990849,
+ACC-1096,completed,red,Churned,0.83633,False,CASE-ACC-1096-0015-01,ASMT-ACC-1096-0015,0,0,577.1109999914188,
+ACC-1052,completed,red,Expanded,0.638544,False,CASE-ACC-1052-0012-01,ASMT-ACC-1052-0012,0,0,610.3052090038545,
+ACC-1217,completed,amber,Renewed,0.830466,False,,ASMT-ACC-1217-0010,0,0,353.3798749995185,

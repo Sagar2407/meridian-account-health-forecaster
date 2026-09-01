@@ -1,0 +1,687 @@
+{
+  "account_id": "ACC-1002",
+  "commit": "c35be79a0d0965468c0963a3ab93e8277c6ab40c",
+  "kind": "tot",
+  "label": "Conflicting evidence, bounded Tree-of-Thought",
+  "offline": true,
+  "question": "What is the renewal outlook for this account, and what drives it?",
+  "recorded_at": "2026-09-01T20:32:25+00:00",
+  "run": {
+    "assessment_id": "ASMT-ACC-1002-0028",
+    "blocked": null,
+    "errors": [],
+    "guardrails": [
+      {
+        "message": "",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "intake"
+      },
+      {
+        "message": "0/8 model calls and 0/60000 tokens spent.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "execution"
+      },
+      {
+        "message": "Every lane envelope, metric provenance record, and citation is scoped to this account and cutoff.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "evidence"
+      },
+      {
+        "message": "0/8 model calls and 0/60000 tokens spent.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "execution"
+      },
+      {
+        "message": "Every numeric claim and cited document matched the verified evidence.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "output"
+      },
+      {
+        "message": "stale sources: evidence:external_event, evidence:support_ticket",
+        "outcome": "review",
+        "reason_codes": [
+          "route_amber"
+        ],
+        "rule_ids": [
+          "ROUTE-AMBER",
+          "stale_sources"
+        ],
+        "stage": "routing"
+      }
+    ],
+    "result": {
+      "account_id": "ACC-1002",
+      "citations": [
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2024-08-30",
+          "doc_id": "EVT-ACC-1002-2024-08-30-d03c83801aec",
+          "excerpt": "[External event] KeystoneNetworks LLC beat quarterly earnings estimates\nType: Earnings beat. Signal: favorable. Source: Trade publication. Date: 2024-08-30.",
+          "parent_id": "EVT-ACC-1002-2024-08-30-d03c83801aec",
+          "retrieval_score": 0.594204,
+          "signal": "favorable",
+          "source_type": "external_event",
+          "sub_goal": "external_context",
+          "subtype": "Earnings beat"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2025-05-04",
+          "doc_id": "EVT-ACC-1002-2025-05-04-2f860af6fbe9",
+          "excerpt": "[External event] KeystoneNetworks LLC hired a new CMO to lead digital\nType: Executive hire (digital/CX). Signal: favorable. Source: Trade publication. Date: 2025-05-04.",
+          "parent_id": "EVT-ACC-1002-2025-05-04-2f860af6fbe9",
+          "retrieval_score": 0.577796,
+          "signal": "favorable",
+          "source_type": "external_event",
+          "sub_goal": "external_context",
+          "subtype": "Executive hire (digital/CX)"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2025-05-20",
+          "doc_id": "NOTE-200058",
+          "excerpt": "Action items: (1) Build an adoption plan to drive depth on Smart tagging (AI). (2) Schedule a value-realization review to quantify ROI. (3) Multi-thread beyond the current sponsor.\n\nRenewal outlook: likely, assuming we maintain engagement.",
+          "parent_id": "NOTE-200058",
+          "retrieval_score": 0.714956,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "adoption",
+          "subtype": "Quarterly Business Review"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2025-02-17",
+          "doc_id": "NOTE-200065",
+          "excerpt": "[Monthly Touchpoint] KeystoneNetworks LLC\n\nMonthly touchpoint \u2014 KeystoneNetworks LLC steady as she goes. The usage trend is clearly negative \u2014 fewer active users, shorter sessions, and no meaningful use of Brand portal.",
+          "parent_id": "NOTE-200065",
+          "retrieval_score": 0.643603,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "adoption",
+          "subtype": "Monthly Touchpoint"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2024-11-10",
+          "doc_id": "NOTE-200056",
+          "excerpt": "Action items: (1) Multi-thread beyond the current sponsor. (2) Build an adoption plan to drive depth on Dynamic media rendering. (3) Schedule a value-realization review to quantify ROI.\n\nRenewal outlook: likely, assuming we maintain engagement.",
+          "parent_id": "NOTE-200056",
+          "retrieval_score": 0.711123,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "adoption",
+          "subtype": "Quarterly Business Review"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2025-08-15",
+          "doc_id": "NOTE-200059",
+          "excerpt": "Action items: (1) Schedule a value-realization review to quantify ROI. (2) Build an adoption plan to drive depth on Rights management. (3) Multi-thread beyond the current sponsor.\n\nRenewal outlook: likely, assuming we maintain engagement.",
+          "parent_id": "NOTE-200059",
+          "retrieval_score": 0.688546,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "adoption",
+          "subtype": "Quarterly Business Review"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2025-02-15",
+          "doc_id": "NOTE-200057",
+          "excerpt": "Action items: (1) Schedule a value-realization review to quantify ROI. (2) Multi-thread beyond the current sponsor. (3) Build an adoption plan to drive depth on Smart tagging (AI).\n\nRenewal outlook: likely, assuming we maintain engagement.",
+          "parent_id": "NOTE-200057",
+          "retrieval_score": 0.713204,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "adoption",
+          "subtype": "Quarterly Business Review"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2024-10-18",
+          "doc_id": "NOTE-200055",
+          "excerpt": "[Onboarding Kickoff] KeystoneNetworks LLC\n\nOnboarding kickoff for KeystoneNetworks LLC went well. We scoped the Digital Asset Management rollout, assigned an internal owner, and agreed on enablement dates. Ingrid Schneider is bought in; the open question is whether the practitioner team has the bandwidth to ramp quickly.",
+          "parent_id": "NOTE-200055",
+          "retrieval_score": 0.603607,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "support",
+          "subtype": "Onboarding Kickoff"
+        },
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2025-08-10",
+          "doc_id": "NOTE-200070",
+          "excerpt": "[Monthly Touchpoint] KeystoneNetworks LLC\n\nRoutine check-in with KeystoneNetworks LLC; no surprises. Adoption is eroding. Logins are down, and the drop is concentrated in the teams that were previously our strongest users.",
+          "parent_id": "NOTE-200070",
+          "retrieval_score": 0.591806,
+          "signal": "neutral",
+          "source_type": "csm_note",
+          "sub_goal": "external_context",
+          "subtype": "Monthly Touchpoint"
+        },
+        {
+          "account_id": null,
+          "doc_date": null,
+          "doc_id": "KB-001",
+          "excerpt": "# Save Play: Rescuing an At-Risk Account\n\nUse this play when an account enters the **at_risk** or **slipping** band, especially after a sharp drop in `adoption_score` or a spike in `support_escalation_rate`.",
+          "parent_id": "KB-001",
+          "retrieval_score": 0.779204,
+          "signal": "neutral",
+          "source_type": "knowledge_base",
+          "sub_goal": "playbook_guidance",
+          "subtype": "playbook"
+        },
+        {
+          "account_id": null,
+          "doc_date": null,
+          "doc_id": "KB-029",
+          "excerpt": "**T-90:** Health assessment and forecast. Classify the likely renewal result and record the rationale. Confirm decision-maker and budget authority. High-risk or high-ACV accounts enter human review here.\n**T-60:** Value review with the customer; surface and address risks; for healthy accounts, develop the expansion case.\n**T-30:** Commercial alignment internally; issue the quote; handle objections.\n**T-14:** Confirm paperwork and close. Escalate any slippage.\n**T-0 (renewal_date):** renewal result realized and recorded (Renewed/Expanded/Contracted/Churned) with a reason.",
+          "parent_id": "KB-029",
+          "retrieval_score": 0.771959,
+          "signal": "neutral",
+          "source_type": "knowledge_base",
+          "sub_goal": "playbook_guidance",
+          "subtype": "policy"
+        }
+      ],
+      "cited_doc_ids": [
+        "EVT-ACC-1002-2024-08-30-d03c83801aec",
+        "EVT-ACC-1002-2025-05-04-2f860af6fbe9",
+        "TCK-100037"
+      ],
+      "confidence": 0.920726,
+      "confidence_breakdown": {
+        "agreement_score": 0.8,
+        "applied_caps": [],
+        "calibrated_probability": 0.94568,
+        "confidence": 0.920726,
+        "coverage_score": 0.925,
+        "raw_confidence": 0.920726
+      },
+      "counterevidence": [
+        {
+          "account_id": "ACC-1002",
+          "doc_date": "2024-10-31",
+          "doc_id": "TCK-100037",
+          "excerpt": "[Bug / Defect / P3] Smart tagging (AI) intermittently failing since Tuesday\n\nHi team, things are going well with Digital Asset Management and we're looking to go further. We're seeing an error code we don't recognize when running Smart tagging (AI). It started after the most recent release. No rush at all; whenever the team has a moment. Thank you!",
+          "parent_id": "TCK-100037",
+          "retrieval_score": 0.598643,
+          "signal": "adverse",
+          "source_type": "support_ticket",
+          "sub_goal": "support",
+          "subtype": "Bug / Defect"
+        }
+      ],
+      "cutoff": "2025-11-03",
+      "distribution": {
+        "Churned": 0.0,
+        "Contracted": 0.025748,
+        "Expanded": 0.028571,
+        "Renewed": 0.94568
+      },
+      "drivers": [
+        {
+          "contribution": 0.496332,
+          "description": "Mean CSAT across closed tickets; 3.5 when the window has none.",
+          "direction": "supports",
+          "feature": "avg_closed_csat_26w",
+          "value": 4.0
+        },
+        {
+          "contribution": 0.264354,
+          "description": "Count of headwind external events.",
+          "direction": "supports",
+          "feature": "adverse_events_2q",
+          "value": 0.0
+        },
+        {
+          "contribution": 0.18227,
+          "description": "Onboarding was not completed.",
+          "direction": "supports",
+          "feature": "onboarding_incomplete",
+          "value": 0.0
+        },
+        {
+          "contribution": 0.144387,
+          "description": "Mean CSM note sentiment, kept separate from ticket sentiment.",
+          "direction": "supports",
+          "feature": "avg_note_sentiment_26w",
+          "value": 0.368714
+        },
+        {
+          "contribution": 0.136292,
+          "description": "Escalations divided by observed active weeks inside the 26-week window. The archive divides by the whole observed history (plan section 8.3).",
+          "direction": "supports",
+          "feature": "support_escalation_rate",
+          "value": 0.0
+        },
+        {
+          "contribution": -0.072197,
+          "description": "Mean weekly adoption index, 100 x mean active users per licensed seat.",
+          "direction": "opposes",
+          "feature": "adoption_level_last_q",
+          "value": 44.316877
+        }
+      ],
+      "limitations": [
+        "Selected by a bounded Tree-of-Thought search because the evidence materially disagreed; the branch summaries and scores are in the trace.",
+        "Evidence was not available for: external"
+      ],
+      "model_name": "",
+      "narrative_source": "deterministic",
+      "outcome": "Renewed",
+      "rationale": "Renewed carries a calibrated prior of 94.6%. The observed signals arguing for it are avg_closed_csat_26w, adverse_events_2q. Retrieved evidence pointing the same way: EVT-ACC-1002-2024-08-30-d03c83801aec, EVT-ACC-1002-2025-05-04-2f860af6fbe9. It would be wrong if TCK-100037 proves more material than the telemetry. Stress test: the strongest verified reason this could be wrong is TCK-100037, a support_ticket pointing adverse.",
+      "recommended_action": "Review the branch summaries with the account team before acting: the evidence disagreed and this outcome was selected over the alternatives.",
+      "route": "amber",
+      "route_reason": "stale sources: evidence:external_event, evidence:support_ticket",
+      "selected_by": "tree_of_thought"
+    },
+    "review_case_id": null,
+    "reviewer_decision": null,
+    "run_id": "TRACE-ACC-1002",
+    "thread_id": "TRACE-ACC-1002",
+    "trace": [
+      {
+        "completion_tokens": 0,
+        "event": "run_started",
+        "latency_ms": 0.0,
+        "node": "validate_request",
+        "payload": {
+          "account_id": "ACC-1002",
+          "mode": "interactive",
+          "question": "What is the renewal outlook for this account, and what drives it?",
+          "question_digest": "c6fe49492a87",
+          "requested_as_of": null,
+          "requester_role": "csm"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 45,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.375+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "request_validated",
+        "latency_ms": 0.636,
+        "node": "validate_request",
+        "payload": {
+          "outcome": "pass",
+          "reason_codes": [],
+          "rule_ids": []
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 46,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.375+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "context_loaded",
+        "latency_ms": 3.023,
+        "node": "load_context",
+        "payload": {
+          "account_id": "ACC-1002",
+          "effective_cutoff": "2025-11-03",
+          "high_value": false,
+          "prior_assessments": 5,
+          "segment": "Mid-Market"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 47,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.379+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "plan_created",
+        "latency_ms": 0.066,
+        "node": "plan_sub_goals",
+        "payload": {
+          "fallback_reason": "no language-model provider is configured",
+          "model": "",
+          "source": "deterministic",
+          "sub_goals": [
+            "adoption",
+            "support",
+            "external_context",
+            "playbook_guidance"
+          ]
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 48,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.379+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "quantitative_completed",
+        "latency_ms": 39.89,
+        "node": "quantitative_lane",
+        "payload": {
+          "available": true,
+          "critical_gaps": [],
+          "metrics": 21,
+          "model_probability": 0.94568,
+          "observed_weeks": 13,
+          "predicted_outcome": "Renewed"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 49,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.419+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "retrieval_attempted",
+        "latency_ms": 106.53,
+        "node": "retrieval_lane",
+        "payload": {
+          "available": true,
+          "citations": 10,
+          "covered": [
+            "adoption",
+            "support",
+            "external_context"
+          ],
+          "guidance": 2,
+          "retries": 0,
+          "sub_goals": [
+            "adoption",
+            "support",
+            "external_context"
+          ],
+          "unavailable_reason": null,
+          "uncovered": []
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 50,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.486+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "evidence_screened",
+        "latency_ms": 0.0,
+        "node": "merge_evidence",
+        "payload": {
+          "outcome": "pass",
+          "quarantined": 0,
+          "reasons": [],
+          "rule_ids": []
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 51,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.488+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "evidence_merged",
+        "latency_ms": 0.0,
+        "node": "merge_evidence",
+        "payload": {
+          "context": 7,
+          "counterevidence": 1,
+          "guidance": 2,
+          "missing_sources": [
+            "external"
+          ],
+          "round": 1,
+          "stale_sources": [
+            "evidence:external_event",
+            "evidence:support_ticket"
+          ],
+          "supporting": 2
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 52,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.488+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "coverage_evaluated",
+        "latency_ms": 0.0,
+        "node": "merge_evidence",
+        "payload": {
+          "reason": "every planned sub-goal produced evidence",
+          "round": 1,
+          "verdict": "sufficient"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 53,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.488+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "conflict_detected",
+        "latency_ms": 0.054,
+        "node": "conflict_gate",
+        "payload": {
+          "baseline_accounts": 260,
+          "conflict_types": [
+            "evidence_versus_evidence"
+          ],
+          "reasons": [
+            "CONFLICT-PASSAGE-SPLIT: 1 high-relevance passage(s) point adverse and 2 point favourable",
+            "CONFLICT-BOTH-SIDES: 2 material supporting and 1 material contradicting item(s) were verified"
+          ],
+          "rule_ids": [
+            "CONFLICT-PASSAGE-SPLIT",
+            "CONFLICT-BOTH-SIDES"
+          ],
+          "severity": "moderate",
+          "triggered": true
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 54,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.488+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "tot_started",
+        "latency_ms": 0.126,
+        "node": "tot_adjudication",
+        "payload": {
+          "candidates": 4,
+          "fallback_reason": "no language-model provider is configured",
+          "severity": "moderate",
+          "source": "deterministic"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 55,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.491+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "tot_completed",
+        "latency_ms": 1.026,
+        "node": "tot_adjudication",
+        "payload": {
+          "abstain_reason": "",
+          "abstained": false,
+          "branches": 6,
+          "margin": 0.194,
+          "pruned": 0,
+          "scores": [
+            1.0,
+            0.806
+          ],
+          "survivors": [
+            "Renewed",
+            "Expanded"
+          ],
+          "tie_broken_by_vote": false,
+          "winner": "Renewed"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 56,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.491+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "decision_drafted",
+        "latency_ms": 0.084,
+        "node": "tot_adjudication",
+        "payload": {
+          "agrees_with_model": true,
+          "applied_caps": [],
+          "confidence": 0.920726,
+          "narrative_source": "deterministic",
+          "outcome": "Renewed",
+          "selected_by": "tree_of_thought"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 57,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.491+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "output_verified",
+        "latency_ms": 0.288,
+        "node": "verify_output",
+        "payload": {
+          "attempts": 1,
+          "citations": 3,
+          "failures": [],
+          "numeric_claims": 1,
+          "passed": true
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 58,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.492+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "decision_routed",
+        "latency_ms": 0.0,
+        "node": "assign_route",
+        "payload": {
+          "codes": [
+            "stale_sources"
+          ],
+          "confidence": 0.920726,
+          "high_value": false,
+          "outcome": "Renewed",
+          "reason": "stale sources: evidence:external_event, evidence:support_ticket",
+          "route": "amber"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 59,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.493+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "decision_persisted",
+        "latency_ms": 0.0,
+        "node": "persist",
+        "payload": {
+          "assessment_id": "ASMT-ACC-1002-0028",
+          "persisted": true,
+          "regression_ids": [],
+          "review_case_id": null
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 60,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.497+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "run_completed",
+        "latency_ms": 0.0,
+        "node": "persist",
+        "payload": {
+          "abstained": false,
+          "route": "amber"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-ACC-1002",
+        "sequence": 61,
+        "thread_id": "TRACE-ACC-1002",
+        "timestamp": "2026-09-01T20:32:32.497+00:00"
+      }
+    ]
+  },
+  "summary": {
+    "abstained": false,
+    "applied_caps": [],
+    "citations": [
+      "EVT-ACC-1002-2024-08-30-d03c83801aec",
+      "EVT-ACC-1002-2025-05-04-2f860af6fbe9",
+      "NOTE-200058",
+      "NOTE-200065",
+      "NOTE-200056",
+      "NOTE-200059",
+      "NOTE-200057",
+      "NOTE-200055",
+      "NOTE-200070",
+      "KB-001",
+      "KB-029"
+    ],
+    "confidence": 0.9207,
+    "counterevidence": [
+      "TCK-100037"
+    ],
+    "events": 17,
+    "guardrail_stages": [
+      "intake",
+      "execution",
+      "evidence",
+      "execution",
+      "output",
+      "routing"
+    ],
+    "model_calls": 0,
+    "node_path": [
+      "validate_request",
+      "load_context",
+      "plan_sub_goals",
+      "quantitative_lane",
+      "retrieval_lane",
+      "merge_evidence",
+      "conflict_gate",
+      "tot_adjudication",
+      "verify_output",
+      "assign_route",
+      "persist"
+    ],
+    "outcome": "Renewed",
+    "route": "amber",
+    "total_tokens": 0
+  }
+}

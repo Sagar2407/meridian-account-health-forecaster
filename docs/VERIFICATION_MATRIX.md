@@ -56,6 +56,10 @@ This matrix separates verified facts from provisional design choices and unresol
 | Demo mode replaces free text and refuses scans in the production image | A poem request came back as the curated question; a scan returned `REQUEST_BLOCKED` | Verified in Phase 11 |
 | Every curated demo run is marked as a recording | Four cached runs, each carrying `is_cached` and a note naming the commit and moment | Verified in Phase 11 |
 | Every API failure carries a stable code | FastAPI's own 404s now render in the documented shape too | Verified in Phase 11 |
+| The published architecture diagram matches the compiled graph | Diagram rewritten with the graph's own node names; two wrong edges corrected against `graph/builder.py` | Verified in Phase 12 |
+| Four representative graph paths are captured from real runs | `artifacts/traces/`; fast, ToT, degraded, and human-review, all offline at 0 tokens | Verified in Phase 12 |
+| Every offline artifact regenerates at the current commit | `evaluate-tot`, `evaluate-guardrails`, `evaluate-retrieval`, and a scan re-run; the ToT ablation was found stale and refreshed | Verified in Phase 12 |
+| Evaluation artifacts are tracked, not gitignored | `artifacts/` (676 KB) is committed; `models/` and `data/indexes/` remain ignored | Verified in Phase 12 |
 
 ## Point-in-time audit
 
@@ -87,7 +91,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | Whether conflict-gated ToT beats linear adjudication | Both arms over the same 106 conflicting development accounts, paired on the cases both answered | Not on this evidence: 86.5% agreement, 69 declined answers for 12 caught errors against a 15.1% base rate; the provider arm is unrun; see `docs/PHASE_6_STATUS.md` |
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 | Whether the packaged guardrail policy passes its hard safety gate | All 36 cases through the offline graph, with per-case behavioural grading and whole-result leakage checks | 0/15 hard false passes, 0/21 false blocks, 0 leakage findings, and 36/36 behavioural checks passed; see `docs/PHASE_7_STATUS.md` |
-| Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts | **No.** 0 auto-released; all 6 queued for review (3 amber, 3 red). The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
+| Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts, repeated over 12 in Phase 12 | **No.** 0 auto-released at either size; 6 of 6 and then 12 of 12 queued for review. The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
 | What loosening the review bands would buy | 29 candidate band pairs replayed over 207 development runs | Twelve times the release rate (6 to 70 of 207) at a 5.7% unreviewed error rate. No threshold was changed: the trade is a business decision; see `docs/PHASE_10_STATUS.md` |
 | Whether the confidence score ranks correctly | Error rate inside each review band, 207 development runs | Yes: 0.000 green, 0.029 amber, 0.127 red, and all 8 errors landed in red. ECE says the absolute scale is over-confident even though the ranking is sound |
 

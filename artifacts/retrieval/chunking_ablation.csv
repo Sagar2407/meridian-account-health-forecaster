@@ -1,0 +1,3 @@
+strategy,chunks,queries,graded_queries,recall_at_5,precision_at_5,mrr,ndcg,mean_returned,empty_results,wrong_account_citations,post_cutoff_citations,duplicate_parent_citations,forbidden_parent_citations,conflict_coverage
+parent_child,1464,243.0,139.0,0.9424460431654677,0.3402877697841727,0.7316546762589928,0.6793103545959887,4.604938271604938,0.0,0.0,0.0,0.0,0.0,0.25
+fixed_length,1029,243.0,139.0,0.9280575539568345,0.3510791366906475,0.7943645083932853,0.7217253567509034,4.604938271604938,0.0,0.0,0.0,0.0,0.0,0.25

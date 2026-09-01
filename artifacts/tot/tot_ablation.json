@@ -1,0 +1,56 @@
+{
+  "conflict_gated": {
+    "abstained": 69,
+    "accuracy": 0.918918918918919,
+    "arm": "conflict_gated",
+    "auto_release_error_rate": 0.0,
+    "auto_release_errors": 0,
+    "auto_released": 17,
+    "driver_fidelity": 0.4954954954954955,
+    "escalation_rate": 0.839622641509434,
+    "mean_latency_ms": 159.86200750043247,
+    "released": 37,
+    "runs": 106,
+    "supported_claim_rate": 1.0,
+    "total_tokens": 0
+  },
+  "conflict_rate": 0.512077,
+  "conflicting_accounts": 106,
+  "deltas": {
+    "accuracy": 0.069862,
+    "auto_release_error_rate": 0.0,
+    "driver_fidelity": 0.028514,
+    "escalation_rate": 0.216981,
+    "mean_latency_ms": -2.722,
+    "total_tokens": 0
+  },
+  "linear": {
+    "abstained": 0,
+    "accuracy": 0.8490566037735849,
+    "arm": "linear",
+    "auto_release_error_rate": 0.0,
+    "auto_release_errors": 0,
+    "auto_released": 40,
+    "driver_fidelity": 0.4669811320754717,
+    "escalation_rate": 0.6226415094339622,
+    "mean_latency_ms": 162.5844486224419,
+    "released": 106,
+    "runs": 106,
+    "supported_claim_rate": 1.0,
+    "total_tokens": 0
+  },
+  "paired": {
+    "agreement_rate": 0.864865,
+    "both_released": 37,
+    "conflict_gated_right_when_they_differ": 2,
+    "declined_by_conflict_gated_only": 69,
+    "declined_precision": 0.173913,
+    "disagreements": 5,
+    "linear_right_when_they_differ": 1,
+    "linear_was_wrong_on_declined": 12,
+    "paired_accuracy_conflict_gated": 0.918919,
+    "paired_accuracy_linear": 0.891892
+  },
+  "scanned_accounts": 207,
+  "split": "development"
+}

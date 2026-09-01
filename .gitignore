@@ -48,7 +48,13 @@ data/eval/*
 !data/rag_corpus/.gitkeep
 !data/eval/.gitkeep
 models/
-artifacts/
+# `artifacts/` IS committed. Module 7 asks a public repository to carry its
+# evaluation artifacts, and `docs/CAPSTONE_EVIDENCE.md` cites these files as the
+# evidence behind every published number -- a citation to a path no clone
+# contains is not evidence. The whole tree is small text plus a few plots (well
+# under a megabyte); the genuinely large outputs it used to shield, the trained
+# model and the FAISS index, are ignored above under `models/` and
+# `data/indexes/` and are rebuilt with `make bootstrap`.
 logs/
 # Application state this system writes about itself: assessment snapshots,
 # review cases, and LangGraph checkpoints (plan sections 12.2 and 17). It is

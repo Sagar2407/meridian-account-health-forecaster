@@ -1,0 +1,542 @@
+{
+  "calibration": {
+    "auto_release_rate": 0.029,
+    "brier": 0.05,
+    "confidence_bands": [
+      {
+        "band": "low",
+        "count": 3,
+        "error_rate": 0.33333333333333337,
+        "lower": 0.0,
+        "upper": 0.5
+      },
+      {
+        "band": "medium",
+        "count": 60,
+        "error_rate": 0.15000000000000002,
+        "lower": 0.5,
+        "upper": 0.75
+      },
+      {
+        "band": "high",
+        "count": 74,
+        "error_rate": 0.013513513513513487,
+        "lower": 0.75,
+        "upper": 1.01
+      }
+    ],
+    "expected_calibration_error": 0.1568,
+    "log_loss": 0.3711,
+    "released": 137,
+    "reliability": [
+      {
+        "accuracy": null,
+        "bin_lower": 0.0,
+        "bin_upper": 0.1,
+        "count": 0,
+        "mean_confidence": null
+      },
+      {
+        "accuracy": null,
+        "bin_lower": 0.1,
+        "bin_upper": 0.2,
+        "count": 0,
+        "mean_confidence": null
+      },
+      {
+        "accuracy": null,
+        "bin_lower": 0.2,
+        "bin_upper": 0.30000000000000004,
+        "count": 0,
+        "mean_confidence": null
+      },
+      {
+        "accuracy": null,
+        "bin_lower": 0.30000000000000004,
+        "bin_upper": 0.4,
+        "count": 0,
+        "mean_confidence": null
+      },
+      {
+        "accuracy": 0.6666666666666666,
+        "bin_lower": 0.4,
+        "bin_upper": 0.5,
+        "count": 3,
+        "mean_confidence": 0.4423034905144905
+      },
+      {
+        "accuracy": 0.8846153846153846,
+        "bin_lower": 0.5,
+        "bin_upper": 0.6000000000000001,
+        "count": 26,
+        "mean_confidence": 0.5788695940914829
+      },
+      {
+        "accuracy": 0.76,
+        "bin_lower": 0.6000000000000001,
+        "bin_upper": 0.7000000000000001,
+        "count": 25,
+        "mean_confidence": 0.6524295587823701
+      },
+      {
+        "accuracy": 1.0,
+        "bin_lower": 0.7000000000000001,
+        "bin_upper": 0.8,
+        "count": 25,
+        "mean_confidence": 0.7651937119633121
+      },
+      {
+        "accuracy": 1.0,
+        "bin_lower": 0.8,
+        "bin_upper": 0.9,
+        "count": 22,
+        "mean_confidence": 0.8501234178739001
+      },
+      {
+        "accuracy": 0.9722222222222222,
+        "bin_lower": 0.9,
+        "bin_upper": 1.0,
+        "count": 36,
+        "mean_confidence": 0.9441871440337274
+      }
+    ],
+    "routing_quality": {
+      "amber": {
+        "auto_released": false,
+        "count": 68,
+        "error_rate": 0.0294,
+        "errors": 2
+      },
+      "green": {
+        "auto_released": true,
+        "count": 6,
+        "error_rate": 0.0,
+        "errors": 0
+      },
+      "red": {
+        "auto_released": false,
+        "count": 63,
+        "error_rate": 0.127,
+        "errors": 8
+      }
+    }
+  },
+  "forecast_correctness": {
+    "abstained": 70,
+    "accuracy": 0.9197,
+    "beats_majority": true,
+    "blocked": 0,
+    "confusion_matrix": {
+      "classes": [
+        "Churned",
+        "Contracted",
+        "Expanded",
+        "Renewed"
+      ],
+      "rows": [
+        [
+          34,
+          1,
+          0,
+          0
+        ],
+        [
+          3,
+          7,
+          2,
+          0
+        ],
+        [
+          0,
+          1,
+          66,
+          0
+        ],
+        [
+          0,
+          1,
+          2,
+          20
+        ]
+      ]
+    },
+    "macro_f1": 0.8468,
+    "majority_baseline_accuracy": 0.4891,
+    "majority_class": "Renewed",
+    "per_class": {
+      "Churned": {
+        "f1": 0.9444,
+        "precision": 0.9189,
+        "recall": 0.9714,
+        "support": 35
+      },
+      "Contracted": {
+        "f1": 0.6364,
+        "precision": 0.7,
+        "recall": 0.5833,
+        "support": 12
+      },
+      "Expanded": {
+        "f1": 0.9302,
+        "precision": 1.0,
+        "recall": 0.8696,
+        "support": 23
+      },
+      "Renewed": {
+        "f1": 0.9635,
+        "precision": 0.9429,
+        "recall": 0.9851,
+        "support": 67
+      }
+    },
+    "released": 137,
+    "slices": {
+      "region": [
+        {
+          "count": 19,
+          "group": "APAC",
+          "macro_f1": 0.9529914529914529
+        },
+        {
+          "count": 38,
+          "group": "EMEA",
+          "macro_f1": 0.9113475177304964
+        },
+        {
+          "count": 15,
+          "group": "LATAM",
+          "macro_f1": 0.820054945054945
+        },
+        {
+          "count": 65,
+          "group": "NA",
+          "macro_f1": 0.8005115089514067
+        }
+      ],
+      "segment": [
+        {
+          "count": 55,
+          "group": "Enterprise",
+          "macro_f1": 0.8375398794753633
+        },
+        {
+          "count": 60,
+          "group": "Mid-Market",
+          "macro_f1": 0.810956416464891
+        },
+        {
+          "count": 22,
+          "group": "Strategic",
+          "macro_f1": 0.875
+        }
+      ]
+    }
+  },
+  "grounded_explanation": {
+    "citation_precision": 1.0,
+    "conflicting_runs": 37,
+    "counterevidence_inclusion_rate_on_conflict": 0.6757,
+    "driver_overlap": 0.4526,
+    "exact_numeric_agreement": 1.0,
+    "judge_metrics": null,
+    "judge_note": "Section 22.2 permits an LLM judge score only after validation against a double-reviewed human sample. No such sample exists, so no judge metric is reported. Every measure above is deterministic.",
+    "post_cutoff_citation_count": 0,
+    "released": 137,
+    "runs_with_citations": 137,
+    "runs_with_ground_truth_drivers": 137,
+    "supported_claim_rate": 1.0,
+    "unsupported_numeric_claim_count": 0,
+    "verified_first_attempt_rate": 1.0,
+    "wrong_account_citation_count": 0
+  },
+  "manifest": {
+    "commit": "befdf982fc069da3dfab78db2690988bb759b7d9",
+    "dataset_digest": "absent",
+    "environment": {
+      "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
+      "python": "3.12.14"
+    },
+    "generated_at": "2026-09-01T16:03:44+00:00",
+    "model": {
+      "calibration": "isotonic",
+      "name": "logistic_regression",
+      "seed": 20260721,
+      "split_digest": "f3deae08ce6c97c618fa07a43ff65698811d5796cea449f00d797ae1ec91c487"
+    },
+    "provider": "none (deterministic)",
+    "split": "development",
+    "thresholds": {
+      "agreement_weight": 0.15,
+      "amber_minimum_confidence": 0.7,
+      "calibrated_weight": 0.7,
+      "cap_critical_source_missing": 0.69,
+      "cap_exhausted_retrieval_gap": 0.84,
+      "cap_repaired_verification": 0.84,
+      "cap_unresolved_conflict": 0.69,
+      "coverage_weight": 0.15,
+      "digest": "5e23d7f9d9fef896",
+      "green_minimum_confidence": 0.85,
+      "rationale": "Section 16.1's recommended structure and section 16.5's bands, unchanged from the plan. The development-split study in artifacts/evaluation/threshold_study.csv measures what other bands would release; no change has been made on that evidence, because the alternative is to trade a measured escalation rate for an unmeasured error rate.",
+      "tie_margin": 0.1,
+      "version": "v1"
+    },
+    "working_tree_clean": null
+  },
+  "operational_reliability": {
+    "abstention_rate": 0.3382,
+    "completion_rate": 1.0,
+    "escalation_rate": 0.6425,
+    "exhausted_retrieval_fallback": {
+      "runs": 1,
+      "safe_fallback_rate": 1.0
+    },
+    "latency": {
+      "abstained": {
+        "p50_ms": 164.1,
+        "p95_ms": 241.2
+      },
+      "blocked": {
+        "p50_ms": null,
+        "p95_ms": null
+      },
+      "fast": {
+        "p50_ms": 166.7,
+        "p95_ms": 254.1
+      },
+      "overall": {
+        "p50_ms": 164.2,
+        "p95_ms": 248.1
+      },
+      "tree_of_thought": {
+        "p50_ms": 160.7,
+        "p95_ms": 214.6
+      }
+    },
+    "node_error_count": 0,
+    "path_counts": {
+      "abstained": 70,
+      "blocked": 0,
+      "fast": 100,
+      "tree_of_thought": 37
+    },
+    "regeneration_rate": 0.0,
+    "release_rate": 0.6618,
+    "retrieval_retry_rate": 0.0918,
+    "runs": 207,
+    "tokens": {
+      "completion": 0,
+      "model_calls": 0,
+      "prompt": 0,
+      "total": 0
+    }
+  },
+  "release_targets": [
+    {
+      "direction": "at_least",
+      "measured": 0.8468,
+      "met": true,
+      "metric": "Macro F1",
+      "target": 0.7
+    },
+    {
+      "direction": "at_least",
+      "measured": 1.0,
+      "met": true,
+      "metric": "Exact numeric agreement",
+      "target": 1.0
+    },
+    {
+      "direction": "at_least",
+      "measured": 1.0,
+      "met": true,
+      "metric": "Supported-claim rate",
+      "target": 0.95
+    },
+    {
+      "direction": "at_most",
+      "measured": 0,
+      "met": true,
+      "metric": "Wrong-account citations",
+      "target": 0.0
+    },
+    {
+      "direction": "at_most",
+      "measured": 0,
+      "met": true,
+      "metric": "Post-cutoff citations",
+      "target": 0.0
+    },
+    {
+      "direction": "at_most",
+      "measured": 0.1568,
+      "met": false,
+      "metric": "Expected calibration error",
+      "target": 0.1
+    },
+    {
+      "direction": "at_least",
+      "measured": 1.0,
+      "met": true,
+      "metric": "Exhausted-retrieval safe fallback",
+      "target": 1.0
+    }
+  ],
+  "safety_routing": {
+    "behaviour_pass_rate": 1.0,
+    "by_category": {
+      "commercial_commit": {
+        "cases": 1,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 1
+      },
+      "conflicting_signals": {
+        "cases": 8,
+        "hard": false,
+        "pass_rate": 1.0,
+        "passed": 8
+      },
+      "fabrication_bait": {
+        "cases": 1,
+        "hard": false,
+        "pass_rate": 1.0,
+        "passed": 1
+      },
+      "future_unknowable": {
+        "cases": 1,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 1
+      },
+      "hr_judgment": {
+        "cases": 2,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 2
+      },
+      "human_review_required": {
+        "cases": 4,
+        "hard": false,
+        "pass_rate": 1.0,
+        "passed": 4
+      },
+      "insufficient_history": {
+        "cases": 3,
+        "hard": false,
+        "pass_rate": 1.0,
+        "passed": 3
+      },
+      "leakage": {
+        "cases": 2,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 2
+      },
+      "nonexistent_account": {
+        "cases": 1,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 1
+      },
+      "out_of_domain": {
+        "cases": 3,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 3
+      },
+      "overconfidence": {
+        "cases": 5,
+        "hard": false,
+        "pass_rate": 1.0,
+        "passed": 5
+      },
+      "privacy": {
+        "cases": 1,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 1
+      },
+      "unanswerable_missing_field": {
+        "cases": 4,
+        "hard": true,
+        "pass_rate": 1.0,
+        "passed": 4
+      }
+    },
+    "cases": 36,
+    "disposition_accuracy": 1.0,
+    "disposition_exact_match": 0.5833,
+    "escalated_behavioural_cases": [
+      "GE-016",
+      "GE-017",
+      "GE-018",
+      "GE-019",
+      "GE-020",
+      "GE-021",
+      "GE-022",
+      "GE-023",
+      "GE-024",
+      "GE-025",
+      "GE-026",
+      "GE-027",
+      "GE-034",
+      "GE-035",
+      "GE-036"
+    ],
+    "failures": [],
+    "fallback_account": "ACC-1000",
+    "false_block_rate": 0.0,
+    "false_blocks": [],
+    "generated_at": "2026-09-01",
+    "hard_cases": 15,
+    "hard_false_pass_rate": 0.0,
+    "hard_false_passes": [],
+    "leakage_clean": true,
+    "observed_dispositions": {
+      "answer": 2,
+      "block": 15,
+      "escalate": 19
+    },
+    "out_of_policy": [],
+    "soft_cases": 21,
+    "target_leakage_findings": [],
+    "total_tokens": 0,
+    "unclassified_categories": []
+  },
+  "threshold_study": {
+    "abstained": 70,
+    "accounts": 207,
+    "accuracy_on_released": 0.927,
+    "candidates": 29,
+    "frozen": {
+      "amber": 68,
+      "amber_minimum": 0.7,
+      "auto_release_rate": 0.029,
+      "auto_released": 6,
+      "auto_released_error_rate": 0.0,
+      "auto_released_errors": 0,
+      "digest": "5e23d7f9d9fef896",
+      "green_minimum": 0.85,
+      "red": 63,
+      "released": 137,
+      "review_load": 201,
+      "review_load_rate": 0.971,
+      "version": "v1"
+    },
+    "most_permissive_measured": {
+      "amber": 56,
+      "amber_minimum": 0.5,
+      "auto_release_rate": 0.3382,
+      "auto_released": 70,
+      "auto_released_error_rate": 0.0571,
+      "auto_released_errors": 4,
+      "green_minimum": 0.6,
+      "red": 11,
+      "released": 137,
+      "review_load": 137,
+      "review_load_rate": 0.6618
+    },
+    "released": 137,
+    "split": "development"
+  }
+}

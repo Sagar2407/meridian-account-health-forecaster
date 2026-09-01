@@ -44,6 +44,11 @@ The synthetic design allows the public project to demonstrate realistic data mod
 
 ## Design evolution across checkpoints
 
+This section records what each checkpoint **committed to**, as written, before
+any code existed. What the build actually did with those commitments -- which
+held, which changed, and which were never implemented -- is in
+`docs/DESIGN_EVOLUTION.md`.
+
 ### Checkpoint 1.1 — Problem and initial agent
 
 Defined the Forecaster problem, intended users, four outcome classes, evidence-grounding requirement, deterministic calculations, and the need to decline or escalate when evidence is inadequate.

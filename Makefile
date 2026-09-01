@@ -91,6 +91,9 @@ screenshots: ## Capture the README screenshots from the running UI (Docker).
 evaluate-system: ## Run the full evaluation and write a result directory (Docker).
 	./scripts/python_in_docker.sh python scripts/evaluate_system.py $(if $(SPLIT),--split $(SPLIT),) $(if $(LIMIT),--limit $(LIMIT),)
 
+traces: ## Capture the four representative traces for the report (Docker).
+	./scripts/python_in_docker.sh python scripts/capture_traces.py $(if $(SCAN),--scan $(SCAN),)
+
 assess: ## Assess one account end to end, e.g. make assess ACCOUNT=ACC-1042 [OFFLINE=1].
 	./scripts/python_in_docker.sh python scripts/assess_account.py $(ACCOUNT) $(if $(QUESTION),"$(QUESTION)",) $(if $(OFFLINE),--offline,)
 

@@ -1,0 +1,510 @@
+{
+  "account_id": "ACC-1000",
+  "commit": "c35be79a0d0965468c0963a3ab93e8277c6ab40c",
+  "kind": "degraded",
+  "label": "Retrieval unavailable, verified telemetry only",
+  "offline": true,
+  "question": "What is the renewal outlook for this account, and what drives it?",
+  "recorded_at": "2026-09-01T20:32:25+00:00",
+  "run": {
+    "assessment_id": "ASMT-ACC-1000-0012",
+    "blocked": null,
+    "errors": [],
+    "guardrails": [
+      {
+        "message": "",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "intake"
+      },
+      {
+        "message": "0/8 model calls and 0/60000 tokens spent.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "execution"
+      },
+      {
+        "message": "Every lane envelope, metric provenance record, and citation is scoped to this account and cutoff.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "evidence"
+      },
+      {
+        "message": "The typed degraded result contains no categorical outcome.",
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": [],
+        "stage": "output"
+      },
+      {
+        "message": "critical coverage is missing: retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`",
+        "outcome": "review",
+        "reason_codes": [
+          "route_red"
+        ],
+        "rule_ids": [
+          "ROUTE-RED",
+          "critical_coverage_missing"
+        ],
+        "stage": "routing"
+      }
+    ],
+    "result": {
+      "account_id": "ACC-1000",
+      "citations": [],
+      "cutoff": "2026-05-13",
+      "gaps": [
+        "retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`"
+      ],
+      "limitations": [
+        "No outcome label is reported: the evidence required to support one was not available at this cutoff."
+      ],
+      "reason_code": "CRITICAL_DATA_GAP",
+      "recommended_action": "Supply the requested sources and re-run the assessment. Until then, treat the telemetry above as the only verified position.",
+      "requested_data": [
+        {
+          "detail": "a built document index for this account's notes and tickets",
+          "source": "retrieval_index",
+          "window": "up to the cutoff"
+        }
+      ],
+      "route": "red",
+      "route_reason": "critical coverage is missing: retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`",
+      "verified_metrics": [
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "adoption_trend_13w",
+          "source": "usage_weekly",
+          "value": -0.053868,
+          "window": "last 13 observed weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "adoption_level_last_q",
+          "source": "usage_weekly",
+          "value": 28.959276,
+          "window": "last 13 observed weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "advanced_feature_depth",
+          "source": "usage_weekly",
+          "value": 19.023077,
+          "window": "last 13 observed weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 1,
+          "name": "product_breadth",
+          "source": "accounts",
+          "value": 3.0,
+          "window": "contract"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "active_users_delta_6w",
+          "source": "usage_weekly",
+          "value": -0.075269,
+          "window": "6 weeks against the preceding 6"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "active_users_delta_13w",
+          "source": "usage_weekly",
+          "value": -0.076923,
+          "window": "13 weeks against the preceding 13"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "sessions_delta_6w",
+          "source": "usage_weekly",
+          "value": -0.095238,
+          "window": "6 weeks against the preceding 6"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 13,
+          "name": "sessions_delta_13w",
+          "source": "usage_weekly",
+          "value": -0.124606,
+          "window": "13 weeks against the preceding 13"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "ticket_count_26w",
+          "source": "support_tickets and csm_notes",
+          "value": 3.0,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "support_escalation_rate",
+          "source": "support_tickets and csm_notes",
+          "value": 0.0,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "high_priority_share_26w",
+          "source": "support_tickets and csm_notes",
+          "value": 0.333333,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "open_high_priority_count",
+          "source": "support_tickets and csm_notes",
+          "value": 0.0,
+          "window": "as at cutoff"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "avg_ticket_sentiment_26w",
+          "source": "support_tickets and csm_notes",
+          "value": 0.076,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "avg_note_sentiment_26w",
+          "source": "support_tickets and csm_notes",
+          "value": -0.168143,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 10,
+          "name": "avg_closed_csat_26w",
+          "source": "support_tickets and csm_notes",
+          "value": 4.0,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 0,
+          "name": "adverse_events_2q",
+          "source": "external_events",
+          "value": 0.0,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 0,
+          "name": "favorable_events_2q",
+          "source": "external_events",
+          "value": 0.0,
+          "window": "last 26 weeks"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 1,
+          "name": "sponsor_change",
+          "source": "accounts",
+          "value": 1.0,
+          "window": "as at cutoff"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 1,
+          "name": "sponsor_lost",
+          "source": "accounts",
+          "value": 1.0,
+          "window": "as at cutoff"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 1,
+          "name": "onboarding_incomplete",
+          "source": "accounts",
+          "value": 0.0,
+          "window": "as at cutoff"
+        },
+        {
+          "calculation_version": "features-1.0.0",
+          "coverage": 1,
+          "name": "days_to_renewal",
+          "source": "accounts",
+          "value": 90.0,
+          "window": "cutoff to renewal"
+        }
+      ]
+    },
+    "review_case_id": "CASE-ACC-1000-0012-01",
+    "reviewer_decision": null,
+    "run_id": "TRACE-degraded",
+    "thread_id": "TRACE-degraded",
+    "trace": [
+      {
+        "completion_tokens": 0,
+        "event": "run_started",
+        "latency_ms": 0.0,
+        "node": "validate_request",
+        "payload": {
+          "account_id": "ACC-1000",
+          "mode": "interactive",
+          "question": "What is the renewal outlook for this account, and what drives it?",
+          "question_digest": "c6fe49492a87",
+          "requested_as_of": null,
+          "requester_role": "csm"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 1,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.710+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "request_validated",
+        "latency_ms": 1.078,
+        "node": "validate_request",
+        "payload": {
+          "outcome": "pass",
+          "reason_codes": [],
+          "rule_ids": []
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 2,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.710+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "context_loaded",
+        "latency_ms": 6.167,
+        "node": "load_context",
+        "payload": {
+          "account_id": "ACC-1000",
+          "effective_cutoff": "2026-05-13",
+          "high_value": false,
+          "prior_assessments": 5,
+          "segment": "Mid-Market"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 3,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.717+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "plan_created",
+        "latency_ms": 0.074,
+        "node": "plan_sub_goals",
+        "payload": {
+          "fallback_reason": "no language-model provider is configured",
+          "model": "",
+          "source": "deterministic",
+          "sub_goals": [
+            "adoption",
+            "support",
+            "relationship",
+            "playbook_guidance"
+          ]
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 4,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.717+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "retrieval_attempted",
+        "latency_ms": 13.149,
+        "node": "retrieval_lane",
+        "payload": {
+          "available": false,
+          "citations": 0,
+          "covered": [],
+          "guidance": 0,
+          "retries": 0,
+          "sub_goals": [],
+          "unavailable_reason": "the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`",
+          "uncovered": []
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 5,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.735+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "quantitative_completed",
+        "latency_ms": 50.678,
+        "node": "quantitative_lane",
+        "payload": {
+          "available": true,
+          "critical_gaps": [],
+          "metrics": 21,
+          "model_probability": 0.729681,
+          "observed_weeks": 13,
+          "predicted_outcome": "Renewed"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 6,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.768+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "evidence_screened",
+        "latency_ms": 0.0,
+        "node": "merge_evidence",
+        "payload": {
+          "outcome": "pass",
+          "quarantined": 0,
+          "reasons": [],
+          "rule_ids": []
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 7,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.769+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "evidence_merged",
+        "latency_ms": 0.0,
+        "node": "merge_evidence",
+        "payload": {
+          "context": 0,
+          "counterevidence": 0,
+          "guidance": 0,
+          "missing_sources": [
+            "external",
+            "evidence:csm_note",
+            "evidence:support_ticket"
+          ],
+          "round": 1,
+          "stale_sources": [],
+          "supporting": 0
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 8,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.769+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "coverage_evaluated",
+        "latency_ms": 0.0,
+        "node": "merge_evidence",
+        "payload": {
+          "reason": "retrieval is unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`",
+          "round": 1,
+          "verdict": "critical"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 9,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.769+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "degraded_result",
+        "latency_ms": 0.0,
+        "node": "degraded_result",
+        "payload": {
+          "gaps": [
+            "retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`"
+          ],
+          "high_value": false,
+          "reason_code": "CRITICAL_DATA_GAP",
+          "requested_sources": [
+            "retrieval_index"
+          ],
+          "route": "red",
+          "verified_metrics": 21
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 10,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.769+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "decision_persisted",
+        "latency_ms": 0.0,
+        "node": "persist",
+        "payload": {
+          "assessment_id": "ASMT-ACC-1000-0012",
+          "persisted": true,
+          "regression_ids": [],
+          "review_case_id": "CASE-ACC-1000-0012-01"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 11,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.783+00:00"
+      },
+      {
+        "completion_tokens": 0,
+        "event": "run_completed",
+        "latency_ms": 0.0,
+        "node": "persist",
+        "payload": {
+          "abstained": true,
+          "route": "red"
+        },
+        "prompt_tokens": 0,
+        "run_id": "TRACE-degraded",
+        "sequence": 12,
+        "thread_id": "TRACE-degraded",
+        "timestamp": "2026-09-01T20:32:26.783+00:00"
+      }
+    ]
+  },
+  "summary": {
+    "abstained": true,
+    "events": 12,
+    "gaps": [
+      "retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index`"
+    ],
+    "guardrail_stages": [
+      "intake",
+      "execution",
+      "evidence",
+      "output",
+      "routing"
+    ],
+    "model_calls": 0,
+    "node_path": [
+      "validate_request",
+      "load_context",
+      "plan_sub_goals",
+      "retrieval_lane",
+      "quantitative_lane",
+      "merge_evidence",
+      "degraded_result",
+      "persist"
+    ],
+    "outcome": null,
+    "route": "red",
+    "total_tokens": 0,
+    "verified_metrics": 21
+  }
+}

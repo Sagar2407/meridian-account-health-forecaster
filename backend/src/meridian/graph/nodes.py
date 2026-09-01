@@ -1266,7 +1266,12 @@ class GraphNodes:
                 if family in _REQUESTED_DATA:
                     requested.append(_REQUESTED_DATA[family])
         if retrieval is not None and not retrieval.available:
-            gaps.append(f"Retrieval is unavailable: {retrieval.unavailable_reason}")
+            # The merged coverage already records this gap when both lanes
+            # reported, so appending unconditionally showed a reviewer the same
+            # fact twice, differing only in capitalisation.
+            reason = retrieval.unavailable_reason or ""
+            if not reason or not any(reason in gap for gap in gaps):
+                gaps.append(f"Retrieval is unavailable: {reason}")
             requested.append(
                 RequestedData(
                     source="retrieval_index",

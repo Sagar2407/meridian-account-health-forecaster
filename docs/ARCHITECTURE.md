@@ -11,32 +11,42 @@ The system is read-only with respect to Meridian source data. It may persist int
 ```mermaid
 flowchart TD
     UI[React application] --> API[FastAPI intake]
-    API --> IG{Intake guardrail}
-    IG -->|Blocked| BLOCK[Safe refusal]
-    IG -->|Allowed| LOAD[Load sanitized account context]
-    LOAD --> PLAN[Orchestrator plans bounded sub-goals]
-    PLAN --> QUANT[Quantitative Analyst]
-    PLAN --> RETRIEVE[Evidence Retriever]
-    QUANT --> MERGE[Typed evidence bundle]
+    API --> IG{validate_request}
+    IG -->|Blocked or clarify| BLOCK[safe_refusal]
+    IG -->|Allowed| LOAD[load_context]
+    LOAD --> PLAN[plan_sub_goals]
+    PLAN --> QUANT[quantitative_lane]
+    PLAN --> RETRIEVE[retrieval_lane]
+    QUANT --> MERGE[merge_evidence]
     RETRIEVE --> MERGE
-    MERGE --> COVER{Coverage sufficient?}
-    COVER -->|Recoverable| RETRY[One targeted retry]
+    MERGE --> COVER{Coverage verdict}
+    COVER -->|Recoverable| RETRY[targeted_retry]
     RETRY --> MERGE
-    COVER -->|Critical gap| DEGRADED[Verified telemetry and gap notice]
-    COVER -->|Sufficient| CONFLICT{Material conflict?}
-    CONFLICT -->|No| FAST[Linear adjudication]
-    CONFLICT -->|Yes| TOT[Bounded ToT subgraph]
-    FAST --> VERIFY[Output verification]
-    TOT --> VERIFY
-    DEGRADED --> ROUTE[Confidence and impact routing]
-    VERIFY --> ROUTE
-    ROUTE -->|Green or Amber| RELEASE[Advisory result]
-    ROUTE -->|Red| STORE[Persist assessment and review case]
-    STORE -->|Non-pausing| QUEUE[Review queue]
-    STORE -->|Interactive| PAUSE[LangGraph interrupt]
+    COVER -->|Critical gap| DEGRADED[degraded_result]
+    COVER -->|Sufficient| CONFLICT{Conflict gate}
+    CONFLICT -->|No| FAST[fast_adjudication]
+    CONFLICT -->|Yes| TOT[tot_adjudication]
+    FAST --> VERIFY[verify_output]
+    TOT -->|Winner selected| VERIFY
+    TOT -->|Search abstained| PERSIST
+    VERIFY -->|Passed| ROUTE[assign_route]
+    VERIFY -->|Repairable| FAST
+    VERIFY -->|Failed twice| FALLBACK[safe_fallback]
+    FALLBACK --> ROUTE
+    ROUTE --> PERSIST[persist]
+    DEGRADED --> PERSIST
+    PERSIST -->|Green or amber, or a scan| DONE[Advisory result and queue entry]
+    PERSIST -->|Red, interactive| PAUSE[await_review: LangGraph interrupt]
     PAUSE --> DECIDE[Typed reviewer decision]
     DECIDE --> RESUME[Resume and persist regression]
 ```
+
+Node names are the graph's own, so the diagram and `backend/src/meridian/graph/builder.py`
+can be compared line by line. Two edges are easy to draw wrongly and are drawn
+as built here: **every** route persists, not only red -- a green assessment is
+still recorded -- and the interrupt sits *after* persistence, so a run abandoned
+at the pause leaves an open review case rather than nothing. The captured node
+paths in `artifacts/traces/TRACES.md` are the same edges observed at runtime.
 
 Structural transitions are deterministic. LLMs may propose typed sub-goals, summarize evidence, generate candidate hypotheses, and score qualitative rubric dimensions, but they do not decide policy edges through unrestricted prose.
 

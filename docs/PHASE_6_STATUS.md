@@ -68,10 +68,18 @@ gate routed. No provider was configured, so both arms cost zero tokens.
 | Released a label | 106 | 37 |
 | Abstained | 0 | 69 |
 | Accuracy on what it released | 0.849 | 0.919 |
-| Escalation rate | 0.623 | 0.877 |
-| Supported-claim rate | 1.000 | 0.892 |
+| Escalation rate | 0.623 | 0.840 |
+| Supported-claim rate | 1.000 | 1.000 |
 | Driver fidelity | 0.467 | 0.495 |
 | Tokens | 0 | 0 |
+
+**These are the numbers at the current commit, not the ones this phase first
+measured.** When Phase 6 shipped, the gated arm scored 0.892 on supported claims
+and escalated 0.877; a later fix -- a Tree-of-Thought candidate that cited
+nothing when all of its evidence was neutral, corrected in the post-phase audit
+-- moved both. The paired comparison below is unchanged by it. The stale figures
+are recorded here rather than overwritten silently, because a table that quietly
+acquires better numbers is exactly what an evaluation section should not do.
 
 Those two accuracy figures are not comparable, which is why the ablation also
 reports the paired view. The gated arm abstains on what it finds hardest, so
@@ -166,6 +174,14 @@ search's choice.
 `ForecastDecision.selected_by` now records which adjudicator chose the outcome,
 and a failed Tree-of-Thought draft goes straight to the safe fallback, which
 rewrites only the prose and argues the outcome the decision actually carries.
+
+That fix stopped the search's choice being replaced, but it did not take the
+supported-claim rate to 1.0. The remaining shortfall was a second, narrower
+defect found later: a candidate whose retrieved evidence was *entirely neutral*
+cited nothing at all, so output verification failed on every such run. Naming the
+neutral evidence closed it, and the gated arm now scores 1.000 -- the same as the
+linear arm, which is what it should always have been, since both read the same
+bundle.
 
 ## Known limitations
 

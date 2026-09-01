@@ -35,7 +35,7 @@ Each of these is a real path through the code, not a label:
 
 ## Current status
 
-**Phases 0 through 10 are complete.** Every exit gate passes, and none of them needs an API key.
+**All twelve phases are complete.** Every exit gate passes, and none of them needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
@@ -131,7 +131,21 @@ saves nobody any work. Loosening the bands to 0.60/0.50 would release twelve tim
 measured 5.7% unreviewed error rate. That trade is a business decision, so no threshold was
 changed and the measurement is recorded instead. Evidence is in `docs/PHASE_10_STATUS.md`.
 
-Phase 11, public deployment and repository polish, is next.
+Phase 11 delivered the deployable system: a multi-stage production image that serves the API and
+the built SPA from one container, a Render blueprint with demo mode, per-client rate limits and a
+scheduler switch, and a curated demo cache of four recorded runs -- every one produced by the real
+graph, and every one labelled as recorded so a viewer is never shown a replay as if it were live.
+The image was verified running locally the way Render runs it. Evidence is in `docs/DEPLOYMENT.md`,
+which also states the one thing that is not solved: the image ships without the dataset, the model,
+and the retrieval index, so a deployment today starts degraded until one of three documented options
+is chosen.
+
+Phase 12 assembled the capstone evidence package: every Module 7 report section mapped to the code
+or artifact behind it, the architecture diagram corrected against the compiled graph, four
+representative traces captured from real runs, and the checkpoint-by-checkpoint record of which
+design commitments held, changed, or were never built. The evaluation artifacts are now committed
+rather than gitignored, because a citation to a path no clone contains is not evidence. Start at
+`docs/CAPSTONE_EVIDENCE.md`; what still needs a person is in `docs/SUBMISSION_CHECKLIST.md`.
 
 ## What it looks like
 
@@ -347,7 +361,10 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 ## Documentation map
 
 - `AGENTS.md` — repository operating instructions
-- `docs/PROJECT_CONTEXT.md` — problem, users, course story, and design evolution
+- `docs/PROJECT_CONTEXT.md` — problem, users, and what each checkpoint committed to
+- `docs/CAPSTONE_EVIDENCE.md` — every report section mapped to the code or artifact behind it
+- `docs/DESIGN_EVOLUTION.md` — which checkpoint commitments held, changed, or were not built
+- `docs/SUBMISSION_CHECKLIST.md` — what the repository carries, and what still needs you
 - `docs/REQUIREMENTS.md` — numbered requirements and acceptance conditions
 - `docs/ARCHITECTURE.md` — final architecture and control flow
 - `docs/DATA_SAFETY.md` — cutoff, leakage, immutability, and validation policy
@@ -368,6 +385,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_8_STATUS.md` — served API, portfolio scan, and its bounds
 - `docs/PHASE_9_STATUS.md` — the React application, its journeys, and what they found
 - `docs/PHASE_10_STATUS.md` — frozen thresholds, the held-out evaluation, and its limitations
+- `docs/PHASE_12_STATUS.md` — the capstone evidence package and its exit gate
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments
@@ -474,3 +492,9 @@ The completed capstone must include:
 - Optionally, a 90-second elevator pitch.
 
 The report template, presentation outline, and any separate detailed grading rubric are intentionally deferred and are not active project blockers.
+
+`docs/SUBMISSION_CHECKLIST.md` tracks each of these, separating what the
+repository already carries from what needs a person. `docs/CAPSTONE_EVIDENCE.md`
+maps every report section to the code, test, or artifact behind it — and lists
+what this system deliberately does not do, so the report cannot overclaim by
+omission.
