@@ -52,6 +52,10 @@ This matrix separates verified facts from provisional design choices and unresol
 | Every claim in the evaluation report comes from its result file | `render()` formats the result and holds no literal; a test asserts every named artifact exists | Verified in Phase 10 |
 | The browser's types match the models the API sends | `test_browser_contract.py` compares field names and literal unions against the Pydantic models | Verified in Phase 10 |
 | An abstention carries rule codes like any other route | Section 22.6's safe-fallback target now measures 1.0000 over the development run that reaches it | Verified in Phase 10 |
+| The production image serves the API and the browser bundle from one process | `make prod-up`, then the shell at `/`, a client route at `/review`, a hashed asset, and `/api/health` all answered correctly | Verified in Phase 11 |
+| Demo mode replaces free text and refuses scans in the production image | A poem request came back as the curated question; a scan returned `REQUEST_BLOCKED` | Verified in Phase 11 |
+| Every curated demo run is marked as a recording | Four cached runs, each carrying `is_cached` and a note naming the commit and moment | Verified in Phase 11 |
+| Every API failure carries a stable code | FastAPI's own 404s now render in the documented shape too | Verified in Phase 11 |
 
 ## Point-in-time audit
 
@@ -92,7 +96,9 @@ This matrix separates verified facts from provisional design choices and unresol
 | Item | Consequence | Next action |
 | --- | --- | --- |
 | Deadline year/timezone absent from pasted text | Submission scheduling risk | Verify Canvas deadline directly |
-| Repository license not selected | Public-release blocker | Choose license before publication |
+| The dataset, model, and index are not in the production image | A Render deployment starts degraded, with three subsystems absent | Bake them in, build them in the image, or attach a disk; the trade is cost against build time (`docs/DEPLOYMENT.md`) |
+| No deploy has happened and no live URL exists | The plan's public-application-URL deliverable is open | Follow `docs/DEPLOYMENT.md` once the repository is public |
+| No recorded demo video | The plan asks for a backup recording | Record one against the local production image or the live URL |
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
@@ -111,7 +117,8 @@ The official report template, presentation outline, and any separate detailed gr
 
 ## Readiness decision
 
-Phases 0 through 10 are complete. The latest `make phase0-verify` rebuilt both
+Phases 0 through 10 are complete, and Phase 11's configuration is built and
+verified locally though not deployed. The latest `make phase0-verify` rebuilt both
 locked images, passed formatting, lint, strict typing, 485 backend container
 tests at 95.24% coverage, 7 frontend tests, the production frontend build, the
 repository policy scan over 242 files, and both live container health checks. The separate

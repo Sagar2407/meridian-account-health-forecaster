@@ -22,6 +22,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from '../src/App'
 import { AccountPage } from '../src/pages/AccountPage'
+import { DemoPage } from '../src/pages/DemoPage'
 import { EvaluationPage } from '../src/pages/EvaluationPage'
 import { formatMetric } from '../src/pages/formatMetric'
 import { PortfolioPage } from '../src/pages/PortfolioPage'
@@ -993,5 +994,155 @@ describe('the health pill before the first response', () => {
     )
 
     expect(await screen.findByText(/demo mode/)).toBeInTheDocument()
+  })
+})
+
+describe('DemoPage', () => {
+  const cached = {
+    kind: 'conflict',
+    label: 'An account whose evidence disagrees with itself.',
+    account_id: 'ACC-1042',
+    question: 'What is the renewal outlook for this account?',
+    route: 'red',
+    recorded_at: '2026-09-01T12:00:00Z',
+    commit: 'a4563f45de05d6a75016cf9eefcd4316b387485e',
+    is_cached: true,
+    cached_note:
+      'This is a recorded run, not a live one. It was produced by the real graph at commit a4563f45de05 on 2026-09-01.',
+    state: runState,
+  }
+
+  it('says it is a recording before it shows anything else', async () => {
+    // Section 24.3 forbids showing a cached run as though it were live, so the
+    // label is the first thing on the page rather than a badge in a corner.
+    // The synthetic-data banner is also a note, so this one is found by name.
+    stubApi(() => cached)
+
+    renderAt('/demo/conflict', <DemoPage />, '/demo/:kind')
+
+    const banner = await screen.findByRole('note', {
+      name: 'Recorded run notice',
+    })
+    expect(banner).toHaveTextContent('This is a recorded run, not a live one.')
+    expect(banner).toHaveTextContent('a4563f45de05')
+  })
+
+  it('renders the recorded decision through the same card a live run uses', async () => {
+    stubApi(() => cached)
+
+    renderAt('/demo/conflict', <DemoPage />, '/demo/:kind')
+
+    expect(
+      await screen.findByRole('heading', { name: 'Renewed' }),
+    ).toBeInTheDocument()
+    // The account appears in the header and again on the card, by design.
+    expect(screen.getAllByText(/ACC-1042/).length).toBeGreaterThan(0)
+  })
+
+  it('shows what the recorded run did', async () => {
+    stubApi(() => cached)
+
+    renderAt('/demo/conflict', <DemoPage />, '/demo/:kind')
+
+    expect(await screen.findByText('Request received')).toBeInTheDocument()
+  })
+
+  it('renders a recorded refusal without inventing a decision', async () => {
+    stubApi(() => ({
+      ...cached,
+      kind: 'guardrail_refusal',
+      route: 'blocked',
+      state: {
+        ...runState,
+        route: 'blocked',
+        decision: null,
+        blocked: {
+          account_id: 'ACC-1042',
+          message:
+            'This system does not evaluate the performance of named employees.',
+          rule_ids: ['INTAKE-HR'],
+          reason_codes: ['refuse_hr_judgment'],
+          route: 'blocked',
+          reason_code: 'REQUEST_BLOCKED',
+        },
+      },
+    }))
+
+    renderAt('/demo/guardrail_refusal', <DemoPage />, '/demo/:kind')
+
+    expect(
+      await screen.findByRole('heading', { name: 'Request refused' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Renewed' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('says so when this deployment has no run of that kind', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 'ACCOUNT_NOT_FOUND',
+          message:
+            "No curated run of kind 'nope' is cached in this deployment.",
+        }),
+        { status: 404 },
+      ),
+    )
+
+    renderAt('/demo/nope', <DemoPage />, '/demo/:kind')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No curated run of kind',
+    )
+  })
+})
+
+describe('the curated panel on the landing page', () => {
+  it('offers every cached run, and nothing when there is no cache', async () => {
+    stubApi((url) => {
+      if (url.includes('/api/demo-runs')) {
+        return [
+          {
+            kind: 'fast_path',
+            label: 'A straightforward account.',
+            account_id: 'ACC-1000',
+            question: 'q',
+            route: 'amber',
+            recorded_at: '2026-09-01T12:00:00Z',
+            commit: 'abc123',
+            is_cached: true,
+          },
+        ]
+      }
+      if (url.includes('/api/accounts')) return accountPage
+      return undefined
+    })
+
+    renderAt('/', <PortfolioPage />, '/')
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'See it work, without spending anything',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('fast path')).toBeInTheDocument()
+  })
+
+  it('does not appear when this deployment has no cache', async () => {
+    stubApi((url) => {
+      if (url.includes('/api/demo-runs')) return []
+      if (url.includes('/api/accounts')) return accountPage
+      return undefined
+    })
+
+    renderAt('/', <PortfolioPage />, '/')
+    await screen.findByText('Northwind Freight')
+
+    expect(
+      screen.queryByRole('heading', {
+        name: 'See it work, without spending anything',
+      }),
+    ).not.toBeInTheDocument()
   })
 })

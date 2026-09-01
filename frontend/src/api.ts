@@ -430,6 +430,22 @@ export type RegressionCase = {
   route: string
 }
 
+export type CuratedRunSummary = {
+  kind: string
+  label: string
+  account_id: string
+  question: string
+  route: string
+  recorded_at: string
+  commit: string
+  is_cached: boolean
+}
+
+export type CuratedRun = CuratedRunSummary & {
+  cached_note: string
+  state: AssessmentState
+}
+
 export type EvaluationResult = {
   eval_id: string
   status: 'published' | 'not_run'
@@ -563,6 +579,12 @@ export const submitReviewDecision = (
 
 export const fetchRegressions = (signal?: AbortSignal) =>
   request<RegressionCase[]>('/api/review-regressions', { signal })
+
+export const fetchDemoRuns = (signal?: AbortSignal) =>
+  request<CuratedRunSummary[]>('/api/demo-runs', { signal })
+
+export const fetchDemoRun = (kind: string, signal?: AbortSignal) =>
+  request<CuratedRun>(`/api/demo-runs/${encodeURIComponent(kind)}`, { signal })
 
 export const fetchEvaluation = (name: string, signal?: AbortSignal) =>
   request<EvaluationResult>(`/api/evaluations/${encodeURIComponent(name)}`, {

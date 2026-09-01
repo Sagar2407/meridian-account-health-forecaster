@@ -16,6 +16,7 @@ from typing import Any
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from meridian.contracts import ErrorCode
 
@@ -77,6 +78,26 @@ async def api_error_handler(_: Request, error: Exception) -> JSONResponse:
     )
 
 
+async def http_error_handler(_: Request, error: Exception) -> JSONResponse:
+    """Render FastAPI's own HTTP errors in the documented shape.
+
+    Section 19.3 says every failure carries a stable code and a plain message.
+    Without this, the errors *FastAPI* raises -- an unmatched route, a wrong
+    method, a validation failure -- come back as `{"detail": ...}`, so a client
+    parsing the documented shape gets nothing useful from exactly the failures
+    it is most likely to hit while being written.
+    """
+
+    assert isinstance(error, StarletteHTTPException)
+    code: ErrorCode = "ACCOUNT_NOT_FOUND" if error.status_code == 404 else "REQUEST_BLOCKED"
+    if error.status_code >= 500:
+        code = "INTERNAL_ERROR"
+    return JSONResponse(
+        status_code=error.status_code,
+        content=ErrorResponse(code=code, message=str(error.detail)).model_dump(exclude_none=True),
+    )
+
+
 async def unhandled_error_handler(request: Request, error: Exception) -> JSONResponse:
     """Log the whole failure and return a message that reveals nothing.
 
@@ -100,5 +121,6 @@ __all__ = [
     "ApiError",
     "ErrorResponse",
     "api_error_handler",
+    "http_error_handler",
     "unhandled_error_handler",
 ]

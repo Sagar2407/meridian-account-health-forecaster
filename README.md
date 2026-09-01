@@ -4,6 +4,35 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 > All account, company, person, usage, ticket, note, event, and outcome data in this repository is synthetic. The system is decision support and must not make customer-facing or commercial commitments.
 
+## Who it is for, and what it is for
+
+A customer-success team carrying two hundred accounts cannot read every ticket, note, and usage
+curve before every renewal. The question they actually need answered is narrower than "how is this
+account doing": it is *which accounts should I look at this week, and what should I read first when
+I do*.
+
+Meridian answers that and nothing more. It forecasts one of four renewal outcomes from
+point-in-time evidence, shows the metrics and documents behind the call, and — the part that
+matters — **declines when the evidence will not support an answer**. On the held-out split it
+abstained on 16 of 53 accounts and routed all but zero of the rest to a person.
+
+It sends no email, changes no record, and commits to no price. Every result is advisory.
+
+## How the course techniques are implemented
+
+Each of these is a real path through the code, not a label:
+
+| Technique | Where it lives | What it actually does |
+| --- | --- | --- |
+| **Multi-agent coordination** | `meridian.agents.*`, `meridian.graph.builder` | Four agents over a 17-node LangGraph, with two evidence lanes that genuinely run in parallel (proved by overlapping wall-clock intervals, not by adjacent log lines) |
+| **ReAct-style planning** | `meridian.agents.orchestrator` | The planner proposes two to four typed sub-goals; it cannot choose a structural transition, which stays deterministic |
+| **RAG** | `meridian.retrieval.*` | Parent-child chunking over FAISS, account- and cutoff-filtered *before* any vector is scored, with one bounded grade/rewrite/retry |
+| **Tree of Thought** | `meridian.graph.tot`, `meridian.graph.conflict` | Four candidates, six hard checks, a five-dimension rubric, beam 2, depth 2 — behind a deterministic conflict gate, so it runs on 51% of accounts rather than all of them |
+| **MCP** | `meridian.tools.*` | Eight read-only tools behind the official SDK, allowlisted per agent role; the Adjudicator's allowlist is empty because section 13.4 says it makes no tool calls |
+| **Memory** | `meridian.memory.store`, SQLite checkpointer | Working memory in typed graph state; long-term memory as assessment snapshots and review cases. Prior assessments are context, never a label carried forward |
+| **Guardrails** | `meridian.guardrails.*` | Five typed stages — intake, execution, evidence, output, routing — accumulated on every run so a missing control is visible in the trace |
+| **Human review** | `meridian.graph.nodes.await_review`, `/api/review-cases` | A LangGraph interrupt for cases that must pause, four typed reviewer actions, and an override that files a regression record in the same transaction |
+
 ## Current status
 
 **Phases 0 through 10 are complete.** Every exit gate passes, and none of them needs an API key.
@@ -222,6 +251,9 @@ make scan LIMIT=10       # one bounded portfolio scan; writes artifacts/portfoli
 make evaluate-system     # all five evaluation dimensions; writes artifacts/evaluation/ (Docker)
 make e2e                 # 24 Playwright journeys against the real stack (Docker)
 make screenshots         # regenerate docs/screenshots/ from the running UI (Docker)
+make bootstrap           # data, index, model, and curated demo runs, from a fresh clone
+make prod-build          # build the single-container production image
+make prod-up             # run it on :8080 the way Render will
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)
@@ -273,6 +305,8 @@ matches it exactly:
 | `GET /api/review-regressions` | Exported regression records |
 | `POST /api/evaluations` | Refuses, and names the command to run (see below) |
 | `GET /api/evaluations/{eval_id}` | Metrics from the last command-line run |
+| `GET /api/demo-runs` | The curated runs this deployment can replay |
+| `GET /api/demo-runs/{kind}` | One recorded run, marked as a recording |
 
 Evaluations are deliberately **not** runnable over HTTP. Every harness reads outcome labels, and
 no served module may import the evaluation package, so a route that ran one in-process would put
@@ -318,6 +352,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/ARCHITECTURE.md` — final architecture and control flow
 - `docs/DATA_SAFETY.md` — cutoff, leakage, immutability, and validation policy
 - `docs/DECISIONS.md` — accepted and open architectural decisions
+- `docs/DEPLOYMENT.md` — the production image, `render.yaml`, and the deployment runbook
 - `docs/SOURCE_INVENTORY.md` — source artifacts and hashes
 - `docs/VERIFICATION_MATRIX.md` — verified claims, evidence, and unresolved items
 - `docs/Meridian_Autonomous_System_Implementation_Plan.md` — full phased build specification
@@ -389,6 +424,44 @@ The generator is deterministic: `test_every_table_reproduces_the_shipped_archive
 `20260721` and asserts every table reproduces the committed archive byte for byte. That requires
 `numpy < 2.5` — 2.5 alters one generated note body — which is why `pyproject.toml` caps it. See
 `docs/DATA_LINEAGE.md`.
+
+## Running the public demo
+
+The deployment is not live yet — see `docs/DEPLOYMENT.md` for the runbook and the two
+blockers. What the configuration already does, when it is:
+
+- **Demo mode** (`MERIDIAN_DEMO_MODE=true`) restricts assessments to the synthetic portfolio and
+  replaces free text with a curated question. A dropdown is a convenience for a person and no
+  obstacle at all to anyone calling the API directly, so both are enforced server-side.
+- **Portfolio scans and evaluation runs are refused outright.** Either can spend many model calls
+  from one unauthenticated click.
+- **Rate limits**: 20 runs per client per hour, 200 per day across the service.
+- **The scheduler cannot run.** It requires `enable_scheduler` *and* the absence of demo mode, and
+  refuses rather than starting in a reduced form.
+- **Four curated runs are replayed from cache** — a fast-path assessment, a conflicting one, an
+  abstention, and a guardrail refusal — so a visitor can see the system work without spending
+  anything. Each is labelled a recording, with the commit and moment it was recorded. There is no
+  flag that removes that label.
+- **A free Render instance sleeps** and takes roughly 50 seconds to wake. That is the plan, not the
+  application.
+
+The API key is declared `sync: false` in `render.yaml`, so it is stored as a hosting secret and
+never written to this repository. Leaving it unset is a supported configuration: the system
+completes without a provider, writes a deterministic narrative, and says so in its own limitations.
+
+## Licence and acknowledgments
+
+Licensed under the [Apache License 2.0](LICENSE). See [`NOTICE`](NOTICE) for the synthetic-data and
+decision-support statements that travel with it.
+
+Built as a capstone for the Carnegie Mellon University Agentic AI Program. Not affiliated with,
+endorsed by, or a product of Carnegie Mellon University. The synthetic dataset, its generator, and
+the packaged evaluation sets were supplied with the course brief and are reproduced here unchanged;
+`dataset/` is a byte-exact copy of the committed archive, and a test fails the build if the two
+diverge.
+
+Built with LangGraph, FastAPI, scikit-learn, FAISS, fastembed, React, and the Model Context Protocol
+SDK.
 
 ## Module 7 deliverables
 

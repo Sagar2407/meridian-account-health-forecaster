@@ -60,6 +60,10 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-052 | Return the same structured `RouteVerdict` from `abstention_route` as from `human_route` | Accepted | Abstentions were the only runs carrying no rule codes, and section 22.6's safe-fallback target measures exactly those runs, so the metric silently counted nothing ([Phase 10](PHASE_10_STATUS.md)) |
 | D-053 | Pin the browser's declared types against the Pydantic models they mirror | Accepted | The decision card is served as `dict[str, Any]` and has no schema; three defects drifted through that seam without either type-checker noticing ([Phase 10](PHASE_10_STATUS.md)) |
 | D-054 | Use one `EvidenceSignal` vocabulary across the whole API | Accepted | A citation said `adverse/favorable` and a recent item said `positive/negative`; one API with two spellings of the same idea is one more thing to get wrong, and the browser already had ([Phase 10](PHASE_10_STATUS.md)) |
+| D-055 | Licence the repository under Apache-2.0 | Accepted | Permissive, with an explicit patent grant and contributor terms; closes O-003 ([Phase 11](DEPLOYMENT.md)) |
+| D-056 | Ship one production image that omits `meridian_eval` entirely | Accepted | The evaluation package reads outcome labels; a served process should not be able to import it even by mistake ([Phase 11](DEPLOYMENT.md)) |
+| D-057 | Make every cached demo run carry an unremovable `is_cached` marker | Accepted | Section 24.3 forbids showing a cached run as live; a label that a flag can turn off is a label that will eventually be off ([Phase 11](DEPLOYMENT.md)) |
+| D-058 | Render FastAPI's own 404s and 405s in the documented error shape | Accepted | Section 19.3 promises a stable code on every failure, and an unmatched route returned `{"detail": ...}` — the shape a client hits most while being written ([Phase 11](DEPLOYMENT.md)) |
 
 ## Decisions settled by measurement
 
@@ -82,7 +86,7 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 
 | ID | Decision needed | Blocking point |
 | --- | --- | --- |
-| O-003 | Select repository license | Before public GitHub publication |
+| ~~O-003~~ | ~~Select repository license~~ | **Closed: Apache-2.0, see D-055** |
 | O-004 | Confirm public repository name and URL | Before report and presentation finalization |
 | O-005 | Confirm September 7 deadline year and timezone in Canvas | Immediately |
 

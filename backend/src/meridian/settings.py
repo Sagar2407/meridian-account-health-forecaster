@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import AliasChoices, Field
@@ -74,12 +75,32 @@ class Settings(BaseSettings):
     #: Runs the whole service may start per day. 0 disables the limit.
     rate_limit_daily_runs: int = Field(default=500, ge=0, le=1_000_000)
 
+    #: Where the compiled browser bundle lives, when one has been built into
+    #: the image (plan section 24.2). Empty in development, where Vite serves
+    #: the frontend on its own port; set by the production image.
+    static_directory: str = ""
+
     #: Section 18.2. The scheduled worker is opt-in and stays off by default,
     #: because a schedule that spends money without a person present is the one
     #: autonomous behaviour this system must not have.
     enable_scheduler: bool = False
     #: Minutes between scheduled scans when the scheduler is enabled.
     scheduler_interval_minutes: int = Field(default=1_440, ge=5, le=44_640)
+
+    @property
+    def static_root(self) -> Path | None:
+        """Return the compiled frontend directory, if one was built in.
+
+        Returns None rather than a missing path, so the application mounts the
+        SPA only when there is one to mount. A development container has no
+        bundle and must not answer `/` with a 404 that looks like a broken
+        deployment.
+        """
+
+        if not self.static_directory:
+            return None
+        candidate = Path(self.static_directory)
+        return candidate if (candidate / "index.html").is_file() else None
 
     @property
     def scheduler_is_permitted(self) -> bool:

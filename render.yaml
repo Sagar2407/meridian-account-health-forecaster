@@ -1,0 +1,83 @@
+# Reproducible Render configuration (plan section 24.2).
+#
+# One web service from one Dockerfile. Every value that decides what the demo
+# may spend is set here rather than in the dashboard, so the deployment's cost
+# and safety posture is reviewable in the repository -- which is the point of
+# committing infrastructure at all.
+#
+# The model key is deliberately NOT here. `sync: false` means Render prompts for
+# it once and stores it as a secret; a key in this file would be a key in the
+# git history.
+
+services:
+  - type: web
+    name: meridian
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /api/health
+    autoDeploy: false
+
+    envVars:
+      - key: MERIDIAN_ENVIRONMENT
+        value: production
+      - key: MERIDIAN_LOG_LEVEL
+        value: INFO
+
+      # Section 24.3. Demo mode restricts assessments to the synthetic
+      # portfolio, replaces free text with a curated question, and refuses
+      # portfolio scans and evaluation runs outright.
+      - key: MERIDIAN_DEMO_MODE
+        value: "true"
+
+      # Per-client and service-wide run limits. A free instance has one CPU;
+      # these keep one visitor from consuming the whole budget.
+      - key: MERIDIAN_RATE_LIMIT_RUNS_PER_HOUR
+        value: "20"
+      - key: MERIDIAN_RATE_LIMIT_DAILY_RUNS
+        value: "200"
+
+      # Concurrency and per-run spend. The graph's own budget caps a single run
+      # at eight provider attempts; this caps how many run at once.
+      - key: MERIDIAN_SCAN_CONCURRENCY
+        value: "2"
+
+      # Section 24.3: no unattended scheduled spending in a public deployment.
+      # Demo mode refuses the scheduler anyway; this states the intent twice.
+      - key: MERIDIAN_ENABLE_SCHEDULER
+        value: "false"
+
+      # The browser calls the same origin it was served from, so the allowlist
+      # is the service's own URL. Render substitutes it at deploy time.
+      - key: MERIDIAN_CORS_ORIGINS
+        fromService:
+          type: web
+          name: meridian
+          property: hostport
+
+      # Set once, in the Render dashboard, and stored as a secret. Leave it
+      # empty to run the demo entirely on cached and deterministic paths: the
+      # system completes without a provider and says so in its own limitations.
+      - key: MERIDIAN_LLM_API_KEY
+        sync: false
+      - key: MERIDIAN_LLM_PROVIDER
+        value: openai_compatible
+      - key: MERIDIAN_LLM_MODEL
+        value: anthropic/claude-sonnet-4.5
+      - key: MERIDIAN_LLM_BASE_URL
+        value: https://openrouter.ai/api/v1
+
+      # LangSmith mirroring is optional and off. The application is fully
+      # functional without it (plan section 21.2).
+      - key: LANGSMITH_TRACING
+        value: "false"
+
+    # A free instance has an ephemeral filesystem: assessment history and
+    # review cases do not survive a restart. Section 24.3 permits exactly that
+    # -- "keep review and assessment storage ephemeral in the free public
+    # demo" -- and the README says so rather than letting a visitor assume
+    # their override was kept.
+    disk: null

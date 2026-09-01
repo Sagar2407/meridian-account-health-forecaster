@@ -15,10 +15,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   ApiError,
   fetchAccounts,
+  fetchDemoRuns,
   fetchScan,
   startScan,
   type AccountPage,
   type AccountSummary,
+  type CuratedRunSummary,
   type ScanView,
 } from '../api'
 import {
@@ -54,6 +56,7 @@ export function PortfolioPage() {
   const [scan, setScan] = useState<ScanView | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
+  const [curated, setCurated] = useState<CuratedRunSummary[]>([])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -80,6 +83,16 @@ export function PortfolioPage() {
       })
     return () => controller.abort()
   }, [segment, region, renewsWithin, sort])
+
+  // Section 24.5's curated demo entries. An empty list is normal -- a local
+  // checkout has no cache -- and the panel simply does not appear.
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetchDemoRuns(controller.signal)
+      .then(setCurated)
+      .catch(() => setCurated([]))
+    return () => controller.abort()
+  }, [])
 
   const runScan = useCallback(async () => {
     setScanning(true)
@@ -158,6 +171,31 @@ export function PortfolioPage() {
           </p>
         </article>
       </section>
+
+      {curated.length > 0 ? (
+        <section className="curated" aria-labelledby="curated-title">
+          <h2 id="curated-title">See it work, without spending anything</h2>
+          <p className="curated__lede">
+            Four runs recorded from the real graph. Each is replayed exactly as
+            it happened and is labelled as a recording, not a live result.
+          </p>
+          <ul className="curated__list">
+            {curated.map((item) => (
+              <li key={item.kind}>
+                <Link to={`/demo/${item.kind}`} className="curated__link">
+                  <span className="curated__kind">
+                    {item.kind.replace(/_/g, ' ')}
+                  </span>
+                  <span className="curated__label">{item.label}</span>
+                  <span className="curated__meta">
+                    {item.account_id} · routed {item.route}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {scanError ? <ErrorNote message={scanError} /> : null}
       {scan ? <ScanSummaryPanel scan={scan} /> : null}

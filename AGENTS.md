@@ -72,7 +72,7 @@ Do not proceed to the next phase until the current exit gate passes or the user 
 
 ## Current status
 
-Phases 0 through 10 are complete and every exit gate passes; evidence is in `docs/PHASE_<n>_STATUS.md`. The raw dataset is extracted under `data/raw/meridian-account-health/`. Decision thresholds are frozen at digest `5e23d7f9d9fef896` (v1) and the held-out split has been run against them: do not change a threshold without bumping `THRESHOLD_VERSION` and recording development-split evidence. Phase 11 -- public deployment and repository polish -- is next. Do not start it without closing the current gate or receiving an explicit user scope change.
+Phases 0 through 10 are complete and every exit gate passes; evidence is in `docs/PHASE_<n>_STATUS.md`. The raw dataset is extracted under `data/raw/meridian-account-health/`. Decision thresholds are frozen at digest `5e23d7f9d9fef896` (v1) and the held-out split has been run against them: do not change a threshold without bumping `THRESHOLD_VERSION` and recording development-split evidence. Phase 11's configuration is built and verified against the local production image; the deploy itself is not done, and `docs/DEPLOYMENT.md` records the two blockers. The repository is licensed Apache-2.0 and is deliberately still private. Do not start it without closing the current gate or receiving an explicit user scope change.
 
 Run `make phase0-verify` before declaring any phase finished: it is the only check that builds the locked images and runs the suite the way CI does. A host-only run has passed while the container run failed more than once.
 

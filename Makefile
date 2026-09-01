@@ -4,7 +4,7 @@ PYTHON ?= python3
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot evaluate-guardrails evaluate-system assess scan e2e screenshots phase0-verify docker-up docker-down
+.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot evaluate-guardrails evaluate-system assess scan e2e screenshots bootstrap prod-build prod-up prod-down phase0-verify docker-up docker-down
 
 help:
 	@awk 'BEGIN {FS = ":.*## "; print "Meridian development commands:"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -40,6 +40,17 @@ test: ## Run backend and frontend tests.
 
 security: ## Scan source for common secrets and machine-specific paths.
 	$(PYTHON) scripts/check_repository.py
+
+bootstrap: ## Get a fresh checkout to a runnable state: data, index, model (Docker).
+	@echo "[1/4] Building sanitized runtime tables and the account split"
+	@$(MAKE) --no-print-directory data
+	@echo "[2/4] Building the retrieval index"
+	@$(MAKE) --no-print-directory index
+	@echo "[3/4] Training and calibrating the forecaster"
+	@$(MAKE) --no-print-directory train
+	@echo "[4/4] Caching curated demo runs"
+	./scripts/python_in_docker.sh python scripts/build_demo_cache.py
+	@echo "Bootstrap complete. Run 'docker compose up --build' or 'make prod-up'."
 
 data: ## Build sanitized runtime tables, the dataset manifest, and the account split.
 	./scripts/python_in_docker.sh python scripts/build_data.py
@@ -84,6 +95,21 @@ assess: ## Assess one account end to end, e.g. make assess ACCOUNT=ACC-1042 [OFF
 	./scripts/python_in_docker.sh python scripts/assess_account.py $(ACCOUNT) $(if $(QUESTION),"$(QUESTION)",) $(if $(OFFLINE),--offline,)
 
 check: lint typecheck test security ## Run every local quality gate.
+
+prod-build: ## Build the single-container production image (Docker).
+	docker build -f Dockerfile -t meridian:local .
+
+prod-up: ## Run the production image the way Render will, on port 8080.
+	docker run --rm -p 8080:8080 \
+	  --env PORT=8080 \
+	  --env MERIDIAN_DEMO_MODE=true \
+	  --env MERIDIAN_CORS_ORIGINS=http://localhost:8080 \
+	  --mount type=bind,src=$(PWD)/data,dst=/app/data,readonly \
+	  --mount type=bind,src=$(PWD)/models,dst=/app/models,readonly \
+	  --name meridian-prod meridian:local
+
+prod-down: ## Stop the local production container.
+	-docker rm -f meridian-prod
 
 phase0-verify: ## Generate locks and run the complete Phase 0 gate through Docker.
 	./scripts/complete_phase0.sh

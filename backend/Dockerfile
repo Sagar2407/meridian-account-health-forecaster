@@ -17,6 +17,8 @@ COPY backend ./backend
 # quality gate type-checks and tests it; `test_import_boundary.py` guarantees no
 # runtime module can import it. The Phase 11 production image will omit it.
 COPY evaluation ./evaluation
+# The curated demo runs, so the development stack behaves like production.
+COPY config ./config
 
 RUN uv sync --locked --extra dev
 

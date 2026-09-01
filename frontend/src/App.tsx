@@ -12,6 +12,7 @@ import { NavLink, Route, Routes, useParams } from 'react-router-dom'
 
 import { fetchHealth, type HealthResponse } from './api'
 import { AccountPage } from './pages/AccountPage'
+import { DemoPage } from './pages/DemoPage'
 import { EvaluationPage } from './pages/EvaluationPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { ReviewPage } from './pages/ReviewPage'
@@ -130,6 +131,7 @@ export function App() {
           <Route path="/" element={<PortfolioPage />} />
           <Route path="/accounts/:accountId" element={<KeyedAccountPage />} />
           <Route path="/runs/:runId" element={<KeyedRunPage />} />
+          <Route path="/demo/:kind" element={<DemoPage />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/evaluation" element={<EvaluationPage />} />
           <Route

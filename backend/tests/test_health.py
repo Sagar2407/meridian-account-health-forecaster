@@ -81,4 +81,6 @@ def test_openapi_is_section_19s_endpoint_table() -> None:
         "/api/review-regressions",
         "/api/evaluations",
         "/api/evaluations/{eval_id}",
+        "/api/demo-runs",
+        "/api/demo-runs/{kind}",
     }

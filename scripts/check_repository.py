@@ -28,6 +28,11 @@ VERBATIM_PREFIXES = {Path("dataset")}
 # Files git ignores are never distributed, so they are outside this policy.
 # `.env` in particular is *supposed* to hold real credentials locally.
 FALLBACK_SKIP_NAMES = {".env"}
+# Tool output, not source. `.tsbuildinfo` is TypeScript's incremental build
+# state: git ignores it, but the evaluation image has no git binary, so
+# `ignored_paths` falls back and this scan would otherwise apply an authoring
+# convention to a file no human wrote. The secret and absolute-path patterns
+# below still run against everything that is not binary.
 SKIP_SUFFIXES = {
     ".csv",
     ".docx",
@@ -41,6 +46,7 @@ SKIP_SUFFIXES = {
     ".pdf",
     ".png",
     ".sqlite",
+    ".tsbuildinfo",
     ".zip",
 }
 PATTERNS = {

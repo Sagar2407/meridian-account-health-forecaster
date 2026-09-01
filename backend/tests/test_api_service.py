@@ -477,6 +477,8 @@ def test_the_openapi_schema_is_section_19s_table(client: TestClient) -> None:
         "/api/review-regressions",
         "/api/evaluations",
         "/api/evaluations/{eval_id}",
+        "/api/demo-runs",
+        "/api/demo-runs/{kind}",
     }
 
 
@@ -524,3 +526,50 @@ def test_the_account_detail_serves_no_ticket_or_note_body(
     for item in payload["recent"]:
         assert len(item["label"]) <= 160
         assert len(item["detail"]) <= 200
+
+
+class TestCuratedDemoRuns:
+    """The recorded runs a public demo replays (plan sections 24.3 and 24.5)."""
+
+    def test_every_curated_run_says_it_is_recorded(self, client: TestClient) -> None:
+        """Section 24.3 forbids showing a cached run as though it were live."""
+
+        runs = client.get("/api/demo-runs").json()
+
+        for item in runs:
+            assert item["is_cached"] is True, item["kind"]
+
+    def test_one_curated_run_carries_the_note_a_page_must_show(self, client: TestClient) -> None:
+        """The label names the commit and the moment, not just 'cached'."""
+
+        listed = client.get("/api/demo-runs").json()
+        if not listed:
+            pytest.skip("this checkout has no demo cache; run `make bootstrap`")
+
+        payload = client.get(f"/api/demo-runs/{listed[0]['kind']}").json()
+
+        assert payload["is_cached"] is True
+        assert "recorded run, not a live one" in payload["cached_note"]
+        assert payload["commit"][:6] in payload["cached_note"]
+        assert payload["state"]["trace"], "a recorded run with no trace shows nothing"
+
+    def test_an_uncached_kind_is_a_stable_404(self, client: TestClient) -> None:
+        """A deployment without a given kind says so rather than inventing one."""
+
+        response = client.get("/api/demo-runs/not-a-kind")
+
+        assert response.status_code == 404
+        assert response.json()["code"] == "ACCOUNT_NOT_FOUND"
+
+    def test_no_curated_run_carries_a_latent_field_or_a_prompt(self, client: TestClient) -> None:
+        """A cache is a payload like any other, and is checked like one."""
+
+        body = client.get("/api/demo-runs").text.lower()
+        listed = client.get("/api/demo-runs").json()
+        for item in listed:
+            body += client.get(f"/api/demo-runs/{item['kind']}").text.lower()
+
+        for field in LEAKY_FIELDS:
+            assert field not in body, field
+        for key in FORBIDDEN_TRACE_KEYS:
+            assert f'"{key}"' not in body, key
