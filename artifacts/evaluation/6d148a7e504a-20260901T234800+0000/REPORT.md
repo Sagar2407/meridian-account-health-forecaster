@@ -1,6 +1,6 @@
 # Meridian evaluation report
 
-Commit `befdf982fc06` (working-tree state not determined), split **development**, provider **none (deterministic)**, generated 2026-09-01T16:03:44+00:00.
+Commit `6d148a7e504a` (working-tree state not determined), split **development**, provider **none (deterministic)**, generated 2026-09-01T23:48:00+00:00.
 
 Thresholds `5e23d7f9d9fef896` (v1), dataset `absent`, model `logistic_regression` / `isotonic`.
 
@@ -98,11 +98,11 @@ Error rate inside each review band -- what a reviewer is implicitly promised:
 
 | Path | Runs | p50 | p95 |
 | --- | ---: | ---: | ---: |
-| fast | 100 | 166.7000 ms | 254.1000 ms |
-| tree_of_thought | 37 | 160.7000 ms | 214.6000 ms |
-| abstained | 70 | 164.1000 ms | 241.2000 ms |
+| fast | 100 | 171.6000 ms | 271.7000 ms |
+| tree_of_thought | 37 | 163.6000 ms | 209.0000 ms |
+| abstained | 70 | 173.1000 ms | 252.7000 ms |
 | blocked | 0 | not measured ms | not measured ms |
-| **overall** | 207 | 164.2000 ms | 248.1000 ms |
+| **overall** | 207 | 171.0000 ms | 257.6000 ms |
 
 ## Threshold study (plan section 22.6)
 

@@ -57,16 +57,23 @@ case passed its named behavioural check.
 | False-block rate | 0.0000 |
 | Behaviour pass rate | 1.0000 |
 | Pass/block/escalate accuracy (within policy) | 1.0000 |
-| Exact expected-disposition match | 0.5833 |
+| Exact expected-disposition match | 0.6944 |
 | Leakage findings | 0 |
 | Tokens | 0 |
 
-Observed dispositions: 15 blocked, 19 escalated, 2 auto-released.
+Observed dispositions: 15 blocked, 15 escalated, 6 auto-released.
+
+**These are the numbers at the current commit, not the ones this phase first
+measured.** Phase 7 recorded 0.5833 with 19 escalations and 2 auto-releases.
+Four behavioural cases -- GE-020, GE-023, GE-024, and GE-026 -- now verify and
+release where they previously failed verification and routed red, a consequence
+of the Tree-of-Thought citation fix made in the post-phase audit. The superseded
+figures are stated here rather than overwritten silently.
 
 **The two disposition rows differ, and the gap is the finding rather than a
-rounding detail.** Fifteen behavioural cases -- GE-016, GE-017 to GE-024,
-GE-025 to GE-027, and GE-034 to GE-036 -- were answered *and* routed red to a
-person.
+rounding detail.** Eleven behavioural cases -- GE-016 to GE-019, GE-021,
+GE-022, GE-025, GE-027, and GE-034 to GE-036 -- were answered *and* routed red
+to a person.
 
 Section 22.4 asks for "pass/block/escalate accuracy", and for a behavioural case
 two of those three are both correct. The packaged data says so itself: GE-025's
@@ -82,11 +89,12 @@ nominal disposition counts -- and it is printed beside the first so the
 escalation rate cannot be hidden by the looser number. Nothing was out of policy
 on either reading: no answerable case was refused and no hard case was answered.
 
-What the gap does show is that **only 2 of 21 answerable cases were released
-without a human**, which is a heavily conservative posture. That is safe, and it
-is not obviously useful: a queue that receives nineteen of every twenty-one
-answers is a queue nobody will read. Phase 10 freezes thresholds against the
-development split, and this is the number that should inform that choice.
+What the gap does show is that **only 6 of 21 answerable cases are released
+without a human** -- 2 of 21 when this phase ran -- which is a heavily
+conservative posture either way. That is safe, and it is not obviously useful: a
+queue that receives three of every four answers is a queue nobody will read.
+Phase 10 froze thresholds against the development split, and this is the number
+that informed that choice.
 
 Reproduce the report with:
 

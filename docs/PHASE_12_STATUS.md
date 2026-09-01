@@ -61,10 +61,25 @@ queued. The committed artifact was then restored to the 6-account scan that
 `docs/PHASE_8_STATUS.md` documents and analyses, so each phase document stays
 true to the run it describes.
 
-The system evaluation directories were **not** re-run. They already contain the
-citation fix, and nothing in this phase touches what `evaluate_system.py` reads.
-Re-running the held-out split without a reason is the habit plan section 22.7
-exists to discourage, so it was not done for tidiness.
+The system evaluation was re-run on both splits, at the final commit, and the
+result is the strongest single piece of evidence in this package: comparing 359
+values against the Phase 10 run, **every release-target metric is identical** --
+macro F1 0.8468 and 0.7490, ECE 0.1568 and 0.1712, supported-claim 1.0000,
+exact numeric agreement 1.0000, zero wrong-account and zero post-cutoff
+citations.
+
+Two groups moved. Latency percentiles, which are wall-clock diagnostics rather
+than targets; and the embedded safety-routing block, where exact-disposition
+match went 0.5833 to 0.6944 because four behavioural cases began verifying and
+releasing instead of routing red -- the same Tree-of-Thought citation fix again,
+which Phase 10's run predated. The Phase 10 directories therefore carried a
+superseded block and were replaced rather than kept beside the new ones;
+`docs/PHASE_7_STATUS.md` now records the same movement.
+
+This was a reproducibility check, not tuning: the thresholds were frozen
+throughout, their digest is unchanged, and no number was used to adjust
+anything. Plan section 22.7 forbids tuning against held-out outcomes, and
+nothing here reads one to make a decision.
 
 ### The architecture diagram had two edges the graph does not have
 

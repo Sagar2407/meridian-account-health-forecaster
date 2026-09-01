@@ -67,15 +67,16 @@ Every number below is read from an artifact, and every artifact has a command
 that regenerates it. Nothing in the report should be typed by hand.
 
 Evaluation directories are named `<commit>-<timestamp>` and do not say which
-split they hold; the first line of each `REPORT.md` does. The two published runs
-are both at commit `befdf982fc06`: `...T160344+0000` is **development** (207
-accounts) and `...T160405+0000` is **test** (53 held-out accounts).
+split they hold; the first line of each `REPORT.md` does, and
+`artifacts/evaluation/README.md` indexes them. Both published runs are at commit
+`6d148a7e504a`: `...T234800+0000` is **development** (207 accounts) and
+`...T234822+0000` is **test** (53 held out).
 
 | Result | Value | Artifact | Command |
 | --- | ---: | --- | --- |
-| Macro F1, held-out (53 accounts) | 0.7490 | `.../befdf982fc06-20260901T160405+0000/` | `make evaluate-system SPLIT=test` |
+| Macro F1, held-out (53 accounts) | 0.7490 | `.../6d148a7e504a-20260901T234822+0000/` | `make evaluate-system SPLIT=test` |
 | Majority baseline it beats | 0.4595 | same | same |
-| Macro F1, development (207) | 0.8468 | `.../befdf982fc06-20260901T160344+0000/` | `make evaluate-system` |
+| Macro F1, development (207) | 0.8468 | `.../6d148a7e504a-20260901T234800+0000/` | `make evaluate-system` |
 | Supported-claim rate | 1.0000 | both result directories | same |
 | Exact numeric agreement | 1.0000 | both | same |
 | Wrong-account citations | 0 | both | same |
