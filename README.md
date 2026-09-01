@@ -6,7 +6,7 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 9 are complete.** Every exit gate passes, and none of them needs an API key.
+**Phases 0 through 10 are complete.** Every exit gate passes, and none of them needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
@@ -86,7 +86,23 @@ pass across desktop and tablet with none skipped**, and one of them subscribes t
 the browser receives and fails on any latent field or prompt key. Evidence is in
 `docs/PHASE_9_STATUS.md`.
 
-Phase 10, observability and the full evaluation, is next.
+Phase 10 froze the decision thresholds, ran the held-out evaluation against them, and wired
+mandatory structured tracing with optional LangSmith mirroring.
+
+**On the held-out split (53 accounts, thresholds `5e23d7f9d9fef896`):** macro F1 **0.749** against
+a 0.460 majority baseline, supported-claim rate and exact numeric agreement both **1.000**, and
+**zero** wrong-account or post-cutoff citations. Expected calibration error is **0.171** against a
+0.10 target — not met, and not fixed here, because recalibrating after seeing a held-out number is
+the thing section 22.7 exists to prevent.
+
+**And it auto-releases nothing.** Zero of 53 held-out accounts cleared the green band. The routing
+itself is working — on the development split the error rate rises 0.000 (green) → 0.029 (amber) →
+0.127 (red), and all eight errors landed in red — but a system whose entire output is review load
+saves nobody any work. Loosening the bands to 0.60/0.50 would release twelve times more at a
+measured 5.7% unreviewed error rate. That trade is a business decision, so no threshold was
+changed and the measurement is recorded instead. Evidence is in `docs/PHASE_10_STATUS.md`.
+
+Phase 11, public deployment and repository polish, is next.
 
 ## What it looks like
 
@@ -203,6 +219,7 @@ make assess ACCOUNT=ACC-1042 OFFLINE=1   # one end-to-end assessment, no provide
 make evaluate-tot        # linear versus conflict-gated ToT ablation (Docker, ~10 minutes)
 make evaluate-guardrails # all 36 safety cases; writes artifacts/safety/ (Docker, offline)
 make scan LIMIT=10       # one bounded portfolio scan; writes artifacts/portfolio/ (Docker)
+make evaluate-system     # all five evaluation dimensions; writes artifacts/evaluation/ (Docker)
 make e2e                 # 24 Playwright journeys against the real stack (Docker)
 make screenshots         # regenerate docs/screenshots/ from the running UI (Docker)
 
@@ -315,6 +332,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_7_STATUS.md` — safety evaluation and human-review workflow evidence
 - `docs/PHASE_8_STATUS.md` — served API, portfolio scan, and its bounds
 - `docs/PHASE_9_STATUS.md` — the React application, its journeys, and what they found
+- `docs/PHASE_10_STATUS.md` — frozen thresholds, the held-out evaluation, and its limitations
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments

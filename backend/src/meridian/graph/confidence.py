@@ -19,10 +19,15 @@ from meridian.contracts import (
     EvidenceBundle,
     OutputVerification,
 )
+from meridian.graph.thresholds import THRESHOLDS
 
-CALIBRATED_WEIGHT = 0.70
-COVERAGE_WEIGHT = 0.15
-AGREEMENT_WEIGHT = 0.15
+# Every number below is re-exported from `meridian.graph.thresholds` rather
+# than written here. One frozen, digested source means a held-out result can be
+# tied to the exact thresholds that produced it (plan section 22.7); two copies
+# would mean a change to one of them was undetectable.
+CALIBRATED_WEIGHT = THRESHOLDS.calibrated_weight
+COVERAGE_WEIGHT = THRESHOLDS.coverage_weight
+AGREEMENT_WEIGHT = THRESHOLDS.agreement_weight
 
 #: Coverage is three things a run can be short of, weighted by how much a
 #: missing one distorts the answer: weeks of telemetry the model consumes
@@ -41,14 +46,14 @@ ADJUDICATOR_AGREEMENT_WEIGHT = 0.40
 NEUTRAL_AGREEMENT = 0.5
 
 #: Hard caps from section 16.1.
-CAP_CRITICAL_SOURCE_MISSING = 0.69
-CAP_UNRESOLVED_CONFLICT = 0.69
-CAP_EXHAUSTED_RETRIEVAL_GAP = 0.84
-CAP_REPAIRED_VERIFICATION = 0.84
+CAP_CRITICAL_SOURCE_MISSING = THRESHOLDS.cap_critical_source_missing
+CAP_UNRESOLVED_CONFLICT = THRESHOLDS.cap_unresolved_conflict
+CAP_EXHAUSTED_RETRIEVAL_GAP = THRESHOLDS.cap_exhausted_retrieval_gap
+CAP_REPAIRED_VERIFICATION = THRESHOLDS.cap_repaired_verification
 
 #: Two outcomes this close are not distinguishable by this model on this
 #: evidence, which section 16.5 treats as a red-route condition.
-TIE_MARGIN = 0.10
+TIE_MARGIN = THRESHOLDS.tie_margin
 
 #: The three account source families a broad answer draws on.
 ACCOUNT_SOURCE_FAMILY_COUNT = 3

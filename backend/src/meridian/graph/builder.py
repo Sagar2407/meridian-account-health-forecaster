@@ -16,7 +16,7 @@ it that far.
 import sqlite3
 import uuid
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -40,6 +40,7 @@ from meridian.contracts import (
 )
 from meridian.data.paths import application_directory
 from meridian.graph.nodes import GraphNodes
+from meridian.graph.observability import TraceSink
 from meridian.graph.routing import (
     route_conflict,
     route_coverage,
@@ -346,6 +347,30 @@ def _finish(
     )
 
 
+def _tee(
+    on_event: Callable[[TraceEvent], None] | None, sink: TraceSink | None
+) -> Callable[[TraceEvent], None] | None:
+    """Return one callback that feeds both the caller and the trace sink.
+
+    A sink failure must not end a run. Section 21.1 makes tracing mandatory, but
+    a run that completed and could not write its trace is still a completed
+    run, and losing the answer as well would be the worse outcome.
+    """
+
+    if sink is None:
+        return on_event
+
+    def publish(event: TraceEvent) -> None:
+        """Hand one event to the caller, then to the sink."""
+
+        if on_event is not None:
+            on_event(event)
+        with suppress(Exception):
+            sink.write(event)
+
+    return publish
+
+
 def run_assessment(
     graph: Any,
     request: AssessmentRequest,
@@ -353,6 +378,7 @@ def run_assessment(
     thread_id: str | None = None,
     on_event: Callable[[TraceEvent], None] | None = None,
     pause_on_red: bool = False,
+    sink: TraceSink | None = None,
 ) -> AssessmentRun:
     """Run one assessment to completion, streaming safe events as they happen.
 
@@ -365,6 +391,10 @@ def run_assessment(
         on_event: Called with each trace event as the graph produces it. This
             is the streaming surface of plan section 19.2; Phase 8's SSE
             endpoint is a thin wrapper over it.
+        sink: Where to record the run's trace (plan section 21.1). Local
+            tracing is mandatory, but *which* sink is the caller's choice: the
+            API streams to a browser, an evaluation collects in memory, and a
+            CLI appends to a file.
         pause_on_red: Stop on section 16.6's interrupt when the run routes red,
             instead of completing and leaving an open case. Requires the graph
             to have been compiled with a checkpointer -- there is nowhere to
@@ -404,7 +434,7 @@ def run_assessment(
         "recursion_limit": GRAPH_RECURSION_LIMIT,
     }
 
-    final, pending = _collect(graph, payload, config, on_event)
+    final, pending = _collect(graph, payload, config, _tee(on_event, sink))
     return _finish(identifier, thread, request, final, pending)
 
 
@@ -413,6 +443,7 @@ def resume_assessment(
     thread_id: str,
     decision: ReviewerDecision,
     on_event: Callable[[TraceEvent], None] | None = None,
+    sink: TraceSink | None = None,
 ) -> AssessmentRun:
     """Continue a paused run with a reviewer's typed decision (section 16.6).
 
@@ -438,7 +469,7 @@ def resume_assessment(
         "recursion_limit": GRAPH_RECURSION_LIMIT,
     }
     final, pending = _collect(
-        graph, Command(resume=decision.model_dump(mode="json")), config, on_event
+        graph, Command(resume=decision.model_dump(mode="json")), config, _tee(on_event, sink)
     )
     request = final.get("request")
     assert request is not None, "a resumed thread must carry the request it paused on"

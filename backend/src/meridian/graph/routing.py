@@ -11,6 +11,8 @@ checked here, so "no unbounded cycle" is a property of the routing rather than a
 property of how carefully the nodes were written.
 """
 
+from dataclasses import dataclass
+
 from meridian.contracts import (
     ADVERSE_OUTCOMES,
     ConflictAssessment,
@@ -21,15 +23,17 @@ from meridian.contracts import (
     RetrievalEvidence,
     Route,
 )
-from meridian.graph.confidence import TIE_MARGIN, top_two_margin
+from meridian.graph.confidence import top_two_margin
 from meridian.graph.state import (
     MAX_EVIDENCE_ROUNDS,
     MAX_OUTPUT_REGENERATIONS,
     ForecasterState,
 )
+from meridian.graph.thresholds import THRESHOLDS, DecisionThresholds
 
-GREEN_MINIMUM_CONFIDENCE = 0.85
-AMBER_MINIMUM_CONFIDENCE = 0.70
+# Frozen in `meridian.graph.thresholds`, not here (plan section 22.7).
+GREEN_MINIMUM_CONFIDENCE = THRESHOLDS.green_minimum_confidence
+AMBER_MINIMUM_CONFIDENCE = THRESHOLDS.amber_minimum_confidence
 
 
 def coverage_verdict(
@@ -171,6 +175,22 @@ def route_human_review(state: ForecasterState) -> str:
     return "await_review"
 
 
+@dataclass(frozen=True)
+class RouteVerdict:
+    """A review band, why it was assigned, and which rules fired.
+
+    `codes` exists so the decision is auditable and replayable. A decision card
+    can show which rule sent an answer to a person rather than only the prose,
+    and the threshold study can re-derive a band under a different set of
+    thresholds without re-running the graph -- which is what makes a
+    development-split sweep affordable at all.
+    """
+
+    route: Route
+    reason: str
+    codes: tuple[str, ...] = ()
+
+
 def human_route(
     confidence: float,
     coverage: CoverageReport,
@@ -183,7 +203,8 @@ def human_route(
     intake: GuardrailDecision | None = None,
     evidence_screen: GuardrailDecision | None = None,
     budget: GuardrailDecision | None = None,
-) -> tuple[Route, str]:
+    thresholds: DecisionThresholds = THRESHOLDS,
+) -> RouteVerdict:
     """Return the human-review band for a released forecast (section 16.5).
 
     Args:
@@ -203,46 +224,85 @@ def human_route(
         budget: The runtime budget's verdict. A run that finished on the
             deterministic narrative because its model budget ran out is
             provisional, not unsafe.
+        thresholds: The frozen decision thresholds. A caller other than the
+            graph passes a candidate set only to *measure* what it would do
+            (plan section 22.7); the graph itself always uses the frozen set.
+
+    Returns:
+        The band, a human-readable reason, and the rule codes that fired.
     """
 
     adverse = outcome in ADVERSE_OUTCOMES
     margin = top_two_margin(distribution)
 
-    red_reasons: list[str] = []
-    if confidence < AMBER_MINIMUM_CONFIDENCE:
-        red_reasons.append(f"confidence {confidence:.2f} is below {AMBER_MINIMUM_CONFIDENCE:.2f}")
-    if margin < TIE_MARGIN:
-        red_reasons.append(f"the top two outcomes are within {margin:.2f}")
+    red: list[tuple[str, str]] = []
+    if confidence < thresholds.amber_minimum_confidence:
+        red.append(
+            (
+                "confidence_below_amber",
+                f"confidence {confidence:.2f} is below {thresholds.amber_minimum_confidence:.2f}",
+            )
+        )
+    if margin < thresholds.tie_margin:
+        red.append(("outcomes_tied", f"the top two outcomes are within {margin:.2f}"))
     if coverage.has_critical_gap:
-        red_reasons.append("critical coverage is missing")
+        red.append(("critical_coverage_missing", "critical coverage is missing"))
     if conflict is not None and conflict.unresolved_severe:
-        red_reasons.append("an unresolved severe conflict")
+        red.append(("unresolved_severe_conflict", "an unresolved severe conflict"))
     if verification is not None and not verification.passed:
-        red_reasons.append("output verification failed")
+        red.append(("verification_failed", "output verification failed"))
     if high_value and adverse:
-        red_reasons.append("an adverse call on a high-value account")
+        red.append(("high_value_adverse", "an adverse call on a high-value account"))
     if intake is not None and "escalate_to_human" in intake.reason_codes:
-        red_reasons.append("the request asked for an action a person must decide")
+        red.append(
+            (
+                "intake_escalation",
+                "the request asked for an action a person must decide",
+            )
+        )
     if evidence_screen is not None and evidence_screen.outcome != "pass":
-        red_reasons.append("evidence was quarantined before it reached the decision")
-    if red_reasons:
-        return "red", "; ".join(red_reasons)
+        red.append(
+            (
+                "evidence_quarantined",
+                "evidence was quarantined before it reached the decision",
+            )
+        )
+    if red:
+        return RouteVerdict(
+            "red",
+            "; ".join(message for _, message in red),
+            tuple(code for code, _ in red),
+        )
 
-    amber_reasons: list[str] = []
-    if confidence < GREEN_MINIMUM_CONFIDENCE:
-        amber_reasons.append(f"confidence {confidence:.2f} is below {GREEN_MINIMUM_CONFIDENCE:.2f}")
+    amber: list[tuple[str, str]] = []
+    if confidence < thresholds.green_minimum_confidence:
+        amber.append(
+            (
+                "confidence_below_green",
+                f"confidence {confidence:.2f} is below {thresholds.green_minimum_confidence:.2f}",
+            )
+        )
     if retrieval_gap:
-        amber_reasons.append("a noncritical retrieval gap was left unfilled")
+        amber.append(("retrieval_gap", "a noncritical retrieval gap was left unfilled"))
     if verification is not None and verification.attempts > 1:
-        amber_reasons.append("the output needed one regeneration")
+        amber.append(("output_regenerated", "the output needed one regeneration"))
     if coverage.stale_sources:
-        amber_reasons.append(f"stale sources: {', '.join(coverage.stale_sources)}")
+        amber.append(("stale_sources", f"stale sources: {', '.join(coverage.stale_sources)}"))
     if budget is not None and budget.outcome != "pass":
-        amber_reasons.append("the run reached its model budget and finished deterministically")
-    if amber_reasons:
-        return "amber", "; ".join(amber_reasons)
+        amber.append(
+            (
+                "budget_exhausted",
+                "the run reached its model budget and finished deterministically",
+            )
+        )
+    if amber:
+        return RouteVerdict(
+            "amber",
+            "; ".join(message for _, message in amber),
+            tuple(code for code, _ in amber),
+        )
 
-    return "green", "confidence, coverage, and verification all met the release bar"
+    return RouteVerdict("green", "confidence, coverage, and verification all met the release bar")
 
 
 def abstention_route(
@@ -276,6 +336,7 @@ def abstention_route(
 __all__ = [
     "AMBER_MINIMUM_CONFIDENCE",
     "GREEN_MINIMUM_CONFIDENCE",
+    "RouteVerdict",
     "abstention_route",
     "coverage_verdict",
     "human_route",

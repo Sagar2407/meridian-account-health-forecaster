@@ -88,7 +88,7 @@ export const supportingCitation: Citation = {
   excerpt:
     'The team confirmed budget for the next term and asked about seat expansion.',
   retrieval_score: 0.81,
-  signal: 'positive',
+  signal: 'favorable',
   sub_goal: 'relationship',
 }
 
@@ -102,7 +102,7 @@ export const counterCitation: Citation = {
   excerpt:
     'Third escalation this quarter on the reporting module; the sponsor is unhappy.',
   retrieval_score: 0.77,
-  signal: 'negative',
+  signal: 'adverse',
   sub_goal: 'support',
 }
 
@@ -142,14 +142,14 @@ export const forecast: ForecastDecision = {
     'Adoption held steady through the last quarter while support escalations rose. The two signals offset, so the calibrated distribution is close between Renewed and Churned.',
   drivers: [
     {
-      name: 'adoption_level_last_q',
-      direction: 'positive',
+      feature: 'adoption_level_last_q',
+      direction: 'supports',
       contribution: 0.21,
       value: 74.2,
     },
     {
-      name: 'escalation_rate_26w',
-      direction: 'negative',
+      feature: 'escalation_rate_26w',
+      direction: 'opposes',
       contribution: -0.18,
       value: 0.31,
     },

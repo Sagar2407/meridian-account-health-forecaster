@@ -71,7 +71,7 @@ def _split_digest() -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _plot_reliability(table: pd.DataFrame, destination: Path, title: str) -> None:
+def plot_reliability(table: pd.DataFrame, destination: Path, title: str) -> None:
     """Write a reliability diagram comparing confidence against accuracy."""
 
     figure, axes = plt.subplots(figsize=(5.0, 5.0))
@@ -89,8 +89,12 @@ def _plot_reliability(table: pd.DataFrame, destination: Path, title: str) -> Non
     plt.close(figure)
 
 
-def _plot_confusion(
-    labels: np.ndarray, predicted: np.ndarray, classes: list[str], destination: Path
+def plot_confusion(
+    labels: np.ndarray,
+    predicted: np.ndarray,
+    classes: list[str],
+    destination: Path,
+    title: str = "Validation confusion matrix",
 ) -> None:
     """Write a confusion matrix heatmap."""
 
@@ -108,7 +112,7 @@ def _plot_confusion(
             axes.text(column, row, str(counts[row][column]), ha="center", va="center", fontsize=9)
     axes.set_xlabel("predicted")
     axes.set_ylabel("actual")
-    axes.set_title("Validation confusion matrix")
+    axes.set_title(title)
     figure.colorbar(image, ax=axes, shrink=0.8)
     figure.tight_layout()
     figure.savefig(destination, dpi=150)
@@ -341,14 +345,14 @@ def run_training(seed: int = PROJECT_SEED) -> TrainingReport:
     destination.mkdir(parents=True, exist_ok=True)
 
     reliability = reliability_table(validation_y, probabilities, classes)
-    _plot_reliability(reliability, destination / "reliability_calibrated.png", "Calibrated")
-    _plot_reliability(
+    plot_reliability(reliability, destination / "reliability_calibrated.png", "Calibrated")
+    plot_reliability(
         reliability_table(validation_y, uncalibrated.predict_proba(validation_x), classes),
         destination / "reliability_uncalibrated.png",
         "Uncalibrated",
     )
     predicted = np.array(classes, dtype=object)[probabilities.argmax(axis=1)]
-    _plot_confusion(validation_y, predicted, classes, destination / "confusion_validation.png")
+    plot_confusion(validation_y, predicted, classes, destination / "confusion_validation.png")
 
     pd.DataFrame([vars(item) for item in candidates]).to_csv(
         destination / "candidates.csv", index=False

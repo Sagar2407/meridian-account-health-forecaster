@@ -52,6 +52,11 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-044 | Serve the account page's chart, indicators, and recent activity from the single account endpoint | Accepted | Five requests would let one page render a chart from one point in time beside indicators from another; one request at one cutoff cannot, and the served surface stays equal to section 19.1's table ([Phase 9](PHASE_9_STATUS.md)) |
 | D-045 | Show an abstention the evidence it retrieved before declining to label | Accepted | A reviewer deciding whether the system was right to withhold a label needs to see what it read; the card previously dropped it on exactly those runs ([Phase 9](PHASE_9_STATUS.md)) |
 | D-046 | Forbid `test.skip(true, ...)` on a condition the test itself creates | Accepted | The review-override journey skipped whenever the queue was empty, so the exit gate could pass without ever exercising an override ([Phase 9](PHASE_9_STATUS.md)) |
+| D-047 | Freeze decision thresholds as digested source with no runtime override | Accepted | A threshold an operator can move between runs is not a calibration, and a held-out result measured against a movable threshold means nothing (section 22.7, [Phase 10](PHASE_10_STATUS.md)) |
+| D-048 | Keep the frozen bands despite a 2.9% auto-release rate | Accepted | Loosening to 0.60/0.50 would release twelve times more at a measured 5.7% unreviewed error rate; that trade is a business decision about the cost of a wrong advisory call, not one the data settles ([Phase 10](PHASE_10_STATUS.md)) |
+| D-049 | Collect every dimension from one pass over a split | Accepted | Three of the five dimensions are properties of runs, and one pass with structured records replays exactly what four passes would have measured ([Phase 10](PHASE_10_STATUS.md)) |
+| D-050 | Render the report only from the result dictionary | Accepted | The exit gate is that every claim is traceable to an artifact; a formatter with no literals in it makes that structural rather than promised ([Phase 10](PHASE_10_STATUS.md)) |
+| D-051 | Report a Tree-of-Thought candidate's neutral evidence rather than citing nothing | Accepted | An account whose citations are all directionally neutral left both candidate lists empty, failing output verification on every such run ([Phase 10](PHASE_10_STATUS.md)) |
 
 ## Decisions settled by measurement
 

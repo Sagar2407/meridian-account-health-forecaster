@@ -399,7 +399,8 @@ def _route(**overrides: object) -> tuple[str, str]:
         "high_value": False,
         "retrieval_gap": False,
     }
-    return human_route(**{**defaults, **overrides})  # type: ignore[arg-type]
+    verdict = human_route(**{**defaults, **overrides})  # type: ignore[arg-type]
+    return verdict.route, verdict.reason
 
 
 def test_a_clean_confident_run_releases_green() -> None:

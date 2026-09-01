@@ -1,0 +1,10 @@
+# Generated output. The formatter checks source; a coverage summary or a
+# Playwright report is written by a tool and reformatting it would only make
+# the next run rewrite it.
+coverage
+dist
+node_modules
+test-results
+playwright-report
+e2e-results.json
+*.tsbuildinfo

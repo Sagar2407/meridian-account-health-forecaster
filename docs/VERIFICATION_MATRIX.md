@@ -45,6 +45,11 @@ This matrix separates verified facts from provisional design choices and unresol
 | No response the browser receives carries a latent field or a prompt key | A Playwright response listener over the portfolio, an assessment, the review queue, a decision card, and the evaluation page | Verified in Phase 9 |
 | Every core user journey works end to end in a browser | 24 Playwright tests, desktop and tablet, against the real stack, 0 skipped | Verified in Phase 9 |
 | A reviewer override in the UI files a traceable regression record | The override journey reads the regression id back from the page | Verified in Phase 9 |
+| Macro F1 on the held-out split is 0.7490, against a 0.4595 majority baseline | 53 test accounts, thresholds frozen at `5e23d7f9d9fef896` | Verified in Phase 10 |
+| Supported-claim rate and exact numeric agreement are both 1.0000 on both splits | 137 development and 37 held-out released runs | Verified in Phase 10 |
+| No wrong-account or post-cutoff citation on either split | 260 runs across both splits | Verified in Phase 10 |
+| Error rate rises monotonically green to amber to red | 0.000 / 0.029 / 0.127 on the development split | Verified in Phase 10 |
+| Every claim in the evaluation report comes from its result file | `render()` formats the result and holds no literal; a test asserts every named artifact exists | Verified in Phase 10 |
 
 ## Point-in-time audit
 
@@ -77,6 +82,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 | Whether the packaged guardrail policy passes its hard safety gate | All 36 cases through the offline graph, with per-case behavioural grading and whole-result leakage checks | 0/15 hard false passes, 0/21 false blocks, 0 leakage findings, and 36/36 behavioural checks passed; see `docs/PHASE_7_STATUS.md` |
 | Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts | **No.** 0 auto-released; all 6 queued for review (3 amber, 3 red). The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
+| What loosening the review bands would buy | 29 candidate band pairs replayed over 207 development runs | Twelve times the release rate (6 to 70 of 207) at a 5.7% unreviewed error rate. No threshold was changed: the trade is a business decision; see `docs/PHASE_10_STATUS.md` |
+| Whether the confidence score ranks correctly | Error rate inside each review band, 207 development runs | Yes: 0.000 green, 0.029 amber, 0.127 red, and all 8 errors landed in red. ECE says the absolute scale is over-confident even though the ranking is sound |
 
 ## Unresolved inputs
 
@@ -87,7 +94,9 @@ This matrix separates verified facts from provisional design choices and unresol
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
-| Routing thresholds auto-release almost nothing | A portfolio scan currently returns only review load; 2 of 21 answerable guardrail cases were released | Freeze thresholds against the development split in Phase 10 (section 22.7 forbids tuning them now) |
+| Expected calibration error is 0.1712 held out, against a 0.10 target | The release bands sit on an over-confident probability scale | Refit calibration on development data and re-freeze; section 22.7 forbids recalibrating on the held-out result now measured |
+| Auto-release rate is 0.0000 on the held-out split | The system produces only review load | The measured trade-off is recorded; choosing a band is the owner's decision |
+| `Contracted` has two held-out examples | Its per-class F1 of 0.2857 is not a measurement | Report it, do not read it |
 | The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
 | Serving state is per process and in memory | Live runs, scans, and rate-limit windows do not survive a restart or a second replica | Correct for the single-container target; a scaled deployment needs a shared store |
 | The evaluation page has no confusion matrix or calibration curve | Section 20.6 lists both; the current artifacts are scalar | Phase 10's full evaluation writes the per-class artifacts the page would draw |
@@ -100,11 +109,12 @@ The official report template, presentation outline, and any separate detailed gr
 
 ## Readiness decision
 
-Phases 0 through 9 are complete. The latest `make phase0-verify` rebuilt both
+Phases 0 through 10 are complete. The latest `make phase0-verify` rebuilt both
 locked images, passed formatting, lint, strict typing, 485 backend container
 tests at 95.24% coverage, 7 frontend tests, the production frontend build, the
 repository policy scan over 242 files, and both live container health checks. The separate
 Phase 7 safety run passed all 36 cases without a provider, the Phase 8 scan held
-its concurrency and budget bounds, and the Phase 9 browser suite passed 24
-journeys with none skipped. Phase 10 may begin; deferred submission artifacts do
-not affect implementation readiness.
+its concurrency and budget bounds, the Phase 9 browser suite passed 24
+journeys with none skipped, and the Phase 10 held-out evaluation ran against
+frozen thresholds. Phase 11 may begin; deferred submission artifacts do not
+affect implementation readiness.

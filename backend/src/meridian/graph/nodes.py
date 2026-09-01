@@ -1362,7 +1362,7 @@ class GraphNodes:
         verification = state.get("output_verification")
         breakdown = apply_verification_cap(decision.confidence_breakdown, verification)
         high_value = self._runtime.high_value.is_high_value(account)
-        band, reason = human_route(
+        verdict = human_route(
             confidence=breakdown.confidence,
             coverage=bundle.coverage,
             verification=verification,
@@ -1375,6 +1375,8 @@ class GraphNodes:
             evidence_screen=_strict_verdict(state, "evidence"),
             budget=_verdict(state, "execution"),
         )
+        band = verdict.route
+        reason = verdict.reason
         final = decision.model_copy(
             update={
                 "confidence": breakdown.confidence,
@@ -1390,6 +1392,7 @@ class GraphNodes:
             {
                 "route": band,
                 "reason": reason,
+                "codes": list(verdict.codes),
                 "confidence": breakdown.confidence,
                 "high_value": high_value,
                 "outcome": final.outcome,
@@ -1400,7 +1403,10 @@ class GraphNodes:
         routing_guardrail = GuardrailDecision(
             stage="routing",
             outcome="pass" if band == "green" else "review",
-            rule_ids=(f"ROUTE-{band.upper()}",),
+            # The rules that actually fired, not just the band they produced:
+            # a reviewer asking "why is this red?" gets an answer they can look
+            # up rather than a sentence they have to parse.
+            rule_ids=(f"ROUTE-{band.upper()}", *verdict.codes),
             reason_codes=(f"route_{band}",),
             message=reason,
         )

@@ -131,10 +131,10 @@ export function DecisionCard({ decision }: { decision: Decision }) {
   }
 
   const supporting = decision.citations.filter(
-    (item) => item.signal === 'positive',
+    (item) => item.signal === 'favorable',
   )
   const context = decision.citations.filter(
-    (item) => item.signal !== 'positive',
+    (item) => item.signal !== 'favorable',
   )
 
   return (
@@ -194,13 +194,13 @@ export function DecisionCard({ decision }: { decision: Decision }) {
             <ul className="driver-list">
               {decision.drivers.map((driver) => (
                 <li
-                  key={driver.name}
+                  key={driver.feature}
                   className={`driver driver--${driver.direction}`}
                 >
-                  <span className="driver__name">{driver.name}</span>
+                  <span className="driver__name">{driver.feature}</span>
                   <span className="driver__value">{driver.value}</span>
                   <span className="driver__direction">
-                    {driver.direction === 'positive'
+                    {driver.direction === 'supports'
                       ? 'supports renewal'
                       : 'raises risk'}
                   </span>

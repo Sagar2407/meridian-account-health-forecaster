@@ -43,6 +43,7 @@ from meridian.contracts import (
 )
 from meridian.data.repository import RuntimeRepository
 from meridian.graph import build_graph, resume_assessment, run_assessment, sqlite_checkpointer
+from meridian.graph.observability import JsonlTraceSink
 from meridian.graph.runtime import GraphRuntime
 from meridian.graph.state import MAX_EVIDENCE_ROUNDS, ForecasterState
 from meridian.llm.fake import ScriptedGenerator
@@ -1014,3 +1015,37 @@ def test_the_tot_path_never_runs_deeper_or_wider_than_its_bounds(
         searched += 1
     if not searched:
         pytest.skip("no indexed account triggered the conflict gate")
+
+
+def test_a_run_writes_its_trace_to_the_sink_it_was_given(
+    graph_runtime: GraphRuntime, account_id: str, tmp_path: Path
+) -> None:
+    """Section 21.1 makes local tracing mandatory, so a run must actually write one."""
+
+    target = tmp_path / "runs.jsonl"
+    sink = JsonlTraceSink(path=target)
+    run = run_assessment(build_graph(graph_runtime), _request(account_id), sink=sink)
+
+    lines = target.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == len(run.trace)
+    recorded = [json.loads(line) for line in lines]
+    assert {row["event"] for row in recorded} == {event.event for event in run.trace}
+    assert all(row["run_id"] == run.run_id for row in recorded)
+
+
+def test_a_failing_sink_does_not_cost_the_run_its_answer(
+    graph_runtime: GraphRuntime, account_id: str
+) -> None:
+    """A run that completed but could not write its trace is still a completed run."""
+
+    class _Broken:
+        def write(self, event: object) -> None:
+            raise RuntimeError("disk is full")
+
+        def close(self) -> None:
+            return None
+
+    run = run_assessment(build_graph(graph_runtime), _request(account_id), sink=_Broken())
+
+    assert run.result is not None or run.blocked is not None
+    assert run.trace

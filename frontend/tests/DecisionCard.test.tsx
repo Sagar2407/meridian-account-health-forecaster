@@ -258,3 +258,27 @@ describe('an abstention still shows what it read', () => {
     ).toBeInTheDocument()
   })
 })
+
+describe('the API vocabularies the card renders', () => {
+  it('splits citations on the signal the API actually sends', () => {
+    // `favorable`/`adverse`/`neutral`, not `positive`/`negative`. Typing these
+    // wrongly left the split inert and every citation in the context column.
+    render(<DecisionCard decision={forecast} />)
+
+    const supporting = screen.getByRole('heading', {
+      name: 'Supporting evidence',
+    }).parentElement as HTMLElement
+    expect(within(supporting).getByText('NOTE-1042-08')).toBeInTheDocument()
+    expect(within(supporting).queryByText('KB-014')).not.toBeInTheDocument()
+  })
+
+  it('reads a driver direction as supports or opposes', () => {
+    // The API sends `supports`/`opposes`. Comparing against `positive` made
+    // every driver render as "raises risk", including the supporting ones.
+    render(<DecisionCard decision={forecast} />)
+
+    expect(screen.getByText('supports renewal')).toBeInTheDocument()
+    expect(screen.getByText('raises risk')).toBeInTheDocument()
+    expect(screen.getByText('adoption_level_last_q')).toBeInTheDocument()
+  })
+})

@@ -129,7 +129,7 @@ Safety spans:
 
 Prior assessments are context, not truth. Every new assessment must re-query point-in-time evidence.
 
-## As built, after Phase 9
+## As built, after Phase 10
 
 | Concern | Module |
 | --- | --- |
@@ -159,6 +159,11 @@ Prior assessments are context, not truth. Every new assessment must re-query poi
 | Portfolio, account, run, review, and evaluation pages | `frontend/src/pages/*` |
 | Decision card, evidence drawer, timeline, and charts | `frontend/src/components/*` |
 | Browser journeys and screenshot capture | `frontend/e2e/*` |
+| Frozen decision thresholds and their digest | `meridian.graph.thresholds` |
+| Trace sinks, cost estimation, optional LangSmith | `meridian.graph.observability` |
+| One evaluation pass over a split | `meridian_eval.system_run` |
+| The five evaluation dimensions | `meridian_eval.dimensions` |
+| Threshold sweep and the result directory | `meridian_eval.threshold_study`, `meridian_eval.report` |
 
 The contracts sit at the package root rather than inside `meridian.graph`
 because the agents, the guardrails, and the graph all depend on them: an agent

@@ -28,6 +28,9 @@ export type ErrorCode =
 
 export type Route = 'green' | 'amber' | 'red' | 'blocked'
 
+/** How a citation points, as the tool layer classifies it. */
+export type EvidenceSignal = 'adverse' | 'favorable' | 'neutral'
+
 /** A failure the server described, rather than a bare network error. */
 export class ApiError extends Error {
   readonly code: ErrorCode
@@ -162,15 +165,18 @@ export type Citation = {
   doc_date: string | null
   excerpt: string
   retrieval_score: number
-  signal: 'positive' | 'negative' | 'neutral'
+  /** The API's own vocabulary. `positive`/`negative` are not values it sends. */
+  signal: EvidenceSignal
   sub_goal: string | null
 }
 
 export type Driver = {
-  name: string
-  direction: 'positive' | 'negative'
-  contribution: number
+  /** The feature, as the model names it. The API's field is `feature`. */
+  feature: string
   value: number
+  contribution: number
+  /** The API's own vocabulary; `positive`/`negative` are not values it sends. */
+  direction: 'supports' | 'opposes'
   description?: string
 }
 

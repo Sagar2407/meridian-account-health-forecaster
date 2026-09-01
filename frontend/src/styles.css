@@ -768,10 +768,10 @@ textarea {
 .driver__direction {
   font-size: 0.76rem;
 }
-.driver--positive .driver__direction {
+.driver--supports .driver__direction {
   color: var(--status-green);
 }
-.driver--negative .driver__direction {
+.driver--opposes .driver__direction {
   color: var(--status-red);
 }
 
@@ -807,10 +807,10 @@ textarea {
 .citation:hover {
   background: var(--surface-raised);
 }
-.citation--positive {
+.citation--favorable {
   border-left-color: var(--status-green);
 }
-.citation--negative {
+.citation--adverse {
   border-left-color: var(--status-red);
 }
 

@@ -533,13 +533,29 @@ def deterministic_candidate(bundle: EvidenceBundle, outcome: str) -> CandidateHy
     else:
         parts.append("No retrieved evidence points the other way for this outcome.")
 
+    # An account whose every citation is neutral -- routine how-to tickets, a
+    # monthly touchpoint -- leaves both directional lists empty. The candidate
+    # has still *read* that evidence, and a narrative that names none of it
+    # fails output verification with "cites no evidence although evidence was
+    # retrieved". Naming what was read and found non-directional is both true
+    # and what the verifier is asking for.
+    considered: tuple[Citation, ...] = ()
+    if not agreeing and not opposing:
+        considered = _citations_pointing(bundle, "neutral", 3)
+        if considered:
+            parts.append(
+                "The retrieved evidence is directionally neutral: "
+                + ", ".join(citation.doc_id for citation in considered)
+                + " describe routine activity rather than a signal either way."
+            )
+
     strongest = opposing[0].doc_id if opposing else "none"
     return CandidateHypothesis(
         outcome=outcome,
         model_prior=round(prior, 6),
         rationale=" ".join(parts),
         key_drivers=drivers,
-        supporting_citation_ids=tuple(citation.doc_id for citation in agreeing),
+        supporting_citation_ids=tuple(citation.doc_id for citation in (agreeing or considered)),
         counterevidence_citation_ids=tuple(citation.doc_id for citation in opposing),
         strongest_counterevidence=strongest,
         source="deterministic",

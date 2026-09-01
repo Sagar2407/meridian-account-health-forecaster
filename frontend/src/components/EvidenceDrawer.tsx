@@ -17,9 +17,9 @@ import { useEffect, useRef } from 'react'
 import type { Citation } from '../api'
 
 const signalLabel: Record<Citation['signal'], string> = {
-  positive: 'Supports a favourable reading',
-  negative: 'Counterevidence',
-  neutral: 'Context',
+  favorable: 'Points toward a favourable outcome',
+  adverse: 'Points toward an adverse outcome',
+  neutral: 'Context; points neither way',
 }
 
 export function EvidenceDrawer({
