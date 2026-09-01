@@ -297,14 +297,14 @@ export const accountDetail: AccountDetail = {
       item_date: '2026-07-19',
       label: 'Reporting module timing out',
       detail: 'Bug · Urgent · Open',
-      signal: 'negative',
+      signal: 'adverse',
     },
     {
       kind: 'note',
       item_date: '2026-07-02',
       label: 'QBR',
       detail: 'logged by A. Rivera',
-      signal: 'positive',
+      signal: 'favorable',
     },
   ],
   prior_assessments: [
@@ -335,6 +335,7 @@ export const reviewCase: ReviewCase = {
   reason_code: null,
   note: null,
   corrected_outcome: null,
+  requested_data: [],
 }
 
 export const reviewCard: ReviewCard = {

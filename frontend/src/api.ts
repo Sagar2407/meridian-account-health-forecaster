@@ -97,7 +97,8 @@ export type RecentItem = {
   item_date: string
   label: string
   detail: string
-  signal: 'positive' | 'negative' | 'neutral'
+  /** The same vocabulary a citation carries. */
+  signal: EvidenceSignal
 }
 
 export type AccountIndicators = {
@@ -378,6 +379,8 @@ export type ReviewCase = {
   reason_code: string | null
   note: string | null
   corrected_outcome: string | null
+  /** What a reviewer asked for when they resolved the case with a data request. */
+  requested_data: RequestedData[]
 }
 
 export type ReviewCard = {

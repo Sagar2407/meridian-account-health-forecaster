@@ -50,6 +50,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | No wrong-account or post-cutoff citation on either split | 260 runs across both splits | Verified in Phase 10 |
 | Error rate rises monotonically green to amber to red | 0.000 / 0.029 / 0.127 on the development split | Verified in Phase 10 |
 | Every claim in the evaluation report comes from its result file | `render()` formats the result and holds no literal; a test asserts every named artifact exists | Verified in Phase 10 |
+| The browser's types match the models the API sends | `test_browser_contract.py` compares field names and literal unions against the Pydantic models | Verified in Phase 10 |
+| An abstention carries rule codes like any other route | Section 22.6's safe-fallback target now measures 1.0000 over the development run that reaches it | Verified in Phase 10 |
 
 ## Point-in-time audit
 

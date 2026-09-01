@@ -473,9 +473,10 @@ def test_an_adverse_call_on_an_ordinary_account_is_not_automatically_red() -> No
 def test_an_abstention_escalates_on_impact_as_well_as_on_gaps() -> None:
     """The instructor feedback asks for impact-aware escalation, not gap counting."""
 
-    assert abstention_route(_coverage(), high_value=False)[0] == "amber"
-    assert abstention_route(_coverage(), high_value=True)[0] == "red"
-    band, reason = abstention_route(_coverage(critical_gaps=("no history",)), high_value=False)
+    assert abstention_route(_coverage(), high_value=False).route == "amber"
+    assert abstention_route(_coverage(), high_value=True).route == "red"
+    verdict = abstention_route(_coverage(critical_gaps=("no history",)), high_value=False)
+    band, reason = verdict.route, verdict.reason
     assert band == "red"
     assert "critical coverage is missing" in reason
 
@@ -555,8 +556,31 @@ def test_a_passing_tree_of_thought_draft_routes_normally() -> None:
 def test_an_unresolved_conflict_abstention_routes_red() -> None:
     """Section 15.6: a persistent tie is a red review case, not an amber note."""
 
-    band, reason = abstention_route(
+    verdict = abstention_route(
         _coverage(), high_value=False, unresolved_conflict="the branches stayed tied"
     )
-    assert band == "red"
-    assert "not resolved" in reason
+    assert verdict.route == "red"
+    assert "not resolved" in verdict.reason
+    assert "unresolved_conflict" in verdict.codes
+
+
+def test_an_abstention_carries_rule_codes_like_any_other_route() -> None:
+    """The runs that abstain were the only runs carrying no codes.
+
+    Section 22.6 measures "exhausted-retrieval safe fallback" over exactly those
+    runs, so a bare band and a sentence meant the metric counted nothing at all
+    and reported "not measured" on every evaluation.
+    """
+
+    exhausted = abstention_route(
+        _coverage(critical_gaps=("retrieval was exhausted",)), high_value=False
+    )
+    assert exhausted.route == "red"
+    assert "critical_coverage_missing" in exhausted.codes
+
+    ordinary = abstention_route(_coverage(), high_value=False)
+    assert ordinary.route == "amber"
+    assert ordinary.codes == ("insufficient_evidence",)
+
+    high_value = abstention_route(_coverage(), high_value=True)
+    assert "high_value_account" in high_value.codes

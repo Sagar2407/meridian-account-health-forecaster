@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from meridian.api.dependencies import RuntimeDependency
 from meridian.api.errors import ApiError
 from meridian.data.repository import AccountProfile, RuntimeRepository, UnknownAccountError
+from meridian.tools.contracts import EvidenceSignal
 
 router = APIRouter(tags=["accounts"])
 
@@ -105,13 +106,19 @@ class UsagePoint(BaseModel):
 
 
 class RecentItem(BaseModel):
-    """One dated item from the account's recent history."""
+    """One dated item from the account's recent history.
+
+    `signal` uses `EvidenceSignal`, the same vocabulary a citation carries.
+    Two spellings of "this points the wrong way" in one API is one more thing a
+    reader has to hold in their head, and the browser has already got it wrong
+    once.
+    """
 
     kind: Literal["ticket", "note", "event"]
     item_date: str
     label: str
     detail: str
-    signal: Literal["positive", "negative", "neutral"] = "neutral"
+    signal: EvidenceSignal = "neutral"
 
 
 class AccountIndicators(BaseModel):
@@ -181,7 +188,7 @@ def _usage_series(repository: RuntimeRepository, account_id: str) -> list[UsageP
     ]
 
 
-def _sentiment_signal(value: object) -> Literal["positive", "negative", "neutral"]:
+def _sentiment_signal(value: object) -> EvidenceSignal:
     """Classify a stored sentiment score. Structured metadata, never free text."""
 
     if value is None:
@@ -193,9 +200,9 @@ def _sentiment_signal(value: object) -> Literal["positive", "negative", "neutral
     if score != score:  # NaN, which the archive uses for a missing score
         return "neutral"
     if score > 0.15:
-        return "positive"
+        return "favorable"
     if score < -0.15:
-        return "negative"
+        return "adverse"
     return "neutral"
 
 
@@ -243,7 +250,7 @@ def _recent(repository: RuntimeRepository, account_id: str) -> list[RecentItem]:
                 item_date=pd.Timestamp(row["event_date"]).date().isoformat(),
                 label=str(row["headline"])[:MAX_SUBJECT_CHARACTERS],
                 detail=f"{row['event_type']} · {row['source']}",
-                signal=("positive" if polarity > 0 else "negative" if polarity < 0 else "neutral"),
+                signal=("favorable" if polarity > 0 else "adverse" if polarity < 0 else "neutral"),
             )
         )
 

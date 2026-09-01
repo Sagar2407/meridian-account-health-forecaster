@@ -87,8 +87,8 @@ def route_intake(state: ForecasterState) -> str:
     if decision is None or decision.outcome == "block":
         return "safe_refusal"
     # A clarification is a refusal to guess, not a refusal to answer, so it ends
-    # the run the same way a block does but with a different message. Phase 8's
-    # API turns it into a prompt for the user rather than an error.
+    # the run the same way a block does but with a different message. The API
+    # turns it into a prompt for the user rather than an error.
     if decision.outcome == "clarify":
         return "safe_refusal"
     return "load_context"
@@ -307,7 +307,7 @@ def human_route(
 
 def abstention_route(
     coverage: CoverageReport, high_value: bool, unresolved_conflict: str | None = None
-) -> tuple[Route, str]:
+) -> RouteVerdict:
     """Return the band for a degraded or abstained, no-label result.
 
     The instructor feedback recorded in section 2 asks for "impact-aware
@@ -319,18 +319,39 @@ def abstention_route(
     two branches stay tied after the consistency vote has not failed to find
     evidence -- it has found evidence that genuinely points both ways, which is
     precisely the case a person should look at.
+
+    Returns the same `RouteVerdict` as `human_route`, codes included. An
+    abstention used to return a bare band and a sentence, which meant the runs
+    that abstained were the only runs carrying no rule codes -- and section
+    22.6's "exhausted-retrieval safe fallback" measures exactly those runs, so
+    the metric silently counted nothing at all.
     """
 
-    reasons: list[str] = []
+    reasons: list[tuple[str, str]] = []
     if unresolved_conflict:
-        reasons.append(f"the conflict was not resolved: {unresolved_conflict}")
+        reasons.append(
+            ("unresolved_conflict", f"the conflict was not resolved: {unresolved_conflict}")
+        )
     if coverage.has_critical_gap:
-        reasons.append(f"critical coverage is missing: {'; '.join(coverage.critical_gaps)}")
+        reasons.append(
+            (
+                "critical_coverage_missing",
+                f"critical coverage is missing: {'; '.join(coverage.critical_gaps)}",
+            )
+        )
     if high_value:
-        reasons.append("this is a high-value account")
+        reasons.append(("high_value_account", "this is a high-value account"))
     if reasons:
-        return "red", "; ".join(reasons)
-    return "amber", "evidence was insufficient for a categorical forecast"
+        return RouteVerdict(
+            "red",
+            "; ".join(message for _, message in reasons),
+            tuple(code for code, _ in reasons),
+        )
+    return RouteVerdict(
+        "amber",
+        "evidence was insufficient for a categorical forecast",
+        ("insufficient_evidence",),
+    )
 
 
 __all__ = [

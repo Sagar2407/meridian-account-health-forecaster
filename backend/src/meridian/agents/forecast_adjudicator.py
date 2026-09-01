@@ -262,21 +262,6 @@ def verify_output(
     )
 
 
-def verify_draft(
-    draft: AdjudicationDraft, bundle: EvidenceBundle, attempts: int = 1
-) -> OutputVerification:
-    """Verify a model's draft. A thin name for the common case."""
-
-    return verify_output(
-        draft.rationale,
-        draft.recommended_action,
-        draft.limitations,
-        draft.cited_doc_ids,
-        bundle,
-        attempts,
-    )
-
-
 def _percentage(value: float) -> str:
     """Return a probability written the way the verifier expects to read it."""
 
@@ -763,7 +748,6 @@ __all__ = [
     "evidence_brief",
     "is_verified",
     "split_evidence",
-    "verify_draft",
     "verify_output",
     "written_numbers",
 ]

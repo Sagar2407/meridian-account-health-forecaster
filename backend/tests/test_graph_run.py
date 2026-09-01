@@ -256,6 +256,7 @@ def test_no_trace_event_carries_a_prompt_or_a_raw_reply(
     """Section 21.3: the trace is published, so it is checked, not trusted."""
 
     run = run_assessment(build_graph(graph_runtime), _request(account_id))
+    assert run.trace, "a run with no trace would satisfy every check below"
     for event in run.trace:
         assert "prompt" not in event.payload
         assert "messages" not in event.payload

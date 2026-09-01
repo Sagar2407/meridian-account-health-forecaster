@@ -944,9 +944,10 @@ class GraphNodes:
         """
 
         high_value = self._runtime.high_value.is_high_value(account)
-        route, reason = abstention_route(
+        verdict = abstention_route(
             bundle.coverage, high_value, unresolved_conflict=result.abstain_reason
         )
+        route, reason = verdict.route, verdict.reason
         decision = InsufficientEvidenceDecision(
             account_id=bundle.account_id,
             cutoff=bundle.cutoff,
@@ -995,7 +996,7 @@ class GraphNodes:
                 GuardrailDecision(
                     stage="routing",
                     outcome="review",
-                    rule_ids=("ROUTE-RED",),
+                    rule_ids=("ROUTE-RED", *verdict.codes),
                     reason_codes=("route_red",),
                     message=reason,
                 ),
@@ -1292,7 +1293,8 @@ class GraphNodes:
             gaps.append("Evidence coverage was insufficient for a categorical forecast.")
 
         high_value = self._runtime.high_value.is_high_value(account)
-        route, route_reason = abstention_route(coverage, high_value)
+        verdict = abstention_route(coverage, high_value)
+        route, route_reason = verdict.route, verdict.reason
         citations: tuple[Citation, ...] = (
             retrieval.citations + retrieval.guidance if retrieval is not None else ()
         )
@@ -1329,7 +1331,7 @@ class GraphNodes:
                 GuardrailDecision(
                     stage="routing",
                     outcome="review",
-                    rule_ids=(f"ROUTE-{route.upper()}",),
+                    rule_ids=(f"ROUTE-{route.upper()}", *verdict.codes),
                     reason_codes=(f"route_{route}",),
                     message=route_reason,
                 ),

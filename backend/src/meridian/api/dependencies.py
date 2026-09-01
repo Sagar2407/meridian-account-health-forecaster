@@ -69,16 +69,6 @@ def get_scan(scan_id: str) -> PortfolioScan | None:
         return _scans.get(scan_id)
 
 
-def reset_serving_state() -> None:
-    """Drop every cached dependency. For tests and for a clean reload."""
-
-    get_runtime.cache_clear()
-    get_run_manager.cache_clear()
-    get_rate_limiter.cache_clear()
-    with _scan_lock:
-        _scans.clear()
-
-
 def client_key(request: Request) -> str:
     """Return a stable identifier for the caller.
 
@@ -134,5 +124,4 @@ __all__ = [
     "get_runtime",
     "get_scan",
     "register_scan",
-    "reset_serving_state",
 ]

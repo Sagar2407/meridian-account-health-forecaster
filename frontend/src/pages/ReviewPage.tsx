@@ -221,6 +221,14 @@ export function ReviewPage() {
                   <span className="queue-item__account">{item.account_id}</span>
                   <span className="queue-item__reason">{item.reason}</span>
                   <span className="queue-item__meta">{item.created_at}</span>
+                  {item.requested_data.length > 0 ? (
+                    <span className="queue-item__meta">
+                      Data requested:{' '}
+                      {item.requested_data
+                        .map((entry) => entry.source)
+                        .join(', ')}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             ))}

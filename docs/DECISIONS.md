@@ -57,6 +57,9 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-049 | Collect every dimension from one pass over a split | Accepted | Three of the five dimensions are properties of runs, and one pass with structured records replays exactly what four passes would have measured ([Phase 10](PHASE_10_STATUS.md)) |
 | D-050 | Render the report only from the result dictionary | Accepted | The exit gate is that every claim is traceable to an artifact; a formatter with no literals in it makes that structural rather than promised ([Phase 10](PHASE_10_STATUS.md)) |
 | D-051 | Report a Tree-of-Thought candidate's neutral evidence rather than citing nothing | Accepted | An account whose citations are all directionally neutral left both candidate lists empty, failing output verification on every such run ([Phase 10](PHASE_10_STATUS.md)) |
+| D-052 | Return the same structured `RouteVerdict` from `abstention_route` as from `human_route` | Accepted | Abstentions were the only runs carrying no rule codes, and section 22.6's safe-fallback target measures exactly those runs, so the metric silently counted nothing ([Phase 10](PHASE_10_STATUS.md)) |
+| D-053 | Pin the browser's declared types against the Pydantic models they mirror | Accepted | The decision card is served as `dict[str, Any]` and has no schema; three defects drifted through that seam without either type-checker noticing ([Phase 10](PHASE_10_STATUS.md)) |
+| D-054 | Use one `EvidenceSignal` vocabulary across the whole API | Accepted | A citation said `adverse/favorable` and a recent item said `positive/negative`; one API with two spellings of the same idea is one more thing to get wrong, and the browser already had ([Phase 10](PHASE_10_STATUS.md)) |
 
 ## Decisions settled by measurement
 

@@ -53,6 +53,7 @@ Both splits, offline (no provider), thresholds `5e23d7f9d9fef896`.
 | Expected calibration error | 0.1568 | **0.1712** | ≤ 0.10 ❌ |
 | Completion rate | 1.0000 | 1.0000 | — |
 | Auto-release rate | 0.0290 | **0.0000** | — |
+| Exhausted-retrieval safe fallback | 1.0000 (1 run) | no such run | 1.00 ✅ |
 | p50 / p95 latency | 162 / 251 ms | 167 / 261 ms | p95 < 20 s ✅ |
 
 ### The routing works; the release rate does not
@@ -108,7 +109,8 @@ quantity.
 
 ## Verification
 
-596 tests pass on the host at 94.76% coverage; 41 are new in this phase.
+621 tests pass on the host at 94.86% coverage; 66 are new in this phase,
+including the post-phase audit below.
 
 `make phase0-verify` passed on the locked images: formatting over 139 files,
 ruff, strict mypy over 138 source files, **591 backend container tests with 6
@@ -165,6 +167,58 @@ Both were type-level lies that TypeScript could not catch, because nothing
 checked the browser's types against the server's. Both are fixed and pinned by
 tests.
 
+## Post-phase audit
+
+A sweep for inconsistencies after the phase closed found five things, all fixed
+in the same commit as this note.
+
+**An abstention carried no rule codes, so section 22.6's safe-fallback target
+measured nothing.** `human_route` returns structured codes; `abstention_route`
+returned only a band and a sentence. Every run that abstained -- 70 of 207 on
+development, 16 of 53 held out -- therefore carried no codes at all, and the
+`exhausted_retrieval_fallback` block looked for `critical_coverage_missing`
+among them and always found zero. Both evaluations reported that target as "not
+measured" and it read like an absent input rather than a broken query. Fixed:
+`abstention_route` returns the same `RouteVerdict`, and the metric now reports
+1.0000 over the one development run that reached it.
+
+**The browser knew nothing about `requested_data`.** The API sends it on every
+review case; the client type omitted it, so a resolved data request showed a
+reviewer no record of what had been asked for. Fixed, and the queue now shows it.
+
+**Two vocabularies for "signal" in one API.** A citation's was
+`adverse | favorable | neutral`; a recent-activity item's was
+`positive | negative | neutral`. Both are now the tool layer's `EvidenceSignal`.
+The browser's guardrail chip was named after the signal classes despite meaning
+pass/fail, which is why renaming them silently unstyled it; it is now
+`chip--pass` / `chip--fail`.
+
+**Two dead public names.** `verify_draft` and `reset_serving_state` were
+defined, exported, and called by nothing. Removed.
+
+**Three tests whose assertions all sat inside a loop over a runtime
+collection.** They would have passed over an empty list. Each now asserts the
+collection is non-empty first.
+
+### The test that should have caught three of these earlier
+
+`backend/tests/test_browser_contract.py` compares the browser's declared types
+against the Pydantic models they mirror -- field names and literal unions. It
+exists because the decision card is served as `dict[str, Any]` and therefore has
+no OpenAPI schema, which is how `Citation.signal`, `Driver.direction`, and
+`Driver.feature` all drifted without either type-checker noticing.
+
+Writing it also produced a small lesson in its own right: the first parser used
+a lazy `\{(.*?)\n\}`, which runs past a type written on one line and into the
+next declaration. It reported `RequestedData` as declaring eighteen fields
+belonging to `ForecastDecision`. The parser is brace-matched now.
+
+It **skips inside the backend container**, which excludes `frontend/` by design,
+exactly as `test_dataset_source.py` skips without the archive. That takes the
+container's skip count from 6 to 30. The tests run on a developer checkout and
+in CI, which is where a drifting client would be introduced; a reader comparing
+the two counts should know why they differ.
+
 ## Decisions worth recording
 
 ### Thresholds are frozen source, not settings
@@ -218,6 +272,11 @@ gate expressed as a function signature.
 - **LangSmith mirroring has never run against a live project.** The disabled
   path, the missing-package path, and the broken-client path are all tested;
   the working path needs an API key and has not been exercised.
+- **The exhausted-retrieval fallback rests on one development run.** One
+  account in 207 reached the cutoff with critical coverage missing, and it
+  abstained rather than forecasting. No held-out account did, so that split
+  reports the target as not measured. One observation is a demonstration that
+  the path works, not a rate.
 - **The result directory is not committed.** `artifacts/` is git-ignored, so
   the numbers above are reproducible from this commit rather than stored with
   it: `make evaluate-system SPLIT=test`.

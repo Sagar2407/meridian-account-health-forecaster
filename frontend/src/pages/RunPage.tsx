@@ -191,7 +191,7 @@ export function RunPage() {
                 {state.guardrails.map((guardrail, index) => (
                   <li key={`${guardrail.stage}-${index}`}>
                     <span
-                      className={`chip chip--${guardrail.outcome === 'pass' ? 'positive' : 'negative'}`}
+                      className={`chip chip--${guardrail.outcome === 'pass' ? 'pass' : 'fail'}`}
                     >
                       {guardrail.stage}
                     </span>

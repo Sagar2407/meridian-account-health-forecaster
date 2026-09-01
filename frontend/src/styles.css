@@ -405,13 +405,25 @@ code {
   border-color: var(--cmu-red);
   color: var(--cmu-red);
 }
-.chip--positive {
+/* Evidence signals, in the API's own vocabulary. */
+.chip--favorable {
   background: var(--status-green-bg);
   color: var(--status-green);
 }
-.chip--negative {
+.chip--adverse {
   background: var(--status-red-bg);
   color: var(--status-red);
+}
+
+/* A guardrail stage passed or did not. That is not a signal, and naming it
+   after one is why renaming the signal classes silently unstyled it. */
+.chip--pass {
+  background: var(--status-green-bg);
+  color: var(--status-green);
+}
+.chip--fail {
+  background: var(--status-amber-bg);
+  color: var(--status-amber);
 }
 .chip--neutral {
   background: var(--surface-sunken);

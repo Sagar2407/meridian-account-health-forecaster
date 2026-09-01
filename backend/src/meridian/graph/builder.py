@@ -389,8 +389,8 @@ def run_assessment(
         thread_id: Identifier for the conversation a checkpointer resumes on.
             Defaults to the run id, which makes each run its own thread.
         on_event: Called with each trace event as the graph produces it. This
-            is the streaming surface of plan section 19.2; Phase 8's SSE
-            endpoint is a thin wrapper over it.
+            is the streaming surface of plan section 19.2; the SSE endpoint at
+            `GET /api/assessments/{run_id}/events` is a thin wrapper over it.
         sink: Where to record the run's trace (plan section 21.1). Local
             tracing is mandatory, but *which* sink is the caller's choice: the
             API streams to a browser, an evaluation collects in memory, and a

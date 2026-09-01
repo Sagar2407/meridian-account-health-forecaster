@@ -502,6 +502,11 @@ def test_nothing_the_account_page_draws_postdates_the_cutoff(
     payload = client.get(f"/api/accounts/{api_accounts[1]}").json()
     cutoff = payload["effective_cutoff"]
 
+    # Guard the loops below: a page with nothing on it would satisfy every
+    # assertion in this test without checking anything.
+    assert payload["usage"], "no telemetry to check against the cutoff"
+    assert payload["recent"], "no recent activity to check against the cutoff"
+
     for point in payload["usage"]:
         assert point["week_start"] <= cutoff, point
     for item in payload["recent"]:
@@ -515,6 +520,7 @@ def test_the_account_detail_serves_no_ticket_or_note_body(
 
     payload = client.get(f"/api/accounts/{api_accounts[0]}").json()
 
+    assert payload["recent"], "no recent activity, so nothing was checked"
     for item in payload["recent"]:
         assert len(item["label"]) <= 160
         assert len(item["detail"]) <= 200
