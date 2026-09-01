@@ -4,7 +4,7 @@ PYTHON ?= python3
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot evaluate-guardrails assess scan phase0-verify docker-up docker-down
+.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot evaluate-guardrails assess scan e2e screenshots phase0-verify docker-up docker-down
 
 help:
 	@awk 'BEGIN {FS = ":.*## "; print "Meridian development commands:"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -70,6 +70,12 @@ evaluate-guardrails: ## Run the 36 packaged guardrail cases and write the safety
 
 scan: ## Run one bounded portfolio scan, e.g. make scan LIMIT=10 [CONCURRENCY=4] (Docker).
 	./scripts/python_in_docker.sh python scripts/scan_portfolio.py $(if $(LIMIT),--limit $(LIMIT),) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(HORIZON),--horizon-days $(HORIZON),)
+
+e2e: ## Run the Playwright journeys against the real stack (Docker).
+	./scripts/run_e2e.sh
+
+screenshots: ## Capture the README screenshots from the running UI (Docker).
+	PLAYWRIGHT_SCREENSHOTS=1 ./scripts/run_e2e.sh
 
 assess: ## Assess one account end to end, e.g. make assess ACCOUNT=ACC-1042 [OFFLINE=1].
 	./scripts/python_in_docker.sh python scripts/assess_account.py $(ACCOUNT) $(if $(QUESTION),"$(QUESTION)",) $(if $(OFFLINE),--offline,)

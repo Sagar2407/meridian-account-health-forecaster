@@ -478,3 +478,43 @@ def test_the_openapi_schema_is_section_19s_table(client: TestClient) -> None:
         "/api/evaluations",
         "/api/evaluations/{eval_id}",
     }
+
+
+def test_the_account_detail_carries_everything_the_page_draws(
+    client: TestClient, api_accounts: tuple[str, ...]
+) -> None:
+    """Section 20.2's account page is one request, at one cutoff."""
+
+    payload = client.get(f"/api/accounts/{api_accounts[0]}").json()
+
+    assert payload["usage"], "the 104-week trajectory chart has nothing to draw"
+    assert len(payload["usage"]) <= 104
+    assert payload["indicators"]["weeks_observed"] == len(payload["usage"])
+    assert isinstance(payload["recent"], list)
+    assert {item["kind"] for item in payload["recent"]} <= {"ticket", "note", "event"}
+
+
+def test_nothing_the_account_page_draws_postdates_the_cutoff(
+    client: TestClient, api_accounts: tuple[str, ...]
+) -> None:
+    """A chart drawn past the cutoff would show a reader what the forecast could not see."""
+
+    payload = client.get(f"/api/accounts/{api_accounts[1]}").json()
+    cutoff = payload["effective_cutoff"]
+
+    for point in payload["usage"]:
+        assert point["week_start"] <= cutoff, point
+    for item in payload["recent"]:
+        assert item["item_date"] <= cutoff, item
+
+
+def test_the_account_detail_serves_no_ticket_or_note_body(
+    client: TestClient, api_accounts: tuple[str, ...]
+) -> None:
+    """Bodies reach a reader only as excerpts retrieval selected and a decision cited."""
+
+    payload = client.get(f"/api/accounts/{api_accounts[0]}").json()
+
+    for item in payload["recent"]:
+        assert len(item["label"]) <= 160
+        assert len(item["detail"]) <= 200

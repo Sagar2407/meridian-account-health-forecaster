@@ -129,7 +129,7 @@ Safety spans:
 
 Prior assessments are context, not truth. Every new assessment must re-query point-in-time evidence.
 
-## As built, after Phase 8
+## As built, after Phase 9
 
 | Concern | Module |
 | --- | --- |
@@ -155,6 +155,10 @@ Prior assessments are context, not truth. Every new assessment must re-query poi
 | Optional scheduled worker | `meridian.serving.scheduler` |
 | Demo mode and run rate limits | `meridian.serving.limits` |
 | HTTP surface, dependencies, and error contract | `meridian.api.*` |
+| Typed browser client and the SSE subscription | `frontend/src/api.ts` |
+| Portfolio, account, run, review, and evaluation pages | `frontend/src/pages/*` |
+| Decision card, evidence drawer, timeline, and charts | `frontend/src/components/*` |
+| Browser journeys and screenshot capture | `frontend/e2e/*` |
 
 The contracts sit at the package root rather than inside `meridian.graph`
 because the agents, the guardrails, and the graph all depend on them: an agent

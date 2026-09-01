@@ -6,7 +6,7 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 8 are complete.** Every exit gate passes, and none of them needs an API key.
+**Phases 0 through 9 are complete.** Every exit gate passes, and none of them needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
@@ -78,7 +78,37 @@ CS team no work. Section 22.7 forbids tuning thresholds outside a development-sp
 so Phase 10 freezes them and this is the second measurement saying that choice matters.
 Evidence is in `docs/PHASE_8_STATUS.md`.
 
-Phase 9, the React frontend, is next.
+Phase 9 delivered the application: a portfolio, an account page with its 104-week trajectory and
+effective-cutoff marker, a live assessment view fed by Server-Sent Events, the decision card with a
+confidence gauge and a clickable evidence drawer, a review queue where an override files a
+regression record, and an evaluation page that reads published artifacts. **24 Playwright journeys
+pass across desktop and tablet with none skipped**, and one of them subscribes to every API response
+the browser receives and fails on any latent field or prompt key. Evidence is in
+`docs/PHASE_9_STATUS.md`.
+
+Phase 10, observability and the full evaluation, is next.
+
+## What it looks like
+
+![The portfolio page](docs/screenshots/portfolio.png)
+
+*The portfolio: summary cards, filters, and the accounts renewing soonest. The banner is not
+decoration — everything here is synthetic, and the system takes no action on any customer.*
+
+![An assessment result](docs/screenshots/decision.png)
+
+*A finished assessment. This account's evidence conflicted and the bounded search could not resolve
+it, so the system reports verified telemetry and **no categorical outcome** rather than guessing.
+The timeline on the right is streamed live; the red markers are the two evidence lanes running in
+parallel.*
+
+![The evidence drawer](docs/screenshots/evidence-drawer.png)
+
+*Every citation is inspectable by source id, type, date, and excerpt — the passage retrieval
+selected and output verification replayed the decision's claims against.*
+
+The remaining screenshots — the account page, the review queue, and the evaluation dashboard — are
+in `docs/screenshots/`, regenerated from the running build with `make screenshots`.
 
 ### What one assessment does
 
@@ -173,6 +203,8 @@ make assess ACCOUNT=ACC-1042 OFFLINE=1   # one end-to-end assessment, no provide
 make evaluate-tot        # linear versus conflict-gated ToT ablation (Docker, ~10 minutes)
 make evaluate-guardrails # all 36 safety cases; writes artifacts/safety/ (Docker, offline)
 make scan LIMIT=10       # one bounded portfolio scan; writes artifacts/portfolio/ (Docker)
+make e2e                 # 24 Playwright journeys against the real stack (Docker)
+make screenshots         # regenerate docs/screenshots/ from the running UI (Docker)
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)
@@ -282,6 +314,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_6_STATUS.md` — conflict-gated Tree-of-Thought evidence and ablation
 - `docs/PHASE_7_STATUS.md` — safety evaluation and human-review workflow evidence
 - `docs/PHASE_8_STATUS.md` — served API, portfolio scan, and its bounds
+- `docs/PHASE_9_STATUS.md` — the React application, its journeys, and what they found
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments

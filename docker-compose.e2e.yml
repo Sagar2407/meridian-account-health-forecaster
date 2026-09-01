@@ -1,0 +1,61 @@
+# End-to-end overrides (plan sections 23.5 and 24.1).
+#
+# The browser runs inside its own container, so two things that are implicit in
+# a local `docker compose up` have to be made explicit here:
+#
+# * The frontend must call the backend by its service name, not `localhost`,
+#   because `localhost` inside the Playwright container is the Playwright
+#   container. That changes the browser's origin too, so the backend's CORS
+#   allowlist gains `http://frontend:5173`.
+# * The runtime image deliberately excludes `data/`, `models/`, and
+#   `artifacts/` (see `.dockerignore`). A journey needs all three, so they are
+#   bind-mounted rather than baked in.
+#
+# `data/` is mounted read-write on purpose: the review journey needs the graph
+# to record an assessment and open a case, which is a write to `data/app`.
+# Source data under `data/raw` is immutable by policy, and the store refuses at
+# construction to open a database inside it.
+
+services:
+  backend:
+    environment:
+      MERIDIAN_CORS_ORIGINS: http://frontend:5173,http://localhost:5173
+      MERIDIAN_DEMO_MODE: 'false'
+      MERIDIAN_RATE_LIMIT_RUNS_PER_HOUR: '0'
+      MERIDIAN_RATE_LIMIT_DAILY_RUNS: '0'
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models:ro
+      - ./artifacts:/app/artifacts:ro
+
+  frontend:
+    build:
+      args:
+        VITE_API_BASE_URL: http://backend:8000
+    environment:
+      VITE_API_BASE_URL: http://backend:8000
+
+  # Pinned to the same version as `@playwright/test` in frontend/package.json:
+  # Playwright refuses to run when the library and the browser image differ.
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.62.1-noble
+    working_dir: /workspace/frontend
+    environment:
+      PLAYWRIGHT_BASE_URL: http://frontend:5173
+      COREPACK_HOME: /workspace/.phase0-cache/corepack
+      HOME: /workspace/.phase0-cache/home
+      XDG_CACHE_HOME: /workspace/.phase0-cache/xdg-cache
+      npm_config_cache: /workspace/.phase0-cache/npm
+      CI: '1'
+      PLAYWRIGHT_SCREENSHOTS: ${PLAYWRIGHT_SCREENSHOTS:-}
+    volumes:
+      - .:/workspace
+    depends_on:
+      frontend:
+        condition: service_healthy
+    command: >
+      sh -c "corepack enable &&
+             cd /workspace &&
+             corepack pnpm install --frozen-lockfile --store-dir /workspace/.phase0-cache/pnpm-store &&
+             cd frontend &&
+             pnpm exec playwright test"

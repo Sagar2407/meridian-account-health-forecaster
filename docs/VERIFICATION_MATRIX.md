@@ -42,6 +42,9 @@ This matrix separates verified facts from provisional design choices and unresol
 | A portfolio scan never exceeds its model-call budget | A zero budget scans nothing; an offline scan spends 0 of 200 | Verified in Phase 8 |
 | The served API is exactly section 19.1's endpoint table | `test_openapi_is_section_19s_endpoint_table` compares the OpenAPI path set | Verified in Phase 8 |
 | No served response carries a prompt, a model reply, or a latent field | Whole-payload scan of a completed run against `FORBIDDEN_TRACE_KEYS` and the latent-field list | Verified in Phase 8 |
+| No response the browser receives carries a latent field or a prompt key | A Playwright response listener over the portfolio, an assessment, the review queue, a decision card, and the evaluation page | Verified in Phase 9 |
+| Every core user journey works end to end in a browser | 24 Playwright tests, desktop and tablet, against the real stack, 0 skipped | Verified in Phase 9 |
+| A reviewer override in the UI files a traceable regression record | The override journey reads the regression id back from the page | Verified in Phase 9 |
 
 ## Point-in-time audit
 
@@ -87,6 +90,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | Routing thresholds auto-release almost nothing | A portfolio scan currently returns only review load; 2 of 21 answerable guardrail cases were released | Freeze thresholds against the development split in Phase 10 (section 22.7 forbids tuning them now) |
 | The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
 | Serving state is per process and in memory | Live runs, scans, and rate-limit windows do not survive a restart or a second replica | Correct for the single-container target; a scaled deployment needs a shared store |
+| The evaluation page has no confusion matrix or calibration curve | Section 20.6 lists both; the current artifacts are scalar | Phase 10's full evaluation writes the per-class artifacts the page would draw |
+| Accessibility is checked structurally, not audited | Landmarks, heading counts, accessible names, and overflow are asserted; no axe or WCAG audit has been run | Run an automated audit before the public release |
 | Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Normalize a bounded number-word vocabulary before public evaluation |
 
 ## Deferred inputs
@@ -95,10 +100,11 @@ The official report template, presentation outline, and any separate detailed gr
 
 ## Readiness decision
 
-Phases 0 through 8 are complete. The latest `make phase0-verify` rebuilt both
+Phases 0 through 9 are complete. The latest `make phase0-verify` rebuilt both
 locked images, passed formatting, lint, strict typing, 485 backend container
 tests at 95.24% coverage, 7 frontend tests, the production frontend build, the
 repository policy scan over 242 files, and both live container health checks. The separate
-Phase 7 safety run passed all 36 cases without a provider, and the Phase 8 scan
-held its concurrency and budget bounds. Phase 9 may begin; deferred submission
-artifacts do not affect implementation readiness.
+Phase 7 safety run passed all 36 cases without a provider, the Phase 8 scan held
+its concurrency and budget bounds, and the Phase 9 browser suite passed 24
+journeys with none skipped. Phase 10 may begin; deferred submission artifacts do
+not affect implementation readiness.

@@ -48,6 +48,10 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-040 | Reserve the per-run model-call ceiling before dispatch and refund the unused remainder | Accepted | Charging after a run completes lets every worker pass the same check at once and overspend by the pool's width ([Phase 8](PHASE_8_STATUS.md)) |
 | D-041 | Select scan eligibility against each account's own forecast date, not wall-clock today | Accepted | The synthetic dataset never moves, so a today-based horizon would select a different portfolio daily from identical data ([Phase 8](PHASE_8_STATUS.md)) |
 | D-042 | Require both `enable_scheduler` and the absence of `demo_mode`, and refuse rather than degrade | Accepted | Section 24.3 disables unattended spending in public deployment; a scheduler that silently downgrades leaves an operator believing scans are running ([Phase 8](PHASE_8_STATUS.md)) |
+| D-043 | Draw every chart as hand-written SVG rather than adding a charting library | Accepted | Each figure is a line, a bar, or an arc; a library would outweigh the whole application on a target where image size affects cold start, and the accessible names matter more than the drawing ([Phase 9](PHASE_9_STATUS.md)) |
+| D-044 | Serve the account page's chart, indicators, and recent activity from the single account endpoint | Accepted | Five requests would let one page render a chart from one point in time beside indicators from another; one request at one cutoff cannot, and the served surface stays equal to section 19.1's table ([Phase 9](PHASE_9_STATUS.md)) |
+| D-045 | Show an abstention the evidence it retrieved before declining to label | Accepted | A reviewer deciding whether the system was right to withhold a label needs to see what it read; the card previously dropped it on exactly those runs ([Phase 9](PHASE_9_STATUS.md)) |
+| D-046 | Forbid `test.skip(true, ...)` on a condition the test itself creates | Accepted | The review-override journey skipped whenever the queue was empty, so the exit gate could pass without ever exercising an override ([Phase 9](PHASE_9_STATUS.md)) |
 
 ## Decisions settled by measurement
 
