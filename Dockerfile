@@ -48,6 +48,11 @@ COPY backend ./backend
 # silently lost its cache would spend a model budget nobody expected.
 COPY config ./config
 
+# The published evaluation results. `GET /api/evaluations/{name}` reads these,
+# so without them the deployed evaluation page reports every evaluation as
+# never run. Text and plots, well under a megabyte.
+COPY artifacts ./artifacts
+
 # No `--extra dev`: the serving image needs neither pytest nor the linters.
 RUN uv sync --locked --no-dev
 

@@ -2,11 +2,19 @@
 """Run the retrieval benchmark and the chunking ablation.
 
 Run with `make evaluate-retrieval`. Requires an index built by `make index`.
+
+The per-query and per-arm detail goes to CSV, and the headline numbers also go to
+`retrieval_benchmark.json`, which is what `GET /api/evaluations/retrieval` reads.
+Without that file the endpoint reported this evaluation as never run while the
+CSVs sat beside it.
 """
 
+import json
+import math
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY_ROOT / "backend" / "src"))
@@ -80,6 +88,20 @@ def main() -> int:
         headline["wrong_account_citations"]
         + headline["post_cutoff_citations"]
         + headline["forbidden_parent_citations"]
+    )
+
+    # The served summary. `summarise` can return NaN when nothing was graded,
+    # and NaN is not JSON, so it becomes null rather than an unparseable file
+    # the endpoint would report as unreadable.
+    summary: dict[str, Any] = {
+        key: None if isinstance(value, float) and math.isnan(value) else value
+        for key, value in headline.items()
+    }
+    summary["safety_violations"] = int(violations)
+    summary["by_family"] = json.loads(by_family.to_json(orient="index"))
+    summary["chunking_ablation"] = json.loads(frame[columns].to_json(orient="records"))
+    (ARTIFACTS / "retrieval_benchmark.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(
         f"\nSafety violations (wrong account + post cutoff + leaked future doc): {int(violations)}"

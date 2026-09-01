@@ -2,9 +2,12 @@
 
 Status: **Complete; exit gate passed on 2026-09-01**
 
-This phase wrote no application code. Its job was to make every claim in the
-final report checkable, and the interesting part of doing that was discovering
-where the repository could not back a claim it was about to make.
+This phase built no new feature. Its job was to make every claim in the final
+report checkable, and the interesting part of doing that was discovering where
+the repository could not back a claim it was about to make. Three small code
+changes came out of that: a duplicated gap on the degraded decision card, a
+published evaluation whose artifact no command wrote, and the test that would
+have caught the second.
 
 ## Deliverables
 
@@ -25,7 +28,7 @@ where the repository could not back a claim it was about to make.
 | No claimed feature lacks code or evidence | PASS | Every row of `docs/CAPSTONE_EVIDENCE.md` names a file, test, or artifact |
 | No claimed result lacks a reproducible metric artifact | PASS | Every result row names the artifact and the command that regenerates it |
 
-## Four things this phase found
+## Five things this phase found
 
 ### The evaluation artifacts were not in the repository
 
@@ -86,6 +89,21 @@ appends only when no existing gap already names the reason.
 
 This is minor, and it is the kind of thing only a captured artifact finds — the
 tests asserted that a gap was recorded, not that it was recorded once.
+
+### The deployed app reported an evaluation it had run as never run
+
+`GET /api/evaluations/retrieval` reads
+`artifacts/retrieval/retrieval_benchmark.json`. `scripts/evaluate_retrieval.py`
+writes three CSVs and never wrote that file, so the endpoint answered `not_run`
+permanently — for an evaluation whose numbers `docs/PHASE_3_STATUS.md`
+publishes. The script now writes the headline summary alongside the CSVs, with
+NaN rendered as null so an ungraded run cannot produce a file the endpoint
+reports as unreadable.
+
+`artifacts/` was also excluded from the production image, so even a correct
+summary would not have reached a deployment. It is now copied in: it is
+committed, under a megabyte, and the endpoint that reads it is part of the
+served application.
 
 ## The traces
 

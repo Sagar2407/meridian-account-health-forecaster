@@ -85,11 +85,15 @@ comes up.
 
 ### 1. The dataset is not in the image
 
-`.dockerignore` excludes `data/`, `models/`, and `artifacts/`, and the
-production image inherits that. It is the right default — the archive is 25 MB
-and the model is a build output — but it means a Render deployment starts with
-**no dataset, no forecaster, and no retrieval index**, and `/api/health` will
-say `degraded` with three subsystems absent.
+`.dockerignore` excludes `data/` and `models/`, and the production image
+inherits that. It is the right default — the archive is 25 MB and the model is a
+build output — but it means a Render deployment starts with **no dataset, no
+forecaster, and no retrieval index**, and `/api/health` will say `degraded` with
+three subsystems absent.
+
+(`artifacts/` used to be excluded too, and no longer is. It is committed, under
+a megabyte, and `GET /api/evaluations/{name}` reads it, so excluding it made the
+deployed evaluation page report every evaluation as never run.)
 
 Three ways forward, in the order I would consider them:
 

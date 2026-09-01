@@ -11,7 +11,9 @@ frontend/coverage
 frontend/test-results
 frontend/playwright-report
 data
-artifacts
+# `artifacts` is NOT excluded: it is committed, it is under a megabyte, and
+# `GET /api/evaluations/{name}` reads it. Without it a deployment reports every
+# evaluation as never run while the repository publishes their numbers.
 models
 logs
 *.docx
