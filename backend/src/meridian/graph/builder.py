@@ -24,12 +24,17 @@ from typing import Any, Literal
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
+from pydantic import ValidationError
 
 from meridian.contracts import (
     AssessmentRequest,
     BlockedDecision,
     FinalResult,
+    GuardrailDecision,
     NodeError,
+    ReviewerDecision,
+    ReviewInterrupt,
     Route,
     TraceEvent,
 )
@@ -38,6 +43,7 @@ from meridian.graph.nodes import GraphNodes
 from meridian.graph.routing import (
     route_conflict,
     route_coverage,
+    route_human_review,
     route_intake,
     route_tot,
     route_verification,
@@ -103,6 +109,7 @@ def build_graph(
     graph.add_node("safe_fallback", nodes.fallback)
     graph.add_node("assign_route", nodes.route)
     graph.add_node("persist", nodes.persist)
+    graph.add_node("await_review", nodes.await_review)
 
     graph.add_edge(START, "validate_request")
     graph.add_conditional_edges(
@@ -164,7 +171,16 @@ def build_graph(
     )
     graph.add_edge("safe_fallback", "assign_route")
     graph.add_edge("assign_route", "persist")
-    graph.add_edge("persist", END)
+    # Section 16.6's interrupt. It sits *after* persistence on purpose: the
+    # reviewer is shown a case that already exists in application memory, so a
+    # run abandoned at the pause still leaves an open queue item rather than
+    # nothing at all.
+    graph.add_conditional_edges(
+        "persist",
+        route_human_review,
+        {"await_review": "await_review", "end": END},
+    )
+    graph.add_edge("await_review", END)
 
     return graph.compile(checkpointer=checkpointer)
 
@@ -209,12 +225,23 @@ class AssessmentRun:
     errors: tuple[NodeError, ...]
     assessment_id: str | None = None
     review_case_id: str | None = None
+    #: Set when the run paused on section 16.6's interrupt. The run is not
+    #: finished: `resume_assessment` continues it with a typed decision.
+    interrupt: ReviewInterrupt | None = None
+    reviewer_decision: ReviewerDecision | None = None
+    guardrails: tuple[GuardrailDecision, ...] = ()
+
+    @property
+    def awaiting_review(self) -> bool:
+        """Return whether this run is paused waiting for a person."""
+
+        return self.interrupt is not None
 
     @property
     def completed(self) -> bool:
         """Return whether the run produced an advisory result."""
 
-        return self.result is not None
+        return self.result is not None and not self.awaiting_review
 
     @property
     def abstained(self) -> bool:
@@ -233,57 +260,69 @@ class AssessmentRun:
 
         return tuple(event for event in self.trace if event.event == name)
 
+    def guardrail(self, stage: str) -> GuardrailDecision | None:
+        """Return the last verdict recorded for one guardrail stage."""
 
-def run_assessment(
-    graph: Any,
-    request: AssessmentRequest,
-    run_id: str | None = None,
-    thread_id: str | None = None,
-    on_event: Callable[[TraceEvent], None] | None = None,
-) -> AssessmentRun:
-    """Run one assessment to completion, streaming safe events as they happen.
+        for decision in reversed(self.guardrails):
+            if decision.stage == stage:
+                return decision
+        return None
 
-    Args:
-        graph: A compiled graph from `build_graph`.
-        request: The validated request.
-        run_id: Identifier for this attempt; generated when omitted.
-        thread_id: Identifier for the conversation a checkpointer resumes on.
-            Defaults to the run id, which makes each run its own thread.
-        on_event: Called with each trace event as the graph produces it. This
-            is the streaming surface of plan section 19.2; Phase 8's SSE
-            endpoint is a thin wrapper over it.
 
-    Returns:
-        The finished run, including its full trace.
+def _pending_interrupt(chunk: dict[str, Any]) -> ReviewInterrupt | None:
+    """Return the review payload from a LangGraph interrupt chunk, if there is one.
+
+    LangGraph reports a pause as an `__interrupt__` entry carrying its own
+    `Interrupt` objects. Only the payload this graph put there is of interest,
+    so anything that does not validate as one is ignored rather than guessed at.
     """
 
-    identifier = run_id or f"RUN-{uuid.uuid4().hex[:12]}"
-    thread = thread_id or identifier
-    payload: ForecasterState = {
-        "run_id": identifier,
-        "thread_id": thread,
-        "request": request,
-        "evidence_round": 0,
-        "retrieval_retries": 0,
-        "errors": [],
-        "trace_summary": [],
-    }
-    config: dict[str, Any] = {
-        "configurable": {"thread_id": thread},
-        "recursion_limit": GRAPH_RECURSION_LIMIT,
-    }
+    pending = chunk.get("__interrupt__")
+    if not pending:
+        return None
+    for item in pending if isinstance(pending, list | tuple) else [pending]:
+        value = getattr(item, "value", item)
+        if not isinstance(value, dict):
+            continue
+        try:
+            return ReviewInterrupt.model_validate(value)
+        except ValidationError:
+            continue
+    return None
+
+
+def _collect(
+    graph: Any,
+    payload: Any,
+    config: dict[str, Any],
+    on_event: Callable[[TraceEvent], None] | None,
+) -> tuple[dict[str, Any], ReviewInterrupt | None]:
+    """Stream one graph invocation, returning its final state and any pause."""
 
     final: dict[str, Any] = {}
+    pending: ReviewInterrupt | None = None
     for mode, chunk in graph.stream(payload, config, stream_mode=["updates", "values"]):
         if mode == "values":
             final = chunk
             continue
+        pending = pending or _pending_interrupt(chunk)
         for update in chunk.values():
             if not isinstance(update, dict):
                 continue
             for event in update.get("trace_summary") or ():
                 if on_event is not None:
                     on_event(event)
+    return final, pending
+
+
+def _finish(
+    identifier: str,
+    thread: str,
+    request: AssessmentRequest,
+    final: dict[str, Any],
+    pending: ReviewInterrupt | None,
+) -> AssessmentRun:
+    """Assemble the run record from the graph's final state."""
 
     return AssessmentRun(
         run_id=identifier,
@@ -296,7 +335,109 @@ def run_assessment(
         errors=tuple(final.get("errors") or ()),
         assessment_id=final.get("assessment_id"),
         review_case_id=final.get("review_case_id"),
+        interrupt=pending,
+        reviewer_decision=final.get("reviewer_decision"),
+        guardrails=tuple(final.get("guardrails") or ()),
     )
+
+
+def run_assessment(
+    graph: Any,
+    request: AssessmentRequest,
+    run_id: str | None = None,
+    thread_id: str | None = None,
+    on_event: Callable[[TraceEvent], None] | None = None,
+    pause_on_red: bool = False,
+) -> AssessmentRun:
+    """Run one assessment to completion, streaming safe events as they happen.
+
+    Args:
+        graph: A compiled graph from `build_graph`.
+        request: The validated request.
+        run_id: Identifier for this attempt; generated when omitted.
+        thread_id: Identifier for the conversation a checkpointer resumes on.
+            Defaults to the run id, which makes each run its own thread.
+        on_event: Called with each trace event as the graph produces it. This
+            is the streaming surface of plan section 19.2; Phase 8's SSE
+            endpoint is a thin wrapper over it.
+        pause_on_red: Stop on section 16.6's interrupt when the run routes red,
+            instead of completing and leaving an open case. Requires the graph
+            to have been compiled with a checkpointer -- there is nowhere to
+            resume from without one -- and is never set for a portfolio scan,
+            which must not block on a person.
+
+    Returns:
+        The finished run, including its full trace. A run that paused has
+        `interrupt` set and is continued with `resume_assessment`.
+
+    Raises:
+        ValueError: If `pause_on_red` is set on a graph with no checkpointer.
+    """
+
+    if pause_on_red and getattr(graph, "checkpointer", None) is None:
+        raise ValueError(
+            "pause_on_red needs a checkpointer: a paused run has nowhere to resume from"
+        )
+
+    identifier = run_id or f"RUN-{uuid.uuid4().hex[:12]}"
+    thread = thread_id or identifier
+    payload: ForecasterState = {
+        "run_id": identifier,
+        "thread_id": thread,
+        "request": request,
+        "evidence_round": 0,
+        "retrieval_retries": 0,
+        "model_calls": 0,
+        "spent_tokens": 0,
+        "pause_on_red": pause_on_red,
+        "errors": [],
+        "trace_summary": [],
+        "guardrails": [],
+    }
+    config: dict[str, Any] = {
+        "configurable": {"thread_id": thread},
+        "recursion_limit": GRAPH_RECURSION_LIMIT,
+    }
+
+    final, pending = _collect(graph, payload, config, on_event)
+    return _finish(identifier, thread, request, final, pending)
+
+
+def resume_assessment(
+    graph: Any,
+    thread_id: str,
+    decision: ReviewerDecision,
+    on_event: Callable[[TraceEvent], None] | None = None,
+) -> AssessmentRun:
+    """Continue a paused run with a reviewer's typed decision (section 16.6).
+
+    Args:
+        graph: The same compiled graph, with the same checkpointer.
+        thread_id: The thread the run paused on.
+        decision: The reviewer's action. It names the case it resolves, and the
+            paused node refuses a decision naming a different one.
+        on_event: Called with each trace event the resumed run produces.
+
+    Returns:
+        The completed run, with `reviewer_decision` set.
+
+    Raises:
+        ValueError: If the graph has no checkpointer to resume from.
+    """
+
+    if getattr(graph, "checkpointer", None) is None:
+        raise ValueError("a paused run can only be resumed on a graph with a checkpointer")
+
+    config: dict[str, Any] = {
+        "configurable": {"thread_id": thread_id},
+        "recursion_limit": GRAPH_RECURSION_LIMIT,
+    }
+    final, pending = _collect(
+        graph, Command(resume=decision.model_dump(mode="json")), config, on_event
+    )
+    request = final.get("request")
+    assert request is not None, "a resumed thread must carry the request it paused on"
+    return _finish(final.get("run_id", thread_id), thread_id, request, final, pending)
 
 
 __all__ = [
@@ -305,6 +446,7 @@ __all__ = [
     "AssessmentRun",
     "build_graph",
     "checkpoint_path",
+    "resume_assessment",
     "run_assessment",
     "sqlite_checkpointer",
 ]

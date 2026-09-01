@@ -234,6 +234,41 @@ def test_a_provider_failure_still_produces_a_plan() -> None:
     assert "generation failed" in result.fallback_reason
 
 
+def test_a_schema_failure_still_charges_the_run_for_what_it_spent() -> None:
+    """A model that never conformed was billed anyway, so the budget must see it.
+
+    This is the seam the Phase 7 runtime budget rests on. If a failed generation
+    fell back reporting zero usage, a provider stuck in a repair loop would cost
+    real money while `RunBudget` believed the run had spent nothing.
+    """
+
+    never_conforms = ScriptedGenerator(["{}", "{}"])
+    result = Orchestrator(_registry_stub(), never_conforms).plan(
+        AssessmentRequest(account_id="ACC-1042", question="Assess renewal risk"), _profile()
+    )
+    assert result.source == "deterministic"
+    assert result.fallback_reason is not None
+    assert "generation failed" in result.fallback_reason
+    assert never_conforms.calls == 2
+    assert result.attempts == 2
+    assert result.usage.total_tokens > 0
+
+
+def test_a_planner_over_budget_never_calls_the_provider() -> None:
+    """Section 16.3's budget has to stop the call, not merely record it."""
+
+    generator = ScriptedGenerator(['{"sub_goals": [], "focus": ""}'])
+    result = Orchestrator(_registry_stub(), generator).plan(
+        AssessmentRequest(account_id="ACC-1042", question="Assess renewal risk"),
+        _profile(),
+        use_model=False,
+    )
+    assert generator.calls == 0
+    assert result.source == "deterministic"
+    assert result.fallback_reason == "the run's model-call budget is spent"
+    assert result.usage.total_tokens == 0
+
+
 def test_with_no_provider_the_plan_is_deterministic_and_says_so() -> None:
     """Every phase through this one runs without credentials."""
 

@@ -22,6 +22,8 @@ from collections.abc import Callable
 from datetime import date
 from typing import Any, TypeVar
 
+from langgraph.types import interrupt
+
 from meridian.agents.evidence_retriever import SUB_GOAL_SOURCES, merge_evidence
 from meridian.agents.forecast_adjudicator import (
     CandidateGeneration,
@@ -43,6 +45,8 @@ from meridian.contracts import (
     QuantitativeEvidence,
     RequestedData,
     RetrievalEvidence,
+    ReviewerDecision,
+    ReviewInterrupt,
     SubGoal,
     TraceEvent,
 )
@@ -55,7 +59,9 @@ from meridian.graph.runtime import GraphRuntime
 from meridian.graph.state import ForecasterState
 from meridian.graph.tot import ToTResult, search
 from meridian.graph.tracing import GraphEvent, TraceRecorder
+from meridian.guardrails.evidence import screen_evidence
 from meridian.guardrails.intake import evaluate_intake
+from meridian.guardrails.runtime import RunBudget
 
 #: Retrieved evidence older than this at the cutoff is reported as stale. Two
 #: quarters is the support and event feature window, so evidence older than that
@@ -111,6 +117,79 @@ def _trace(
     return [
         _recorder(state).event(
             node, event, payload or {}, latency_ms, prompt_tokens, completion_tokens
+        )
+    ]
+
+
+def _budget(state: ForecasterState) -> RunBudget:
+    """Return what this run has spent so far (plan section 16.3).
+
+    Reconstructed from the state's counters on every read rather than carried
+    as an object, because the state is checkpointed and a mutable budget would
+    not survive a resume with the right value in it.
+    """
+
+    started = state.get("started_at", 0.0)
+    return RunBudget(
+        model_calls=state.get("model_calls", 0),
+        tokens=state.get("spent_tokens", 0),
+        elapsed_seconds=max(0.0, time.time() - started) if started else 0.0,
+    )
+
+
+def _budget_after(state: ForecasterState, attempts: int, tokens: int) -> RunBudget:
+    """Return the runtime budget after one structured-generation operation."""
+
+    current = _budget(state)
+    return RunBudget(
+        model_calls=current.model_calls + attempts,
+        tokens=current.tokens + tokens,
+        elapsed_seconds=current.elapsed_seconds,
+    )
+
+
+def _verdict(state: ForecasterState, stage: str) -> GuardrailDecision | None:
+    """Return the most recent guardrail verdict for one stage, if it ran."""
+
+    for decision in reversed(state.get("guardrails", [])):
+        if decision.stage == stage:
+            return decision
+    return None
+
+
+def _strict_verdict(state: ForecasterState, stage: str) -> GuardrailDecision | None:
+    """Return a non-pass verdict if the stage ever failed, else its latest.
+
+    Evidence is quarantined permanently within a run.  A targeted retrieval
+    retry may later produce clean evidence, but it must not erase the fact that
+    an account, cutoff, or provenance boundary was crossed on the first round.
+    """
+
+    decisions = [decision for decision in state.get("guardrails", []) if decision.stage == stage]
+    return next((decision for decision in decisions if decision.outcome != "pass"), None) or (
+        decisions[-1] if decisions else None
+    )
+
+
+def _generation_errors(
+    node: str, provider_was_available: bool, fallback_reason: str | None
+) -> list[NodeError]:
+    """Turn a configured provider's fallback into explicit failure data."""
+
+    if not provider_was_available or not fallback_reason:
+        return []
+    if fallback_reason in {
+        "no language-model provider is configured",
+        "the run's model-call budget is spent",
+    }:
+        return []
+    return [
+        NodeError(
+            node=node,
+            category="model",
+            code="MODEL_UNAVAILABLE",
+            message=fallback_reason,
+            recoverable=True,
         )
     ]
 
@@ -201,6 +280,9 @@ class GraphNodes:
         event: GraphEvent = "request_validated" if decision.allowed else "request_blocked"
         return {
             "intake": decision,
+            "guardrails": [decision],
+            "started_at": time.time(),
+            "review_state": "not_required",
             "trace_summary": [
                 *started,
                 *_trace(
@@ -272,29 +354,57 @@ class GraphNodes:
 
         account = state["account"]
         assert account is not None
+        budget = _budget(state)
         result, latency = _timed(
             lambda: self._runtime.orchestrator.plan(
-                state["request"], account, tuple(state.get("prior_assessments", []))
+                state["request"],
+                account,
+                tuple(state.get("prior_assessments", [])),
+                use_model=budget.may_spend,
             )
         )
+        tokens = result.usage.prompt_tokens + result.usage.completion_tokens
+        updated_budget = _budget_after(state, result.attempts, tokens)
+        errors = _generation_errors(
+            "plan_sub_goals",
+            self._runtime.generator is not None and budget.may_spend,
+            result.fallback_reason,
+        )
+        events = _trace(
+            state,
+            "plan_sub_goals",
+            "plan_created",
+            {
+                "sub_goals": [sub_goal.kind for sub_goal in result.plan],
+                "source": result.source,
+                "fallback_reason": result.fallback_reason,
+                "model": result.model_name,
+            },
+            latency,
+            result.usage.prompt_tokens,
+            result.usage.completion_tokens,
+        )
+        if not updated_budget.may_spend:
+            events.extend(
+                _trace(
+                    state,
+                    "plan_sub_goals",
+                    "budget_exhausted",
+                    {
+                        "exceeded": list(updated_budget.exceeded),
+                        "model_calls": updated_budget.model_calls,
+                    },
+                )
+            )
         return {
             "plan": list(result.plan),
             "evidence_round": 0,
             "retrieval_retries": 0,
-            "trace_summary": _trace(
-                state,
-                "plan_sub_goals",
-                "plan_created",
-                {
-                    "sub_goals": [sub_goal.kind for sub_goal in result.plan],
-                    "source": result.source,
-                    "fallback_reason": result.fallback_reason,
-                    "model": result.model_name,
-                },
-                latency,
-                result.usage.prompt_tokens,
-                result.usage.completion_tokens,
-            ),
+            "model_calls": result.attempts,
+            "spent_tokens": tokens,
+            "guardrails": [updated_budget.verdict()],
+            "errors": errors,
+            "trace_summary": events,
         }
 
     # -- Parallel lanes ------------------------------------------------------
@@ -411,7 +521,15 @@ class GraphNodes:
     # -- Fan-in and coverage -------------------------------------------------
 
     def merge(self, state: ForecasterState) -> dict[str, Any]:
-        """Build the evidence bundle from both lanes (section 9.2's fan-in)."""
+        """Screen both lanes' evidence, then build the bundle (sections 9.2 and 16.3).
+
+        The fan-in is the last place every piece of evidence is visible at once
+        and the last place before it becomes an argument, so the evidence
+        guardrail runs here. Anything that cannot be shown to belong to this
+        account at this cutoff is quarantined rather than raised: the run
+        continues on what survived, the drop is recorded, and `human_route`
+        turns a non-empty quarantine into a red band.
+        """
 
         quantitative = state.get("quantitative")
         retrieval = state.get("retrieval")
@@ -419,10 +537,65 @@ class GraphNodes:
         assert account is not None
         assert quantitative is not None and retrieval is not None
 
+        requested_cutoff = state["request"].requested_as_of
+        expected_cutoff = min(
+            account.effective_cutoff, requested_cutoff or account.effective_cutoff
+        )
+        screening = screen_evidence(quantitative, retrieval, account.account_id, expected_cutoff)
+
+        if not screening.quantitative_valid:
+            quantitative = quantitative.model_copy(
+                update={
+                    "metrics": screening.metrics,
+                    "distribution": {},
+                    "predicted_outcome": None,
+                    "model_probability": 0.0,
+                    "drivers": (),
+                    "available": False,
+                    "coverage": quantitative.coverage.model_copy(
+                        update={
+                            "critical_gaps": tuple(
+                                dict.fromkeys(
+                                    (
+                                        *quantitative.coverage.critical_gaps,
+                                        "quantitative evidence failed its provenance screen",
+                                    )
+                                )
+                            )
+                        }
+                    ),
+                }
+            )
+
+        if not screening.clean:
+            # Rebuild the lane result from what survived, so the coverage
+            # verdict and the bundle agree about what evidence exists. Leaving
+            # the original in place would let a run whose every citation was
+            # quarantined still look retrieved-and-covered.
+            kept = {citation.doc_id for citation in screening.citations}
+            retrieval = retrieval.model_copy(
+                update={
+                    "observations": tuple(
+                        observation.model_copy(
+                            update={
+                                "citations": tuple(
+                                    citation
+                                    for citation in observation.citations
+                                    if citation.doc_id in kept
+                                )
+                            }
+                        )
+                        for observation in retrieval.observations
+                    ),
+                    "guidance": screening.guidance,
+                    "rejected": retrieval.rejected + screening.rejected,
+                }
+            )
+
         plan = state.get("plan", [])
         coverage = combined_coverage(quantitative, retrieval, plan, account.effective_cutoff)
         outcome = quantitative.predicted_outcome or ""
-        supporting, counterevidence, context = split_evidence(retrieval.citations, outcome)
+        supporting, counterevidence, context = split_evidence(screening.citations, outcome)
 
         bundle = EvidenceBundle(
             account_id=account.account_id,
@@ -433,15 +606,27 @@ class GraphNodes:
             supporting=supporting,
             counterevidence=counterevidence,
             context=context,
-            guidance=retrieval.guidance,
+            guidance=screening.guidance,
         )
         evidence_round = state.get("evidence_round", 0) + 1
         verdict, reason = coverage_verdict(quantitative, retrieval, evidence_round)
 
-        return {
+        update: dict[str, Any] = {
             "evidence_bundle": bundle,
             "evidence_round": evidence_round,
+            "guardrails": [screening.decision],
             "trace_summary": [
+                *_trace(
+                    state,
+                    "merge_evidence",
+                    "evidence_screened",
+                    {
+                        "outcome": screening.decision.outcome,
+                        "rule_ids": list(screening.rule_ids),
+                        "quarantined": len(screening.rejected),
+                        "reasons": list(screening.rejected),
+                    },
+                ),
                 *_trace(
                     state,
                     "merge_evidence",
@@ -464,6 +649,11 @@ class GraphNodes:
                 ),
             ],
         }
+        if quantitative is not state.get("quantitative"):
+            update["quantitative"] = quantitative
+        if not screening.clean:
+            update["retrieval"] = retrieval
+        return update
 
     def targeted_retry(self, state: ForecasterState) -> dict[str, Any]:
         """Retrieve once more, only for the sub-goals that came back empty.
@@ -564,8 +754,11 @@ class GraphNodes:
         conflict = state.get("conflict")
         assert bundle is not None and account is not None
 
+        budget = _budget(state)
         generation, generation_ms = _timed(
-            lambda: self._runtime.adjudicator.generate_candidates(bundle)
+            lambda: self._runtime.adjudicator.generate_candidates(
+                bundle, use_model=budget.may_spend
+            )
         )
         result, search_ms = _timed(lambda: search(generation.candidates, bundle))
 
@@ -603,6 +796,31 @@ class GraphNodes:
             )
         )
 
+        tokens = generation.usage.prompt_tokens + generation.usage.completion_tokens
+        updated_budget = _budget_after(state, generation.attempts, tokens)
+        generation_errors = _generation_errors(
+            "tot_adjudication",
+            self._runtime.generator is not None and budget.may_spend,
+            generation.fallback_reason,
+        )
+        spend = {
+            "model_calls": generation.attempts,
+            "spent_tokens": tokens,
+            "guardrails": [updated_budget.verdict()],
+            "errors": generation_errors,
+        }
+        if not updated_budget.may_spend:
+            events.extend(
+                _trace(
+                    state,
+                    "tot_adjudication",
+                    "budget_exhausted",
+                    {
+                        "exceeded": list(updated_budget.exceeded),
+                        "model_calls": updated_budget.model_calls,
+                    },
+                )
+            )
         branches = list(result.branches)
         if result.winner is None:
             return {
@@ -610,6 +828,7 @@ class GraphNodes:
                 "conflict": (conflict or ConflictAssessment()).model_copy(
                     update={"resolved": False}
                 ),
+                **spend,
                 **self._conflict_abstention(state, bundle, account, result),
                 "trace_summary": events,
             }
@@ -638,6 +857,7 @@ class GraphNodes:
             "candidates": branches,
             "conflict": resolved,
             "draft_decision": decision,
+            **spend,
             "trace_summary": events,
         }
 
@@ -763,7 +983,24 @@ class GraphNodes:
             route_reason=reason,
             reason_code="UNRESOLVED_CONFLICT",
         )
-        return {"final_result": decision, "route": route}
+        return {
+            "final_result": decision,
+            "route": route,
+            "guardrails": [
+                GuardrailDecision(
+                    stage="output",
+                    outcome="pass",
+                    message="The typed abstention contains no categorical outcome.",
+                ),
+                GuardrailDecision(
+                    stage="routing",
+                    outcome="review",
+                    rule_ids=("ROUTE-RED",),
+                    reason_codes=("route_red",),
+                    message=reason,
+                ),
+            ],
+        }
 
     # -- Adjudication and verification --------------------------------------
 
@@ -777,7 +1014,10 @@ class GraphNodes:
 
         previous = state.get("output_verification")
         repair_note = "; ".join(previous.failures) if previous is not None else None
-        result, latency = _timed(lambda: self._runtime.adjudicator.draft(bundle, repair_note))
+        budget = _budget(state)
+        result, latency = _timed(
+            lambda: self._runtime.adjudicator.draft(bundle, repair_note, use_model=budget.may_spend)
+        )
         draft = result.draft
 
         retrieval_gap = bool(bundle.retrieval.uncovered_sub_goals)
@@ -817,27 +1057,53 @@ class GraphNodes:
             model_name=result.model_name,
         )
 
-        return {
+        tokens = result.usage.prompt_tokens + result.usage.completion_tokens
+        updated_budget = _budget_after(state, result.attempts, tokens)
+        errors = _generation_errors(
+            "fast_adjudication",
+            self._runtime.generator is not None and budget.may_spend,
+            result.fallback_reason,
+        )
+        events = _trace(
+            state,
+            "fast_adjudication",
+            "decision_drafted",
+            {
+                "outcome": decision.outcome,
+                "narrative_source": result.source,
+                "confidence": breakdown.confidence,
+                "applied_caps": list(breakdown.applied_caps),
+                "citations": len(decision.citations),
+                "counterevidence": len(decision.counterevidence),
+                "regenerated": previous is not None,
+                "fallback_reason": result.fallback_reason,
+                "within_budget": budget.may_spend,
+            },
+            latency,
+            result.usage.prompt_tokens,
+            result.usage.completion_tokens,
+        )
+        update: dict[str, Any] = {
             "draft_decision": decision,
-            "trace_summary": _trace(
-                state,
-                "fast_adjudication",
-                "decision_drafted",
-                {
-                    "outcome": decision.outcome,
-                    "narrative_source": result.source,
-                    "confidence": breakdown.confidence,
-                    "applied_caps": list(breakdown.applied_caps),
-                    "citations": len(decision.citations),
-                    "counterevidence": len(decision.counterevidence),
-                    "regenerated": previous is not None,
-                    "fallback_reason": result.fallback_reason,
-                },
-                latency,
-                result.usage.prompt_tokens,
-                result.usage.completion_tokens,
-            ),
+            "model_calls": result.attempts,
+            "spent_tokens": tokens,
+            "guardrails": [updated_budget.verdict()],
+            "errors": errors,
+            "trace_summary": events,
         }
+        if not updated_budget.may_spend:
+            events.extend(
+                _trace(
+                    state,
+                    "fast_adjudication",
+                    "budget_exhausted",
+                    {
+                        "exceeded": list(updated_budget.exceeded),
+                        "model_calls": updated_budget.model_calls,
+                    },
+                )
+            )
+        return update
 
     @staticmethod
     def _intake_limitations(intake: GuardrailDecision | None) -> list[str]:
@@ -880,8 +1146,20 @@ class GraphNodes:
                 attempts,
             )
         )
+        guardrail = GuardrailDecision(
+            stage="output",
+            outcome="pass" if verification.passed else "review",
+            rule_ids=() if verification.passed else ("OUTPUT-VERIFICATION",),
+            reason_codes=() if verification.passed else ("output_verification_failed",),
+            message=(
+                "Every numeric claim and cited document matched the verified evidence."
+                if verification.passed
+                else "; ".join(verification.failures)
+            ),
+        )
         return {
             "output_verification": verification,
+            "guardrails": [guardrail],
             "trace_summary": _trace(
                 state,
                 "verify_output",
@@ -1042,6 +1320,20 @@ class GraphNodes:
         return {
             "final_result": result,
             "route": route,
+            "guardrails": [
+                GuardrailDecision(
+                    stage="output",
+                    outcome="pass",
+                    message="The typed degraded result contains no categorical outcome.",
+                ),
+                GuardrailDecision(
+                    stage="routing",
+                    outcome="review",
+                    rule_ids=(f"ROUTE-{route.upper()}",),
+                    reason_codes=(f"route_{route}",),
+                    message=route_reason,
+                ),
+            ],
             "trace_summary": _trace(
                 state,
                 "degraded_result",
@@ -1080,6 +1372,8 @@ class GraphNodes:
             high_value=high_value,
             retrieval_gap=bool(bundle.retrieval.uncovered_sub_goals),
             intake=state.get("intake"),
+            evidence_screen=_strict_verdict(state, "evidence"),
+            budget=_verdict(state, "execution"),
         )
         final = decision.model_copy(
             update={
@@ -1103,32 +1397,52 @@ class GraphNodes:
         )
         if band == "red":
             events.extend(_trace(state, "assign_route", "review_required", {"reason": reason}))
-        return {"final_result": final, "route": band, "trace_summary": events}
+        routing_guardrail = GuardrailDecision(
+            stage="routing",
+            outcome="pass" if band == "green" else "review",
+            rule_ids=(f"ROUTE-{band.upper()}",),
+            reason_codes=(f"route_{band}",),
+            message=reason,
+        )
+        return {
+            "final_result": final,
+            "route": band,
+            "guardrails": [routing_guardrail],
+            "trace_summary": events,
+        }
 
     def persist(self, state: ForecasterState) -> dict[str, Any]:
-        """Record the decision and open a review case when one is required.
+        """Record the decision, open a review case, and file any regression.
 
         Section 17.2 persists assessment snapshots; section 14.3 requires a
-        review case when a run ends red. Application memory is optional, so a
-        deployment without it still completes -- it simply has nothing to
-        compare a later run against.
+        review case when a run ends red; section 21.4 requires that an
+        exhausted-retrieval failure or a failed verification becomes a versioned
+        regression case. All three happen here, before any reviewer is asked
+        anything, so a paused run has something concrete to show them.
+
+        Application memory is optional, so a deployment without it still
+        completes -- it simply has nothing to compare a later run against.
         """
 
         result = state.get("final_result")
         route = state.get("route")
+        request = state["request"]
         store = self._runtime.store
         assessment_id: str | None = None
         case_id: str | None = None
+        regression_ids: list[str] = []
 
         if store is not None and result is not None:
             if isinstance(result, InsufficientEvidenceDecision):
                 outcome = "insufficient_evidence"
                 confidence = 0.0
                 summary = "; ".join(result.gaps)[:500]
+                kind = "insufficient_evidence"
             else:
                 outcome = result.outcome
                 confidence = result.confidence
                 summary = result.rationale[:500]
+                kind = "forecast"
             record = store.record_assessment(
                 account_id=result.account_id,
                 cutoff=result.cutoff,
@@ -1136,28 +1450,74 @@ class GraphNodes:
                 confidence=confidence,
                 decision=str(route),
                 summary=summary,
+                question=request.question,
+                kind=kind,
+                card=result.model_dump(mode="json"),
             )
             assessment_id = record.assessment_id
             if route == "red":
+                intake = state.get("intake")
+                routing = _verdict(state, "routing")
+                reason_codes = tuple(
+                    dict.fromkeys(
+                        (
+                            *(intake.reason_codes if intake is not None else ()),
+                            *(routing.reason_codes if routing is not None else ()),
+                        )
+                    )
+                )
                 case_id = store.open_review_case(
-                    record.assessment_id, result.route_reason or "human review required"
+                    record.assessment_id,
+                    result.route_reason or "human review required",
+                    route="red",
+                    reason_codes=reason_codes,
                 ).case_id
+            for origin in self._regression_origins(state, result):
+                if origin == "retrieval_exhausted":
+                    reason_code = "coverage_insufficient"
+                elif origin == "verification_failure":
+                    reason_code = "evidence_contradicts_outcome"
+                else:
+                    reason_code = "policy_requires_human_action"
+                regression_ids.append(
+                    store.record_regression(
+                        account_id=result.account_id,
+                        origin=origin,
+                        cutoff=result.cutoff,
+                        question=request.question,
+                        system_outcome=outcome,
+                        reason_code=reason_code,
+                        note=(
+                            "; ".join(
+                                error.message
+                                for error in state.get("errors", [])
+                                if error.category == "model"
+                            )
+                            if origin == "model_error"
+                            else result.route_reason or origin
+                        ),
+                        confidence=confidence,
+                        route=str(route),
+                        case_id=case_id,
+                        assessment_id=record.assessment_id,
+                    ).regression_id
+                )
 
-        return {
-            "assessment_id": assessment_id,
-            "review_case_id": case_id,
-            "trace_summary": [
-                *_trace(
-                    state,
-                    "persist",
-                    "decision_persisted",
-                    {
-                        "assessment_id": assessment_id,
-                        "review_case_id": case_id,
-                        "persisted": assessment_id is not None,
-                    },
-                ),
-                *_trace(
+        will_pause = bool(state.get("pause_on_red") and route == "red" and case_id)
+        events = _trace(
+            state,
+            "persist",
+            "decision_persisted",
+            {
+                "assessment_id": assessment_id,
+                "review_case_id": case_id,
+                "regression_ids": regression_ids,
+                "persisted": assessment_id is not None,
+            },
+        )
+        if not will_pause:
+            events.extend(
+                _trace(
                     state,
                     "persist",
                     "run_completed",
@@ -1165,9 +1525,203 @@ class GraphNodes:
                         "route": route,
                         "abstained": result.is_abstention if result is not None else None,
                     },
+                )
+            )
+        return {
+            "assessment_id": assessment_id,
+            "review_case_id": case_id,
+            "review_state": "awaiting_review" if will_pause else state.get("review_state"),
+            "trace_summary": events,
+        }
+
+    @staticmethod
+    def _regression_origins(state: ForecasterState, result: Any) -> tuple[str, ...]:
+        """Return why this run is worth keeping as a regression case (section 21.4).
+
+        Section 21.4 names four sources, while Phase 7 also treats a configured
+        model that fell back after an error as regression-worthy. Retrieval
+        exhaustion, output verification failure, and model failure are visible
+        inside a run. Reviewer overrides are filed when the reviewer acts, and
+        guardrail false passes are filed by the offline safety evaluation.
+        """
+
+        origins: list[str] = []
+        if (
+            isinstance(result, InsufficientEvidenceDecision)
+            and result.reason_code == "RETRIEVAL_EXHAUSTED"
+        ):
+            origins.append("retrieval_exhausted")
+        verification = state.get("output_verification")
+        if verification is not None and not verification.passed:
+            origins.append("verification_failure")
+        if any(error.category == "model" for error in state.get("errors", [])):
+            origins.append("model_error")
+        return tuple(origins)
+
+    # -- Human review --------------------------------------------------------
+
+    def await_review(self, state: ForecasterState) -> dict[str, Any]:
+        """Pause the run and resume it with a typed reviewer decision (section 16.6).
+
+        `interrupt` raises on the first pass and resumes inside this node with
+        the review payload. Assessment and case persistence happen in the prior
+        graph node and are checkpointed, so those writes are not replayed.
+
+        The four actions of section 16.6 are applied here rather than in the
+        API so that a resume and an asynchronous review converge on the same
+        stored state: both end at `AssessmentStore.resolve_review_case`, which
+        is the single place a regression record is written.
+        """
+
+        result = state.get("final_result")
+        case_id = state.get("review_case_id")
+        assert result is not None and case_id is not None
+
+        forecast = result if isinstance(result, ForecastDecision) else None
+        intake = state.get("intake")
+        payload = ReviewInterrupt(
+            case_id=case_id,
+            run_id=state.get("run_id", "unknown"),
+            thread_id=state.get("thread_id", "unknown"),
+            account_id=result.account_id,
+            cutoff=result.cutoff,
+            route=state.get("route") or "red",
+            route_reason=result.route_reason,
+            proposed_outcome=forecast.outcome if forecast is not None else None,
+            distribution=dict(forecast.distribution) if forecast is not None else {},
+            confidence=forecast.confidence if forecast is not None else 0.0,
+            gaps=result.gaps if isinstance(result, InsufficientEvidenceDecision) else (),
+            reason_codes=intake.reason_codes if intake is not None else (),
+        )
+
+        answer = interrupt(payload.model_dump(mode="json"))
+        decision = (
+            answer
+            if isinstance(answer, ReviewerDecision)
+            else ReviewerDecision.model_validate(answer)
+        )
+        if decision.case_id != case_id:
+            raise ValueError(
+                f"reviewer decision names case {decision.case_id}, but this run paused on {case_id}"
+            )
+
+        store = self._runtime.store
+        regression_id: str | None = None
+        if store is not None:
+            _, regression = store.resolve_review_case(decision)
+            regression_id = regression.regression_id if regression is not None else None
+
+        reviewed = self._apply_review(result, decision)
+        return {
+            "final_result": reviewed,
+            "reviewer_decision": decision,
+            "review_state": "reviewed",
+            "trace_summary": [
+                *_trace(
+                    state,
+                    "await_review",
+                    "review_resumed",
+                    {
+                        "case_id": case_id,
+                        "action": decision.action,
+                        "reason_code": decision.reason_code,
+                        "corrected_outcome": decision.corrected_outcome,
+                        "regression_id": regression_id,
+                    },
+                ),
+                *_trace(
+                    state,
+                    "await_review",
+                    "run_completed",
+                    {"route": reviewed.route, "abstained": reviewed.is_abstention},
                 ),
             ],
         }
+
+    @staticmethod
+    def _apply_review(result: Any, decision: ReviewerDecision) -> Any:
+        """Return the result as the reviewer left it (section 16.6).
+
+        An approval and an escalation leave the answer alone and change only who
+        owns it next, so both are recorded as limitations rather than as edits.
+        An override and a data request do change what is released, and both are
+        rewritten deterministically: the reviewer's outcome is *theirs*, so the
+        model's rationale must not be left standing underneath it as though the
+        system had reasoned its way there.
+        """
+
+        stamp = f"Reviewed by {decision.reviewer}: {decision.action} ({decision.reason_code})."
+        note = f" Note: {decision.note}" if decision.note else ""
+        limitation = f"{stamp}{note}"
+
+        if decision.action in {"approve", "escalate"}:
+            return result.model_copy(update={"limitations": (*result.limitations, limitation)})
+
+        if decision.action == "request_data" or decision.corrected_outcome == (
+            "insufficient_evidence"
+        ):
+            return InsufficientEvidenceDecision(
+                account_id=result.account_id,
+                cutoff=result.cutoff,
+                verified_metrics=(
+                    result.verified_metrics
+                    if isinstance(result, InsufficientEvidenceDecision)
+                    else ()
+                ),
+                gaps=(
+                    *(result.gaps if isinstance(result, InsufficientEvidenceDecision) else ()),
+                    f"A reviewer withdrew the released answer: {decision.reason_code}.",
+                ),
+                requested_data=decision.requested_data,
+                citations=result.citations,
+                limitations=(*result.limitations, limitation),
+                recommended_action=(
+                    "Supply the requested sources and re-run the assessment. "
+                    "No categorical outcome is released."
+                ),
+                route="red",
+                route_reason=f"withdrawn by {decision.reviewer}",
+                reason_code="CRITICAL_DATA_GAP",
+            )
+
+        if isinstance(result, InsufficientEvidenceDecision):
+            assert decision.corrected_outcome is not None
+            return result.model_copy(
+                update={
+                    "limitations": (
+                        *result.limitations,
+                        limitation,
+                        f"The reviewer recorded {decision.corrected_outcome} as a human "
+                        "disposition; the system's evidence-based abstention is preserved.",
+                    ),
+                    "recommended_action": (
+                        "Use the reviewer's disposition as human judgement. The system still "
+                        "withholds its own categorical forecast on the available evidence."
+                    ),
+                    "route_reason": f"overridden by {decision.reviewer}",
+                }
+            )
+
+        assert isinstance(result, ForecastDecision)
+        assert decision.corrected_outcome is not None
+        return result.model_copy(
+            update={
+                "outcome": decision.corrected_outcome,
+                "rationale": (
+                    f"A reviewer replaced the system's answer with "
+                    f"{decision.corrected_outcome}. {decision.note}"
+                )[:2_000],
+                "recommended_action": (
+                    "Act on the reviewer's outcome, not the system's. "
+                    "The evidence and telemetry below are unchanged."
+                ),
+                "cited_doc_ids": (),
+                "narrative_source": "deterministic",
+                "limitations": (*result.limitations, limitation),
+                "route": "red",
+                "route_reason": f"overridden by {decision.reviewer}",
+            }
+        )
 
 
 __all__ = ["STALE_EVIDENCE_DAYS", "GraphNodes", "combined_coverage"]

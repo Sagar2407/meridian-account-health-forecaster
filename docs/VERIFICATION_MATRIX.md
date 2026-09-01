@@ -34,6 +34,10 @@ This matrix separates verified facts from provisional design choices and unresol
 | The archive reproduces byte for byte from the generator at seed `20260721` | `test_every_table_reproduces_the_shipped_archive` | Verified in Phase 1 |
 | Byte-exact reproduction requires `numpy < 2.5`; numpy 2.5.2 alters one note body (`NOTE-204709`) | Controlled comparison holding Python, pandas, and seed constant | Verified in Phase 1 |
 | Permitted missing values are 575 CSAT, 575 resolution hours, 135 outcome reasons, 231 usage-cliff dates | `test_permitted_missing_values_are_explicit` | Verified in Phase 1 |
+| All 36 packaged guardrail cases pass their named checks | `make evaluate-guardrails`; ignored JSON, CSV, and Markdown artifacts under `artifacts/safety/` | Verified in Phase 7 |
+| Hard-category false-pass and answerable false-block rates are both 0.0000 | 15 hard and 21 answerable cases in the Phase 7 safety report | Verified in Phase 7 |
+| Released evaluation results contain no target, wrong-account, or post-cutoff leakage findings | Whole-result leakage audit across the 36-case run | Verified in Phase 7 |
+| Reviewer overrides resolve the case and create a linked regression on one transaction | Store rollback test and FastAPI end-to-end test | Verified in Phase 7 |
 
 ## Point-in-time audit
 
@@ -64,6 +68,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | Whether the two evidence lanes run in parallel | Instrumented lanes recording entry and exit, checked for interval overlap | Confirmed concurrent; adjacent trace events were not treated as evidence; see `docs/PHASE_5_STATUS.md` |
 | Whether conflict-gated ToT beats linear adjudication | Both arms over the same 106 conflicting development accounts, paired on the cases both answered | Not on this evidence: 86.5% agreement, 69 declined answers for 12 caught errors against a 15.1% base rate; the provider arm is unrun; see `docs/PHASE_6_STATUS.md` |
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
+| Whether the packaged guardrail policy passes its hard safety gate | All 36 cases through the offline graph, with per-case behavioural grading and whole-result leakage checks | 0/15 hard false passes, 0/21 false blocks, 0 leakage findings, and 36/36 behavioural checks passed; see `docs/PHASE_7_STATUS.md` |
 
 ## Unresolved inputs
 
@@ -73,9 +78,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | Repository license not selected | Public-release blocker | Choose license before publication |
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
-| The packaged 36-case guardrail set has not been run | Intake rule quality is unmeasured | Phase 7 runs it as its exit gate; running it now would tune the rules against the sentences they will be scored on |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
-| Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Consider a numeral-word pass in Phase 7's output guardrail |
+| Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Normalize a bounded number-word vocabulary before public evaluation |
 
 ## Deferred inputs
 
@@ -83,9 +87,9 @@ The official report template, presentation outline, and any separate detailed gr
 
 ## Readiness decision
 
-Context onboarding is complete and Phase 0 implementation is present. Static source, configuration,
-shell, repository-policy, and documentation checks pass. Dependency-backed checks, lockfile
-generation, and the Docker health-page test remain open because package registry access and Docker
-are unavailable in the current workspace. Data/model/RAG implementation must not begin until those
-Phase 0 exit criteria pass or the user explicitly changes scope. Deferred deliverable artifacts do
-not affect Phase 0 readiness.
+Phases 0 through 7 are complete. The latest `make phase0-verify` rebuilt both
+locked images, passed formatting, lint, strict typing, 485 backend container
+tests at 95.24% coverage, 7 frontend tests, the production frontend build, the
+repository policy scan over 242 files, and both live container health checks. The separate
+Phase 7 safety run passed all 36 cases without a provider. Phase 8 may begin;
+deferred submission artifacts do not affect implementation readiness.

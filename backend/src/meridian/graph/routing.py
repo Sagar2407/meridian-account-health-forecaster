@@ -147,6 +147,30 @@ def route_verification(state: ForecasterState) -> str:
     return "safe_fallback"
 
 
+def route_human_review(state: ForecasterState) -> str:
+    """Decide whether a red run pauses for a person (section 16.6).
+
+    Section 16.5 allows a red case to "pause or complete with abstention and
+    require immediate human review", and section 16.6 asks for a LangGraph
+    interrupt "for cases that must pause". Which of the two applies is a
+    property of the caller, not of the account: an interactive user can wait for
+    a reviewer, and a portfolio scan must never block on one. So the caller sets
+    `pause_on_red`, and everything else -- what counts as red, what the reviewer
+    is shown, what is persisted -- is identical on both paths.
+    """
+
+    if not state.get("pause_on_red", False):
+        return "end"
+    if state.get("route") != "red":
+        return "end"
+    # There is nothing to pause for without a case to resolve: application
+    # memory is optional, and a run that could not open one would strand the
+    # graph waiting for a decision no reviewer could ever be shown.
+    if not state.get("review_case_id"):
+        return "end"
+    return "await_review"
+
+
 def human_route(
     confidence: float,
     coverage: CoverageReport,
@@ -157,8 +181,29 @@ def human_route(
     high_value: bool,
     retrieval_gap: bool,
     intake: GuardrailDecision | None = None,
+    evidence_screen: GuardrailDecision | None = None,
+    budget: GuardrailDecision | None = None,
 ) -> tuple[Route, str]:
-    """Return the human-review band for a released forecast (section 16.5)."""
+    """Return the human-review band for a released forecast (section 16.5).
+
+    Args:
+        confidence: The deterministic evidence-aware confidence.
+        coverage: What the run was able to observe.
+        verification: The output verification, when one ran.
+        conflict: The conflict gate's verdict, when one ran.
+        distribution: The calibrated four-class distribution.
+        outcome: The label being released.
+        high_value: Whether an adverse call here needs extra care (section 16.5).
+        retrieval_gap: Whether a noncritical retrieval gap was left unfilled.
+        intake: The intake guardrail's verdict.
+        evidence_screen: The evidence guardrail's verdict. Anything other than a
+            pass means a citation reached the bundle that could not be shown to
+            belong to this account at this cutoff, which is an upstream control
+            failing rather than an ordinary gap -- so it is red, not amber.
+        budget: The runtime budget's verdict. A run that finished on the
+            deterministic narrative because its model budget ran out is
+            provisional, not unsafe.
+    """
 
     adverse = outcome in ADVERSE_OUTCOMES
     margin = top_two_margin(distribution)
@@ -178,6 +223,8 @@ def human_route(
         red_reasons.append("an adverse call on a high-value account")
     if intake is not None and "escalate_to_human" in intake.reason_codes:
         red_reasons.append("the request asked for an action a person must decide")
+    if evidence_screen is not None and evidence_screen.outcome != "pass":
+        red_reasons.append("evidence was quarantined before it reached the decision")
     if red_reasons:
         return "red", "; ".join(red_reasons)
 
@@ -190,6 +237,8 @@ def human_route(
         amber_reasons.append("the output needed one regeneration")
     if coverage.stale_sources:
         amber_reasons.append(f"stale sources: {', '.join(coverage.stale_sources)}")
+    if budget is not None and budget.outcome != "pass":
+        amber_reasons.append("the run reached its model budget and finished deterministically")
     if amber_reasons:
         return "amber", "; ".join(amber_reasons)
 
@@ -232,6 +281,7 @@ __all__ = [
     "human_route",
     "route_conflict",
     "route_coverage",
+    "route_human_review",
     "route_intake",
     "route_tot",
     "route_verification",

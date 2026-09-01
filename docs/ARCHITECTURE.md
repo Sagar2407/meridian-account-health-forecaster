@@ -30,8 +30,12 @@ flowchart TD
     TOT --> VERIFY
     DEGRADED --> ROUTE[Confidence and impact routing]
     VERIFY --> ROUTE
-    ROUTE -->|Green| RELEASE[Advisory result]
-    ROUTE -->|Amber or Red| REVIEW[Human review]
+    ROUTE -->|Green or Amber| RELEASE[Advisory result]
+    ROUTE -->|Red| STORE[Persist assessment and review case]
+    STORE -->|Non-pausing| QUEUE[Review queue]
+    STORE -->|Interactive| PAUSE[LangGraph interrupt]
+    PAUSE --> DECIDE[Typed reviewer decision]
+    DECIDE --> RESUME[Resume and persist regression]
 ```
 
 Structural transitions are deterministic. LLMs may propose typed sub-goals, summarize evidence, generate candidate hypotheses, and score qualitative rubric dimensions, but they do not decide policy edges through unrestricted prose.
@@ -108,6 +112,8 @@ Safety spans:
 - Runtime/evaluation data separation
 - Tool allowlists and typed arguments
 - Account and point-in-time retrieval enforcement
+- Quantitative provenance and account/knowledge evidence isolation
+- Provider-attempt, token, and elapsed-time budgets
 - Evidence and output verification
 - Deterministic confidence and impact routing
 - Human interrupt/resume
@@ -123,7 +129,7 @@ Safety spans:
 
 Prior assessments are context, not truth. Every new assessment must re-query point-in-time evidence.
 
-## As built, after Phase 5
+## As built, after Phase 7
 
 | Concern | Module |
 | --- | --- |
@@ -138,7 +144,12 @@ Prior assessments are context, not truth. Every new assessment must re-query poi
 | Topology, checkpointer, run API | `meridian.graph.builder` |
 | Safe trace events | `meridian.graph.tracing` |
 | The four agents | `meridian.agents.*` |
-| Intake rules and the high-value policy | `meridian.guardrails.*` |
+| Intake rules and the high-value policy | `meridian.guardrails.intake`, `meridian.guardrails.policy` |
+| Evidence boundary and provenance screening | `meridian.guardrails.evidence` |
+| Spending and tool-surface guards | `meridian.guardrails.runtime` |
+| Assessment, review, and regression persistence | `meridian.memory.store` |
+| Human-review HTTP surface | `meridian.api.routes.review` |
+| The 36-case safety evaluation | `meridian_eval.guardrail_eval` |
 
 The contracts sit at the package root rather than inside `meridian.graph`
 because the agents, the guardrails, and the graph all depend on them: an agent

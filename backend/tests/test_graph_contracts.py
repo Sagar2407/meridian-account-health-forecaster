@@ -148,6 +148,21 @@ def test_an_unavailable_quantitative_lane_cannot_carry_a_prediction() -> None:
     assert degraded.coverage.has_critical_gap
 
 
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_a_metric_value_must_be_finite(value: float) -> None:
+    """NaN and infinity cannot cross the quantitative evidence boundary."""
+
+    with pytest.raises(ValidationError):
+        MetricObservation(
+            name="usage_trend_4w",
+            value=value,
+            window="the four weeks through the cutoff",
+            source="usage_weekly.csv",
+            coverage=4,
+            calculation_version="features_v1",
+        )
+
+
 def test_a_request_with_an_injection_shape_is_refused_at_the_type() -> None:
     """The one free-text field a caller controls is checked before anything runs."""
 

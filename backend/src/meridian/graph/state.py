@@ -15,7 +15,7 @@ rule rather than trusting it.
 """
 
 import operator
-from typing import Annotated, TypedDict, TypeVar
+from typing import Annotated, Literal, TypedDict, TypeVar
 
 from meridian.contracts import (
     AssessmentRequest,
@@ -30,6 +30,7 @@ from meridian.contracts import (
     OutputVerification,
     QuantitativeEvidence,
     RetrievalEvidence,
+    ReviewerDecision,
     Route,
     SubGoal,
     TraceEvent,
@@ -47,6 +48,11 @@ MAX_OUTPUT_REGENERATIONS = 1
 #: LangGraph's own safety net. Every path through this graph is far shorter, so
 #: hitting it means a cycle escaped the budgets above.
 GRAPH_RECURSION_LIMIT = 40
+
+#: Where a red run stands with its reviewer (plan section 16.6). `not_required`
+#: is every green and amber run; `awaiting_review` is a run paused on a
+#: LangGraph interrupt; `reviewed` is one a typed reviewer decision resumed.
+ReviewState = Literal["not_required", "awaiting_review", "reviewed"]
 
 ItemT = TypeVar("ItemT")
 
@@ -98,6 +104,25 @@ class ForecasterState(TypedDict, total=False):
     assessment_id: str | None
     errors: Annotated[list[NodeError], operator.add]
     trace_summary: Annotated[list[TraceEvent], operator.add]
+    # -- Phase 7 additions (plan sections 16.3 and 16.6) ---------------------
+    #: Every stage's guardrail verdict, in the order the stages ran. This is
+    #: what the per-run safety report is assembled from, so it accumulates
+    #: rather than replaces: a run that passed intake and then quarantined a
+    #: citation has two verdicts to show, not one.
+    guardrails: Annotated[list[GuardrailDecision], operator.add]
+    #: The runtime budget of section 16.3, tracked as plain counters so it
+    #: survives a checkpoint. `started_at` is epoch seconds; a paused run's
+    #: wall clock therefore includes the reviewer's own time, which is harmless
+    #: because every model call happens before the pause.
+    model_calls: Annotated[int, operator.add]
+    spent_tokens: Annotated[int, operator.add]
+    started_at: float
+    #: Whether a red result should pause on a LangGraph interrupt rather than
+    #: complete and leave an open case. A portfolio scan must never block on a
+    #: person, so this is off unless a caller asks for it.
+    pause_on_red: bool
+    review_state: ReviewState | None
+    reviewer_decision: ReviewerDecision | None
 
 
 #: State keys each parallel lane is permitted to write, plus the two accumulating
@@ -107,7 +132,9 @@ PARALLEL_LANE_KEYS: dict[str, frozenset[str]] = {
     "quantitative": frozenset({"quantitative"}),
     "retrieval": frozenset({"retrieval"}),
 }
-ACCUMULATING_KEYS: frozenset[str] = frozenset({"errors", "trace_summary"})
+ACCUMULATING_KEYS: frozenset[str] = frozenset(
+    {"errors", "trace_summary", "guardrails", "model_calls", "spent_tokens"}
+)
 
 
 __all__ = [
@@ -118,5 +145,6 @@ __all__ = [
     "MAX_RETRIEVAL_REWRITES",
     "PARALLEL_LANE_KEYS",
     "ForecasterState",
+    "ReviewState",
     "keep_last",
 ]

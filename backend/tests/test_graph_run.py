@@ -34,13 +34,15 @@ from meridian.contracts import (
     Citation,
     ForecastDecision,
     InsufficientEvidenceDecision,
+    RequestedData,
     RetrievalEvidence,
     RetrievalObservation,
+    ReviewerDecision,
     SubGoal,
     SubGoalKind,
 )
 from meridian.data.repository import RuntimeRepository
-from meridian.graph import build_graph, run_assessment, sqlite_checkpointer
+from meridian.graph import build_graph, resume_assessment, run_assessment, sqlite_checkpointer
 from meridian.graph.runtime import GraphRuntime
 from meridian.graph.state import MAX_EVIDENCE_ROUNDS, ForecasterState
 from meridian.llm.fake import ScriptedGenerator
@@ -209,6 +211,13 @@ def test_the_fast_path_produces_a_grounded_verified_decision(
     # No provider is configured, so the run must cost nothing and say so.
     assert run.total_tokens == 0
     assert run.result.narrative_source == "deterministic"
+    assert {guardrail.stage for guardrail in run.guardrails} == {
+        "intake",
+        "execution",
+        "evidence",
+        "output",
+        "routing",
+    }
 
 
 def test_the_trace_records_the_whole_run_in_order(
@@ -580,6 +589,75 @@ def test_a_checkpointed_run_can_be_read_back(
     assert len(snapshot.values["trace_summary"]) == len(run.trace)
 
 
+def test_a_red_run_pauses_and_resumes_with_a_traceable_data_request(
+    graph_runtime: GraphRuntime, account_id: str, tmp_path: Path
+) -> None:
+    """The Phase 7 review interrupt resumes once and files a regression case."""
+
+    runtime = _with_retriever(graph_runtime, _StubRetriever("unavailable"))
+    thread_id = f"T-review-{tmp_path.name}"
+    with sqlite_checkpointer(tmp_path / "review-checkpoints.sqlite") as saver:
+        graph = build_graph(runtime, checkpointer=saver)
+        paused = run_assessment(
+            graph,
+            _request(account_id),
+            run_id=f"RUN-review-{tmp_path.name}",
+            thread_id=thread_id,
+            pause_on_red=True,
+        )
+
+        assert paused.awaiting_review is True
+        assert paused.completed is False
+        assert paused.result is not None
+        assert paused.review_case_id is not None
+        assert paused.interrupt is not None
+        assert paused.interrupt.case_id == paused.review_case_id
+        assert paused.events("run_completed") == ()
+
+        requested = RequestedData(
+            source="retrieval_index",
+            detail="Build the account-scoped document index.",
+            window="through the assessment cutoff",
+        )
+        decision = ReviewerDecision(
+            case_id=paused.review_case_id,
+            reviewer="reviewer@example.test",
+            action="request_data",
+            reason_code="coverage_insufficient",
+            note="The qualitative lane was unavailable.",
+            requested_data=(requested,),
+        )
+        resumed = resume_assessment(graph, thread_id, decision)
+
+    assert resumed.awaiting_review is False
+    assert resumed.completed is True
+    assert resumed.reviewer_decision == decision
+    assert len(resumed.events("review_resumed")) == 1
+    assert len(resumed.events("run_completed")) == 1
+    assert runtime.store is not None
+    stored_case = runtime.store.review_case(decision.case_id)
+    assert stored_case is not None
+    assert stored_case.status == "resolved"
+    assert stored_case.action == "request_data"
+    assert stored_case.requested_data[0]["source"] == "retrieval_index"
+    regressions = [
+        case for case in runtime.store.regression_cases() if case.case_id == decision.case_id
+    ]
+    assert len(regressions) == 1
+    assert regressions[0].origin == "reviewer_data_request"
+
+
+def test_a_pause_requires_a_checkpointer(graph_runtime: GraphRuntime, account_id: str) -> None:
+    """A graph with nowhere to resume refuses to strand a red run."""
+
+    with pytest.raises(ValueError, match="needs a checkpointer"):
+        run_assessment(
+            build_graph(graph_runtime),
+            _request(account_id),
+            pause_on_red=True,
+        )
+
+
 def test_the_streaming_callback_sees_every_event_as_it_happens(
     graph_runtime: GraphRuntime, account_id: str
 ) -> None:
@@ -625,6 +703,7 @@ def test_the_graph_is_section_14s_flowchart(graph_runtime: GraphRuntime) -> None
         "safe_fallback",
         "assign_route",
         "persist",
+        "await_review",
     }
 
     edges = {(edge.source, edge.target) for edge in graph.edges}
@@ -638,6 +717,10 @@ def test_the_graph_is_section_14s_flowchart(graph_runtime: GraphRuntime) -> None
     assert ("degraded_result", "persist") in edges
     assert ("persist", "__end__") in edges
     assert ("safe_refusal", "__end__") in edges
+    # Section 16.6's interrupt hangs off persistence, so a paused run has
+    # already left a review case for the person it is waiting for.
+    assert ("persist", "await_review") in edges
+    assert ("await_review", "__end__") in edges
 
 
 def test_no_node_name_collides_with_a_state_key(graph_runtime: GraphRuntime) -> None:

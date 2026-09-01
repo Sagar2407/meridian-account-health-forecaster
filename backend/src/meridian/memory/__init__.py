@@ -9,7 +9,14 @@ from meridian.memory.store import (
     AssessmentRecord,
     AssessmentStore,
     AssessmentStoreError,
+    RegressionCase,
     ReviewCase,
 )
 
-__all__ = ["AssessmentRecord", "AssessmentStore", "AssessmentStoreError", "ReviewCase"]
+__all__ = [
+    "AssessmentRecord",
+    "AssessmentStore",
+    "AssessmentStoreError",
+    "RegressionCase",
+    "ReviewCase",
+]

@@ -18,8 +18,14 @@ def test_health_contract() -> None:
     }
 
 
-def test_openapi_exposes_health_only() -> None:
+def test_openapi_exposes_health_and_the_phase_7_review_workflow() -> None:
     response = client.get("/openapi.json")
 
     assert response.status_code == 200
-    assert set(response.json()["paths"]) == {"/api/health"}
+    assert set(response.json()["paths"]) == {
+        "/api/health",
+        "/api/review-cases",
+        "/api/review-cases/{case_id}",
+        "/api/review-cases/{case_id}/decision",
+        "/api/review-regressions",
+    }

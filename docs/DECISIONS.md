@@ -39,6 +39,10 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-031 | Skip a relative conflict rule when no portfolio baseline is available | Accepted | Comparing against a default of zero would classify every account as above median and fire the rule on the whole portfolio ([Phase 6](PHASE_6_STATUS.md)) |
 | D-032 | Run the ToT ablation on the development split only | Accepted | Section 22.7 forbids tuning against held-out outcomes, and the comparison exists to inform a threshold ([Phase 6](PHASE_6_STATUS.md)) |
 | D-033 | Send a failed Tree-of-Thought draft to the safe fallback rather than to linear regeneration | Accepted | `fast_adjudication` rebuilds the decision around the model's argmax, so regenerating a search winner there would return a different outcome under the same run id ([Phase 6](PHASE_6_STATUS.md)) |
+| D-034 | Treat intake, execution, evidence, output, and routing as typed guardrail stages on every non-blocked run | Accepted | One accumulated contract makes a missing control observable in traces and tests instead of relying on which path happened to execute ([Phase 7](PHASE_7_STATUS.md)) |
+| D-035 | Quarantine an evidence boundary violation for the rest of the run, even if a later retry is clean | Accepted | A retry may recover coverage, but it cannot prove that wrong-account, post-cutoff, or invalid-provenance evidence did not influence earlier state; the final route is therefore red ([Phase 7](PHASE_7_STATUS.md)) |
+| D-036 | Pause only interactive red runs, and only when a checkpointer and stored review case exist | Accepted | Portfolio scans must not block, while an uncheckpointed or unpersisted pause would strand a run no reviewer can resume ([Phase 7](PHASE_7_STATUS.md)) |
+| D-037 | Resolve a reviewer correction and insert its regression record in one transaction | Accepted | A human-corrected released answer without the linked replay case would make the Phase 7 audit trail incomplete ([Phase 7](PHASE_7_STATUS.md)) |
 
 ## Decisions settled by measurement
 

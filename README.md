@@ -6,7 +6,7 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 6 are complete.** Every exit gate passes, and none of them needs an API key.
+**Phases 0 through 7 are complete.** Every exit gate passes, and none of them needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
@@ -57,7 +57,14 @@ fires on 51% of accounts, and in the offline configuration the search agrees wit
 on 86.5% of the cases both answer while declining 69 answers to catch 12 errors. Phase 6 delivers
 the structure the plan specifies and the measurement showing the structure alone is not yet enough.
 
-Phase 7, the complete safety and human-review layer, is next.
+Phase 7 delivered the complete safety and human-review layer: five typed guardrail stages, hard
+runtime spending and tool-surface bounds, evidence-envelope and citation isolation, deterministic
+routing, resumable red-case interrupts, a persisted four-action review queue, atomic reviewer
+regressions, and a 36-case offline safety report. The gate recorded zero hard false passes, zero
+false blocks, zero leakage findings, and zero tokens. Reproduce it with
+`make evaluate-guardrails`; evidence is in `docs/PHASE_7_STATUS.md`.
+
+Phase 8, the assessment and streaming API, is next.
 
 ### What one assessment does
 
@@ -79,6 +86,9 @@ validate_request ─► load_context ─► plan_sub_goals ─┬─► quantita
                                                                               │  verify_output ◄┘
                                                                               │   │ pass │ fail
                                                                               └───┴──►assign_route ─► persist
+                                                                                                      │ red + interactive
+                                                                                                      ▼
+                                                                                                await_review ─► resume
 ```
 
 The outcome label always comes from the calibrated forecaster. A language model, when one is
@@ -147,6 +157,7 @@ make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk"   # retrieve evidence as JSO
 make evaluate-retrieval  # retrieval benchmark and chunking ablation (Docker, ~20 minutes)
 make assess ACCOUNT=ACC-1042 OFFLINE=1   # one end-to-end assessment, no provider (Docker)
 make evaluate-tot        # linear versus conflict-gated ToT ablation (Docker, ~10 minutes)
+make evaluate-guardrails # all 36 safety cases; writes artifacts/safety/ (Docker, offline)
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)
@@ -164,9 +175,9 @@ the frontend production build, the repository policy scan, and both Docker build
 are declared in `pyproject.toml` and `frontend/package.json`; `uv.lock` and `pnpm-lock.yaml` record the
 resolved environments.
 
-## Phase 0 API contract
+## Current API contract
 
-`GET /api/health` is intentionally the only application endpoint in this phase:
+The health contract remains:
 
 ```json
 {
@@ -178,7 +189,15 @@ resolved environments.
 }
 ```
 
-No dataset access, retrieval, model, forecast, agent, or review behavior is present yet.
+Phase 7 also exposes the persisted review workflow:
+
+- `GET /api/review-cases`
+- `GET /api/review-cases/{case_id}`
+- `POST /api/review-cases/{case_id}/decision`
+- `GET /api/review-regressions`
+
+The assessment and SSE endpoints arrive in Phase 8. The review API writes only
+application memory; it never mutates Meridian source data.
 
 ## Verified dataset snapshot
 
@@ -225,6 +244,9 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_2_STATUS.md` — model exit-gate evidence and the two documented departures from the plan
 - `docs/PHASE_3_STATUS.md` — retrieval exit-gate evidence, benchmark, and chunking ablation
 - `docs/PHASE_4_STATUS.md` — tool-layer and provider-adapter exit-gate evidence
+- `docs/PHASE_5_STATUS.md` — fast-path graph and deterministic review-routing evidence
+- `docs/PHASE_6_STATUS.md` — conflict-gated Tree-of-Thought evidence and ablation
+- `docs/PHASE_7_STATUS.md` — safety evaluation and human-review workflow evidence
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments
@@ -233,10 +255,10 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 
 - `backend/` — FastAPI application and Python tests
 - `frontend/` — React/TypeScript application and Vitest tests
-- `graph/` — LangGraph orchestration in later phases
-- `tools/` — typed business services and MCP adapters in later phases
-- `retrieval/` — sanitized indexing and retrieval in later phases
-- `evaluation/` — deterministic evaluation harness in later phases
+- `backend/src/meridian/graph/` — LangGraph orchestration and resumable workflow
+- `backend/src/meridian/tools/` — typed business services and MCP adapters
+- `backend/src/meridian/retrieval/` — sanitized indexing and retrieval
+- `evaluation/` — deterministic evaluation harnesses and evaluation-only data access
 - `config/` — non-secret configuration examples
 - `data/` — immutable raw inputs and ignored generated artifacts
 

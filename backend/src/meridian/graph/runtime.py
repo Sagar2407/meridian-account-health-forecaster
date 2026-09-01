@@ -24,6 +24,7 @@ from meridian.agents.quantitative_analyst import QuantitativeAnalyst
 from meridian.data.repository import RuntimeRepository
 from meridian.features.baselines import BaselineProvider
 from meridian.guardrails.policy import HighValuePolicy
+from meridian.guardrails.runtime import assert_no_dangerous_tools
 from meridian.llm.base import ProviderNotConfiguredError, StructuredGenerator
 from meridian.llm.providers import build_generator
 from meridian.memory.store import AssessmentStore
@@ -97,6 +98,9 @@ class GraphRuntime:
     ) -> "GraphRuntime":
         """Build a runtime from parts, for tests and for `build`."""
 
+        # Fail at assembly, before a provider sees a schema, if the advertised
+        # surface ever grows beyond the frozen eight read-only capabilities.
+        assert_no_dangerous_tools(registry)
         return cls(
             repository=repository,
             registry=registry,

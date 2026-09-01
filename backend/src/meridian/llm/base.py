@@ -45,6 +45,11 @@ class ProviderNotConfiguredError(GenerationError):
 class StructuredOutputError(GenerationError):
     """Raised when a model could not produce output matching the schema."""
 
+    def __init__(self, message: str, usage: "Usage", attempts: int) -> None:
+        super().__init__(message)
+        self.usage = usage
+        self.attempts = attempts
+
 
 @dataclass(frozen=True)
 class Usage:
@@ -129,6 +134,22 @@ def _schema_for(model: type[BaseModel]) -> dict[str, Any]:
     return dict(close(schema))
 
 
+def spent_on_failure(error: GenerationError) -> tuple[Usage, int]:
+    """Return what a failed generation still cost.
+
+    A generation that failed validation twice was still billed twice, so the
+    run's budget has to be charged for it (plan section 16.3). Only
+    `StructuredOutputError` carries that accounting; a provider that was never
+    configured cost nothing. This narrows with `isinstance` rather than reading
+    the attributes with a `getattr` default, so renaming either one is a type
+    error instead of a budget that silently stops counting failures.
+    """
+
+    if isinstance(error, StructuredOutputError):
+        return error.usage, error.attempts
+    return Usage(), 1
+
+
 def generate_structured(
     generator: StructuredGenerator,
     schema: type[ModelT],
@@ -207,6 +228,10 @@ def generate_structured(
             )
 
     raise StructuredOutputError(
-        f"{generator.model_name} did not produce valid {schema.__name__} "
-        f"after {MAX_REPAIR_ATTEMPTS + 1} attempts: {last_error}"
+        (
+            f"{generator.model_name} did not produce valid {schema.__name__} "
+            f"after {MAX_REPAIR_ATTEMPTS + 1} attempts: {last_error}"
+        ),
+        usage=total,
+        attempts=MAX_REPAIR_ATTEMPTS + 1,
     )

@@ -44,6 +44,7 @@ from meridian.llm.base import (
     StructuredGenerator,
     Usage,
     generate_structured,
+    spent_on_failure,
 )
 from meridian.retrieval.documents import forbidden_field_mentions
 from meridian.tools.contracts import assert_safe_text
@@ -573,7 +574,10 @@ class ForecastAdjudicator:
         return self._generator is not None
 
     def generate_candidates(
-        self, bundle: EvidenceBundle, outcomes: Sequence[str] | None = None
+        self,
+        bundle: EvidenceBundle,
+        outcomes: Sequence[str] | None = None,
+        use_model: bool = True,
     ) -> CandidateGeneration:
         """Argue every canonical outcome once (plan section 15.2).
 
@@ -583,15 +587,26 @@ class ForecastAdjudicator:
         priors, and the count are fixed here. A model cannot add an outcome,
         drop one, or change a prior, so the search stays exactly four branches
         wide however the generation goes.
+
+        Args:
+            bundle: The verified evidence.
+            outcomes: The outcome set to argue; the distribution's classes by default.
+            use_model: Set false when the run's model budget is spent
+                (section 16.3). The candidates are then the deterministic floor,
+                which is the same set the search runs on with no provider at all.
         """
 
         classes = tuple(outcomes) if outcomes else tuple(bundle.quantitative.distribution)
         baseline = {outcome: deterministic_candidate(bundle, outcome) for outcome in classes}
 
-        if self._generator is None:
+        if self._generator is None or not use_model:
             return CandidateGeneration(
                 candidates=tuple(baseline.values()),
-                fallback_reason="no language-model provider is configured",
+                fallback_reason=(
+                    "no language-model provider is configured"
+                    if self._generator is None
+                    else "the run's model-call budget is spent"
+                ),
             )
 
         try:
@@ -602,8 +617,11 @@ class ForecastAdjudicator:
                 input_text=candidate_brief(bundle, classes),
             )
         except GenerationError as error:
+            spent, attempts = spent_on_failure(error)
             return CandidateGeneration(
                 candidates=tuple(baseline.values()),
+                usage=spent,
+                attempts=attempts,
                 fallback_reason=f"candidate generation failed: {type(error).__name__}",
             )
 
@@ -634,7 +652,12 @@ class ForecastAdjudicator:
             fallback_reason=None if argued else "the model argued no known outcome",
         )
 
-    def draft(self, bundle: EvidenceBundle, repair_note: str | None = None) -> DraftResult:
+    def draft(
+        self,
+        bundle: EvidenceBundle,
+        repair_note: str | None = None,
+        use_model: bool = True,
+    ) -> DraftResult:
         """Return a drafted narrative, from the model when one is configured.
 
         Args:
@@ -642,17 +665,31 @@ class ForecastAdjudicator:
             repair_note: What the previous verification rejected. Section 14.2
                 allows one regeneration; passing the failure back is what makes
                 the second attempt different from the first.
+            use_model: Set false when the run's model budget is spent
+                (section 16.3). The narrative is then composed from verified
+                values, which passes output verification by construction.
         """
 
-        if self._generator is None:
+        if self._generator is None or not use_model:
+            configured = self._generator is not None
             return DraftResult(
                 draft=deterministic_draft(
                     bundle,
-                    "Analysis narrative unavailable: no language-model provider is "
-                    "configured, so this explanation is generated deterministically.",
+                    (
+                        "Analysis narrative unavailable: this run reached its model-call "
+                        "budget, so this explanation is generated deterministically from "
+                        "verified values."
+                        if configured
+                        else "Analysis narrative unavailable: no language-model provider is "
+                        "configured, so this explanation is generated deterministically."
+                    ),
                 ),
                 source="deterministic",
-                fallback_reason="no language-model provider is configured",
+                fallback_reason=(
+                    "the run's model-call budget is spent"
+                    if configured
+                    else "no language-model provider is configured"
+                ),
             )
 
         brief = evidence_brief(bundle)
@@ -671,6 +708,7 @@ class ForecastAdjudicator:
                 input_text=brief,
             )
         except GenerationError as error:
+            spent, attempts = spent_on_failure(error)
             return DraftResult(
                 draft=deterministic_draft(
                     bundle,
@@ -678,6 +716,8 @@ class ForecastAdjudicator:
                     "so this explanation is generated deterministically from verified values.",
                 ),
                 source="deterministic",
+                usage=spent,
+                attempts=attempts,
                 fallback_reason=f"adjudication generation failed: {type(error).__name__}",
             )
 

@@ -32,6 +32,7 @@ from meridian.llm.base import (
     StructuredGenerator,
     Usage,
     generate_structured,
+    spent_on_failure,
 )
 from meridian.tools.contracts import (
     AccountProfileResponse,
@@ -207,15 +208,25 @@ class Orchestrator:
         request: AssessmentRequest,
         profile: AccountProfile,
         priors: tuple[PriorAssessment, ...] = (),
+        use_model: bool = True,
     ) -> PlanResult:
-        """Return the sub-goals this assessment should gather evidence for."""
+        """Return the sub-goals this assessment should gather evidence for.
+
+        ``use_model`` is false after the run reaches a Phase 7 runtime budget.
+        The deterministic plan is the normal no-provider path, so declining a
+        further model call does not prevent the assessment from completing.
+        """
 
         fallback = deterministic_plan(profile)
-        if self._generator is None:
+        if self._generator is None or not use_model:
             return PlanResult(
                 plan=fallback,
                 source="deterministic",
-                fallback_reason="no language-model provider is configured",
+                fallback_reason=(
+                    "no language-model provider is configured"
+                    if self._generator is None
+                    else "the run's model-call budget is spent"
+                ),
             )
 
         try:
@@ -229,9 +240,12 @@ class Orchestrator:
                 ),
             )
         except GenerationError as error:
+            spent, attempts = spent_on_failure(error)
             return PlanResult(
                 plan=fallback,
                 source="deterministic",
+                usage=spent,
+                attempts=attempts,
                 fallback_reason=f"planner generation failed: {type(error).__name__}",
             )
 

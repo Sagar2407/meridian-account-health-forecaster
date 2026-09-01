@@ -11,6 +11,8 @@ from meridian.contracts import (
     BlockedDecision,
     ForecastDecision,
     InsufficientEvidenceDecision,
+    ReviewerDecision,
+    ReviewInterrupt,
     SubGoal,
     TraceEvent,
 )
@@ -18,6 +20,7 @@ from meridian.graph.builder import (
     AssessmentRun,
     build_graph,
     checkpoint_path,
+    resume_assessment,
     run_assessment,
     sqlite_checkpointer,
 )
@@ -32,10 +35,13 @@ __all__ = [
     "ForecasterState",
     "GraphRuntime",
     "InsufficientEvidenceDecision",
+    "ReviewInterrupt",
+    "ReviewerDecision",
     "SubGoal",
     "TraceEvent",
     "build_graph",
     "checkpoint_path",
+    "resume_assessment",
     "run_assessment",
     "sqlite_checkpointer",
 ]

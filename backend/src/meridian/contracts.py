@@ -195,7 +195,7 @@ class MetricObservation(BaseModel):
     different metric.
     """
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True, extra="forbid", allow_inf_nan=False)
 
     name: str = Field(min_length=1)
     value: float
@@ -700,6 +700,108 @@ class BlockedDecision(BaseModel):
     reason_code: ErrorCode = "REQUEST_BLOCKED"
 
 
+#: What a reviewer may do with a case (plan section 16.6).
+ReviewAction = Literal["approve", "override", "request_data", "escalate"]
+
+#: Why they did it. These are stored as regression metadata (sections 16.6 and
+#: 21.4), so they are a fixed vocabulary rather than free text: a regression
+#: suite can only be grouped by a reason code that means the same thing twice.
+ReviewReasonCode = Literal[
+    "agrees_with_evidence",
+    "evidence_contradicts_outcome",
+    "known_context_missing",
+    "model_miscalibrated",
+    "coverage_insufficient",
+    "policy_requires_human_action",
+    "other",
+]
+
+#: What an override may replace the system's answer with: any outcome the model
+#: distinguishes, or an explicit abstention.
+OVERRIDE_OUTCOMES: frozenset[str] = frozenset({*OUTCOME_CLASSES, "insufficient_evidence"})
+
+
+class ReviewerDecision(BaseModel):
+    """One typed reviewer action on one case (plan section 16.6).
+
+    Section 16.6 lists four reviewer actions and requires an override to carry
+    "a required reason code and note". Required is enforced here rather than in
+    the API layer, so the same rule holds whether the decision arrives over HTTP
+    or as a LangGraph resume value.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    case_id: str = Field(min_length=1, max_length=64)
+    reviewer: str = Field(min_length=1, max_length=120)
+    action: ReviewAction
+    reason_code: ReviewReasonCode = "other"
+    note: str = Field(default="", max_length=1_000)
+    corrected_outcome: str | None = None
+    requested_data: tuple[RequestedData, ...] = ()
+
+    @model_validator(mode="after")
+    def the_action_must_carry_what_it_needs(self) -> "ReviewerDecision":
+        """Refuse an action whose required fields are missing or contradictory."""
+
+        if self.action == "override":
+            if self.corrected_outcome is None:
+                raise ValueError("an override must name the outcome it replaces the answer with")
+            if self.corrected_outcome not in OVERRIDE_OUTCOMES:
+                raise ValueError(
+                    f"corrected_outcome {self.corrected_outcome!r} is not one of "
+                    f"{sorted(OVERRIDE_OUTCOMES)}"
+                )
+            if not self.note.strip():
+                raise ValueError("an override must carry a note (plan section 16.6)")
+            if self.reason_code == "other":
+                raise ValueError("an override must carry a specific reason code")
+        elif self.corrected_outcome is not None:
+            raise ValueError(f"a {self.action} action must not name a corrected outcome")
+
+        if self.action == "request_data" and not self.requested_data:
+            raise ValueError("a data request must name at least one source to supply")
+        if self.note:
+            assert_safe_text(self.note, "note")
+        return self
+
+    @property
+    def creates_regression_case(self) -> bool:
+        """Return whether this action must leave a regression record (section 21.4).
+
+        An approval confirms the system; it is not evidence of a defect. The
+        other three all record that the released answer was not the one a
+        reviewer would have released, which is exactly what a regression suite
+        needs to be built from.
+        """
+
+        return self.action in {"override", "request_data", "escalate"}
+
+
+class ReviewInterrupt(BaseModel):
+    """What a paused run hands a reviewer while it waits (plan section 16.6).
+
+    Only what a decision card needs. The full result is in application memory
+    and is served by the review API; this is the payload LangGraph carries
+    through the interrupt, so it stays small and free of prose.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    case_id: str = Field(min_length=1, max_length=64)
+    run_id: str = Field(min_length=1)
+    thread_id: str = Field(min_length=1)
+    account_id: AccountId
+    cutoff: date
+    route: Literal["red"] = "red"
+    route_reason: str = ""
+    proposed_outcome: str | None = None
+    distribution: dict[str, float] = Field(default_factory=dict)
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    gaps: tuple[str, ...] = ()
+    reason_codes: tuple[str, ...] = ()
+
+
 __all__ = [
     "ADVERSE_OUTCOMES",
     "FORBIDDEN_TRACE_KEYS",
@@ -708,6 +810,7 @@ __all__ = [
     "MAX_TOT_DEPTH",
     "MIN_SUB_GOALS",
     "OUTCOME_CLASSES",
+    "OVERRIDE_OUTCOMES",
     "SUB_GOAL_KINDS",
     "TOT_BEAM_WIDTH",
     "AssessmentRequest",
@@ -733,6 +836,10 @@ __all__ = [
     "RequestedData",
     "RetrievalEvidence",
     "RetrievalObservation",
+    "ReviewAction",
+    "ReviewInterrupt",
+    "ReviewReasonCode",
+    "ReviewerDecision",
     "Route",
     "SubGoal",
     "SubGoalKind",

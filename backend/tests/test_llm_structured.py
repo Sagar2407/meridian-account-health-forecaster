@@ -110,6 +110,9 @@ def test_a_model_that_never_conforms_fails_instead_of_looping() -> None:
         generate_structured(generator, SubGoalPlan, instructions="Plan.", input_text="ACC-1042")
     assert generator.calls == 2
     assert "SubGoalPlan" in str(failure.value)
+    assert failure.value.attempts == 2
+    assert failure.value.usage.prompt_tokens == 20
+    assert failure.value.usage.completion_tokens == 10
 
 
 def test_usage_accumulates_across_attempts() -> None:
