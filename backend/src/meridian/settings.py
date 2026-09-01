@@ -47,6 +47,51 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("MERIDIAN_LLM_API_KEY", "OPENAI_API_KEY"),
     )
 
+    # -- Phase 8: serving, scanning, and demo cost control -------------------
+    # Plan sections 18.2 and 24.3. Every one of these has a safe default: a
+    # deployment that sets nothing gets bounded concurrency, no scheduler, and
+    # no unattended spending.
+
+    #: How many account runs a portfolio scan may execute at once (section 18.1).
+    scan_concurrency: int = Field(default=4, ge=1, le=32)
+    #: The largest portfolio scan a caller may request in one request.
+    scan_max_accounts: int = Field(default=50, ge=1, le=500)
+    #: Days ahead of an account's renewal date that make it eligible for a scan
+    #: (section 18.1's "configurable renewal horizon").
+    scan_renewal_horizon_days: int = Field(default=120, ge=1, le=730)
+    #: Provider calls one whole scan may make, across every account in it. This
+    #: is the scan-level companion to the per-run budget in
+    #: `meridian.guardrails.runtime`, and it is what the Phase 8 exit gate is
+    #: measured against.
+    scan_model_call_budget: int = Field(default=200, ge=0, le=100_000)
+
+    #: Section 24.3. Demo mode restricts assessments to the synthetic portfolio,
+    #: caps run rates, and refuses unattended spending. It is off locally and
+    #: expected to be on in the public deployment.
+    demo_mode: bool = False
+    #: Runs one client address may start per hour. 0 disables the limit.
+    rate_limit_runs_per_hour: int = Field(default=60, ge=0, le=100_000)
+    #: Runs the whole service may start per day. 0 disables the limit.
+    rate_limit_daily_runs: int = Field(default=500, ge=0, le=1_000_000)
+
+    #: Section 18.2. The scheduled worker is opt-in and stays off by default,
+    #: because a schedule that spends money without a person present is the one
+    #: autonomous behaviour this system must not have.
+    enable_scheduler: bool = False
+    #: Minutes between scheduled scans when the scheduler is enabled.
+    scheduler_interval_minutes: int = Field(default=1_440, ge=5, le=44_640)
+
+    @property
+    def scheduler_is_permitted(self) -> bool:
+        """Return whether a scheduled scan may run unattended (sections 18.2, 24.3).
+
+        Demo mode refuses it outright. "Disable unattended scheduled LLM
+        spending in the public deployment by default" is a rule about money, so
+        it is answered here rather than by remembering to unset a flag.
+        """
+
+        return self.enable_scheduler and not self.demo_mode
+
     @property
     def llm_is_configured(self) -> bool:
         """Return whether a model-backed feature can run at all."""

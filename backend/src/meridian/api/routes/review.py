@@ -220,7 +220,7 @@ def decide(
             requested_data=request.requested_data,
         )
     except ValueError as error:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(error)) from error
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
 
     try:
         case, regression = store.resolve_review_case(decision)

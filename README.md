@@ -6,7 +6,7 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 7 are complete.** Every exit gate passes, and none of them needs an API key.
+**Phases 0 through 8 are complete.** Every exit gate passes, and none of them needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
@@ -64,7 +64,21 @@ regressions, and a 36-case offline safety report. The gate recorded zero hard fa
 false blocks, zero leakage findings, and zero tokens. Reproduce it with
 `make evaluate-guardrails`; evidence is in `docs/PHASE_7_STATUS.md`.
 
-Phase 8, the assessment and streaming API, is next.
+Phase 8 delivered the served system: the whole of the plan's endpoint table, a Server-Sent
+Events stream of safe progress for one run, the bounded autonomous portfolio scan, an optional
+scheduled worker that refuses to spend unattended where the plan forbids it, a CLI, and demo-mode
+and rate-limit controls. A scan holds its configured concurrency and model-call budget --
+measured from inside the worker pool rather than reported from its settings -- and
+`scripts/scan_portfolio.py` exits non-zero if either bound is breached.
+
+It also produced an uncomfortable number worth stating up front: **a portfolio scan currently
+auto-releases nothing.** All six accounts in the sample scan were queued for review. The routing
+is behaving exactly as the plan's bands specify, and a review queue containing everything saves a
+CS team no work. Section 22.7 forbids tuning thresholds outside a development-split measurement,
+so Phase 10 freezes them and this is the second measurement saying that choice matters.
+Evidence is in `docs/PHASE_8_STATUS.md`.
+
+Phase 9, the React frontend, is next.
 
 ### What one assessment does
 
@@ -158,6 +172,7 @@ make evaluate-retrieval  # retrieval benchmark and chunking ablation (Docker, ~2
 make assess ACCOUNT=ACC-1042 OFFLINE=1   # one end-to-end assessment, no provider (Docker)
 make evaluate-tot        # linear versus conflict-gated ToT ablation (Docker, ~10 minutes)
 make evaluate-guardrails # all 36 safety cases; writes artifacts/safety/ (Docker, offline)
+make scan LIMIT=10       # one bounded portfolio scan; writes artifacts/portfolio/ (Docker)
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)
@@ -177,7 +192,8 @@ resolved environments.
 
 ## Current API contract
 
-The health contract remains:
+`GET /api/health` reports each subsystem separately, so a container with no dataset says
+`degraded` rather than `ok`:
 
 ```json
 {
@@ -189,15 +205,33 @@ The health contract remains:
 }
 ```
 
-Phase 7 also exposes the persisted review workflow:
+The served surface is the plan's endpoint table, and a test asserts the OpenAPI path set
+matches it exactly:
 
-- `GET /api/review-cases`
-- `GET /api/review-cases/{case_id}`
-- `POST /api/review-cases/{case_id}/decision`
-- `GET /api/review-regressions`
+| Method and route | Purpose |
+| --- | --- |
+| `GET /api/health` | Service, model, index, database, and provider readiness |
+| `GET /api/accounts` | Filtered, sorted, paginated sanitized portfolio |
+| `GET /api/accounts/{account_id}` | Sanitized profile and this system's own advisory history |
+| `POST /api/assessments` | Start one graph run; returns immediately |
+| `GET /api/assessments/{run_id}` | Current or final state projection |
+| `GET /api/assessments/{run_id}/events` | SSE stream of safe progress events |
+| `POST /api/portfolio-scans` | Start a bounded portfolio scan |
+| `GET /api/portfolio-scans/{scan_id}` | Scan summary and per-account statuses |
+| `GET /api/review-cases` | Filtered review queue |
+| `GET /api/review-cases/{case_id}` | Full decision card |
+| `POST /api/review-cases/{case_id}/decision` | Approve, override, request data, or escalate |
+| `GET /api/review-regressions` | Exported regression records |
+| `POST /api/evaluations` | Refuses, and names the command to run (see below) |
+| `GET /api/evaluations/{eval_id}` | Metrics from the last command-line run |
 
-The assessment and SSE endpoints arrive in Phase 8. The review API writes only
-application memory; it never mutates Meridian source data.
+Evaluations are deliberately **not** runnable over HTTP. Every harness reads outcome labels, and
+no served module may import the evaluation package, so a route that ran one in-process would put
+label-reading code one unauthenticated call away. `POST` refuses and names the command; `GET`
+serves the artifact that command wrote.
+
+The only writes this API has are a reviewer's decision on an existing case. Nothing it exposes
+mutates Meridian source data.
 
 ## Verified dataset snapshot
 
@@ -247,6 +281,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_5_STATUS.md` — fast-path graph and deterministic review-routing evidence
 - `docs/PHASE_6_STATUS.md` — conflict-gated Tree-of-Thought evidence and ablation
 - `docs/PHASE_7_STATUS.md` — safety evaluation and human-review workflow evidence
+- `docs/PHASE_8_STATUS.md` — served API, portfolio scan, and its bounds
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments

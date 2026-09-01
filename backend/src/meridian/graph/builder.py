@@ -230,6 +230,10 @@ class AssessmentRun:
     interrupt: ReviewInterrupt | None = None
     reviewer_decision: ReviewerDecision | None = None
     guardrails: tuple[GuardrailDecision, ...] = ()
+    #: Provider attempts this run actually made, as the nodes charged them.
+    #: The portfolio scan's shared budget is measured against this rather than
+    #: against a count of trace events that happen to carry tokens.
+    model_calls: int = 0
 
     @property
     def awaiting_review(self) -> bool:
@@ -338,6 +342,7 @@ def _finish(
         interrupt=pending,
         reviewer_decision=final.get("reviewer_decision"),
         guardrails=tuple(final.get("guardrails") or ()),
+        model_calls=int(final.get("model_calls") or 0),
     )
 
 

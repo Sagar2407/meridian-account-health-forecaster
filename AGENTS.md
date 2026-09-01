@@ -72,7 +72,7 @@ Do not proceed to the next phase until the current exit gate passes or the user 
 
 ## Current status
 
-Phases 0 through 7 are complete and every exit gate passes; evidence is in `docs/PHASE_<n>_STATUS.md`. The raw dataset is extracted under `data/raw/meridian-account-health/`. Phase 8 -- the assessment and streaming API -- is next. Do not start it without closing the current gate or receiving an explicit user scope change.
+Phases 0 through 8 are complete and every exit gate passes; evidence is in `docs/PHASE_<n>_STATUS.md`. The raw dataset is extracted under `data/raw/meridian-account-health/`. Phase 9 -- the React frontend -- is next. Do not start it without closing the current gate or receiving an explicit user scope change.
 
 Run `make phase0-verify` before declaring any phase finished: it is the only check that builds the locked images and runs the suite the way CI does. A host-only run has passed while the container run failed more than once.
 

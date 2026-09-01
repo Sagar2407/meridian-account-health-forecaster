@@ -38,6 +38,10 @@ This matrix separates verified facts from provisional design choices and unresol
 | Hard-category false-pass and answerable false-block rates are both 0.0000 | 15 hard and 21 answerable cases in the Phase 7 safety report | Verified in Phase 7 |
 | Released evaluation results contain no target, wrong-account, or post-cutoff leakage findings | Whole-result leakage audit across the 36-case run | Verified in Phase 7 |
 | Reviewer overrides resolve the case and create a linked regression on one transaction | Store rollback test and FastAPI end-to-end test | Verified in Phase 7 |
+| A portfolio scan never exceeds its configured concurrency | Peak counted inside the worker pool; asserted at 3, 2, and exactly 1 | Verified in Phase 8 |
+| A portfolio scan never exceeds its model-call budget | A zero budget scans nothing; an offline scan spends 0 of 200 | Verified in Phase 8 |
+| The served API is exactly section 19.1's endpoint table | `test_openapi_is_section_19s_endpoint_table` compares the OpenAPI path set | Verified in Phase 8 |
+| No served response carries a prompt, a model reply, or a latent field | Whole-payload scan of a completed run against `FORBIDDEN_TRACE_KEYS` and the latent-field list | Verified in Phase 8 |
 
 ## Point-in-time audit
 
@@ -69,6 +73,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | Whether conflict-gated ToT beats linear adjudication | Both arms over the same 106 conflicting development accounts, paired on the cases both answered | Not on this evidence: 86.5% agreement, 69 declined answers for 12 caught errors against a 15.1% base rate; the provider arm is unrun; see `docs/PHASE_6_STATUS.md` |
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 | Whether the packaged guardrail policy passes its hard safety gate | All 36 cases through the offline graph, with per-case behavioural grading and whole-result leakage checks | 0/15 hard false passes, 0/21 false blocks, 0 leakage findings, and 36/36 behavioural checks passed; see `docs/PHASE_7_STATUS.md` |
+| Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts | **No.** 0 auto-released; all 6 queued for review (3 amber, 3 red). The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
 
 ## Unresolved inputs
 
@@ -79,6 +84,9 @@ This matrix separates verified facts from provisional design choices and unresol
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
+| Routing thresholds auto-release almost nothing | A portfolio scan currently returns only review load; 2 of 21 answerable guardrail cases were released | Freeze thresholds against the development split in Phase 10 (section 22.7 forbids tuning them now) |
+| The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
+| Serving state is per process and in memory | Live runs, scans, and rate-limit windows do not survive a restart or a second replica | Correct for the single-container target; a scaled deployment needs a shared store |
 | Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Normalize a bounded number-word vocabulary before public evaluation |
 
 ## Deferred inputs
@@ -87,9 +95,10 @@ The official report template, presentation outline, and any separate detailed gr
 
 ## Readiness decision
 
-Phases 0 through 7 are complete. The latest `make phase0-verify` rebuilt both
+Phases 0 through 8 are complete. The latest `make phase0-verify` rebuilt both
 locked images, passed formatting, lint, strict typing, 485 backend container
 tests at 95.24% coverage, 7 frontend tests, the production frontend build, the
 repository policy scan over 242 files, and both live container health checks. The separate
-Phase 7 safety run passed all 36 cases without a provider. Phase 8 may begin;
-deferred submission artifacts do not affect implementation readiness.
+Phase 7 safety run passed all 36 cases without a provider, and the Phase 8 scan
+held its concurrency and budget bounds. Phase 9 may begin; deferred submission
+artifacts do not affect implementation readiness.

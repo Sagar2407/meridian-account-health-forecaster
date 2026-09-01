@@ -43,6 +43,11 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-035 | Quarantine an evidence boundary violation for the rest of the run, even if a later retry is clean | Accepted | A retry may recover coverage, but it cannot prove that wrong-account, post-cutoff, or invalid-provenance evidence did not influence earlier state; the final route is therefore red ([Phase 7](PHASE_7_STATUS.md)) |
 | D-036 | Pause only interactive red runs, and only when a checkpointer and stored review case exist | Accepted | Portfolio scans must not block, while an uncheckpointed or unpersisted pause would strand a run no reviewer can resume ([Phase 7](PHASE_7_STATUS.md)) |
 | D-037 | Resolve a reviewer correction and insert its regression record in one transaction | Accepted | A human-corrected released answer without the linked replay case would make the Phase 7 audit trail incomplete ([Phase 7](PHASE_7_STATUS.md)) |
+| D-038 | Refuse to run any evaluation harness over HTTP; serve its published artifact instead | Accepted | Every harness reads outcome labels, and section 8.4 forbids a served module importing `meridian_eval`; a lazy import would hide the leak rather than prevent it ([Phase 8](PHASE_8_STATUS.md)) |
+| D-039 | Measure a scan's peak concurrency from inside the work rather than reporting the configured limit | Accepted | The exit gate is that the bound held, and a scan that echoed its own settings would pass it whatever it did ([Phase 8](PHASE_8_STATUS.md)) |
+| D-040 | Reserve the per-run model-call ceiling before dispatch and refund the unused remainder | Accepted | Charging after a run completes lets every worker pass the same check at once and overspend by the pool's width ([Phase 8](PHASE_8_STATUS.md)) |
+| D-041 | Select scan eligibility against each account's own forecast date, not wall-clock today | Accepted | The synthetic dataset never moves, so a today-based horizon would select a different portfolio daily from identical data ([Phase 8](PHASE_8_STATUS.md)) |
+| D-042 | Require both `enable_scheduler` and the absence of `demo_mode`, and refuse rather than degrade | Accepted | Section 24.3 disables unattended spending in public deployment; a scheduler that silently downgrades leaves an operator believing scans are running ([Phase 8](PHASE_8_STATUS.md)) |
 
 ## Decisions settled by measurement
 

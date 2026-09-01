@@ -95,6 +95,11 @@ ADVERSE_OUTCOMES: frozenset[str] = frozenset({"Churned", "Contracted"})
 
 MAX_QUESTION_CHARACTERS = 500
 
+#: Who is asking. Named rather than spelled inline on `AssessmentRequest`
+#: because the API request model has to accept exactly the same set: a second
+#: copy of the literal is a second place for the two to drift apart.
+RequesterKind = Literal["csm", "cs_leader", "analyst", "system"]
+
 
 class AssessmentRequest(BaseModel):
     """One request to assess an account (plan section 9.1).
@@ -110,7 +115,7 @@ class AssessmentRequest(BaseModel):
     account_id: AccountId
     question: str = Field(min_length=3, max_length=MAX_QUESTION_CHARACTERS)
     requested_as_of: date | None = None
-    requester_role: Literal["csm", "cs_leader", "analyst", "system"] = "csm"
+    requester_role: RequesterKind = "csm"
     mode: Literal["interactive", "portfolio_scan", "backtest"] = "interactive"
 
     @model_validator(mode="after")
@@ -834,6 +839,7 @@ __all__ = [
     "OutputVerification",
     "QuantitativeEvidence",
     "RequestedData",
+    "RequesterKind",
     "RetrievalEvidence",
     "RetrievalObservation",
     "ReviewAction",
