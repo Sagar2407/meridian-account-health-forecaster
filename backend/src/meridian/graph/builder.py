@@ -19,7 +19,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -39,21 +39,43 @@ from meridian.graph.routing import (
     route_conflict,
     route_coverage,
     route_intake,
+    route_tot,
     route_verification,
 )
 from meridian.graph.runtime import GraphRuntime
 from meridian.graph.state import GRAPH_RECURSION_LIMIT, ForecasterState
 from meridian.graph.tracing import ordered
 
+
+def _always_linear(_: ForecasterState) -> str:
+    """Send every run down the fast path (the ablation control arm)."""
+
+    return "fast_adjudication"
+
+
 CHECKPOINT_FILENAME = "graph_checkpoints.sqlite"
 
 
-def build_graph(runtime: GraphRuntime, checkpointer: BaseCheckpointSaver[Any] | None = None) -> Any:
+#: How a run adjudicates. `conflict_gated` is the system; `linear` is the arm
+#: section 15.7's ablation compares it against, and exists for no other reason.
+Adjudication = Literal["conflict_gated", "linear"]
+
+
+def build_graph(
+    runtime: GraphRuntime,
+    checkpointer: BaseCheckpointSaver[Any] | None = None,
+    adjudication: Adjudication = "conflict_gated",
+) -> Any:
     """Compile the assessment graph for one runtime.
 
     Args:
         runtime: The assembled dependencies.
         checkpointer: Optional persistence for resumable runs.
+        adjudication: `conflict_gated` routes a material conflict into the
+            bounded Tree-of-Thought search. `linear` sends every run down the
+            fast path instead, which is the control arm section 15.7's ablation
+            needs. The gate still runs and still records what it found, so the
+            control arm can be compared case by case rather than in aggregate.
 
     Returns:
         The compiled graph. Its type is LangGraph's and is deliberately not
@@ -76,6 +98,7 @@ def build_graph(runtime: GraphRuntime, checkpointer: BaseCheckpointSaver[Any] | 
     graph.add_node("degraded_result", nodes.degraded)
     graph.add_node("conflict_gate", nodes.conflict_gate)
     graph.add_node("fast_adjudication", nodes.fast_adjudication)
+    graph.add_node("tot_adjudication", nodes.tot_adjudication)
     graph.add_node("verify_output", nodes.verify_output)
     graph.add_node("safe_fallback", nodes.fallback)
     graph.add_node("assign_route", nodes.route)
@@ -114,13 +137,22 @@ def build_graph(runtime: GraphRuntime, checkpointer: BaseCheckpointSaver[Any] | 
     graph.add_edge("targeted_retry", "merge_evidence")
     graph.add_edge("degraded_result", "persist")
 
-    # Phase 6 adds a `tot_adjudication` target here. Until it exists, a
-    # triggered conflict has nowhere to go, and the conflict gate is written so
-    # that it never claims to have found one.
+    # Section 15: the bounded Tree-of-Thought subgraph runs only when the
+    # deterministic gate fires. It is a conditional branch, never the default
+    # reasoning mode, because it costs four generations and a critic pass.
     graph.add_conditional_edges(
-        "conflict_gate", route_conflict, {"fast_adjudication": "fast_adjudication"}
+        "conflict_gate",
+        route_conflict if adjudication == "conflict_gated" else _always_linear,
+        {"fast_adjudication": "fast_adjudication", "tot_adjudication": "tot_adjudication"},
     )
     graph.add_edge("fast_adjudication", "verify_output")
+    # A search that selected a winner is verified like any other draft; one that
+    # abstained has already written its result and has nothing left to check.
+    graph.add_conditional_edges(
+        "tot_adjudication",
+        route_tot,
+        {"verify_output": "verify_output", "persist": "persist"},
+    )
     graph.add_conditional_edges(
         "verify_output",
         route_verification,
@@ -269,6 +301,7 @@ def run_assessment(
 
 __all__ = [
     "CHECKPOINT_FILENAME",
+    "Adjudication",
     "AssessmentRun",
     "build_graph",
     "checkpoint_path",

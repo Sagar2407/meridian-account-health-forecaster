@@ -24,6 +24,7 @@ from typing import Any, TypeVar
 
 from meridian.agents.evidence_retriever import SUB_GOAL_SOURCES, merge_evidence
 from meridian.agents.forecast_adjudicator import (
+    CandidateGeneration,
     deterministic_draft,
     split_evidence,
     verify_output,
@@ -45,10 +46,14 @@ from meridian.contracts import (
     SubGoal,
     TraceEvent,
 )
+from meridian.data.repository import AccountProfile
+from meridian.features.baselines import PortfolioBaseline
 from meridian.graph.confidence import apply_verification_cap, compute_confidence
+from meridian.graph.conflict import detect_conflict
 from meridian.graph.routing import abstention_route, coverage_verdict, human_route
 from meridian.graph.runtime import GraphRuntime
 from meridian.graph.state import ForecasterState
+from meridian.graph.tot import ToTResult, search
 from meridian.graph.tracing import GraphEvent, TraceRecorder
 from meridian.guardrails.intake import evaluate_intake
 
@@ -507,29 +512,258 @@ class GraphNodes:
     # -- Conflict gate -------------------------------------------------------
 
     def conflict_gate(self, state: ForecasterState) -> dict[str, Any]:
-        """Record whether evidence materially disagrees (section 15.1).
+        """Decide whether the evidence materially disagrees (section 15.1).
 
-        Phase 5 runs the gate and reports that it did not evaluate: the
-        deterministic triggers are Phase 6's deliverable. `evaluated=False`
-        keeps that visible in the trace, because a bare `triggered=False` would
-        read as "checked, and the evidence agrees", which would be a claim the
-        system has not made.
+        Eight deterministic triggers, none of which asks a model anything.
+        Whether a run spends four extra generations and a critic pass is a
+        structural transition, and section 14.1 keeps those away from an LLM.
         """
 
-        assessment = ConflictAssessment(
-            triggered=False,
-            evaluated=False,
-            reasons=("deterministic conflict triggers are implemented in Phase 6",),
-        )
+        bundle = state.get("evidence_bundle")
+        assert bundle is not None
+
+        baseline: PortfolioBaseline | None = None
+        if self._runtime.baselines is not None:
+            baseline = self._runtime.baselines.get()
+
+        assessment, latency = _timed(lambda: detect_conflict(bundle, baseline))
+        event: GraphEvent = "conflict_detected" if assessment.triggered else "conflict_evaluated"
         return {
             "conflict": assessment,
             "trace_summary": _trace(
                 state,
                 "conflict_gate",
-                "conflict_evaluated",
-                {"triggered": False, "evaluated": False},
+                event,
+                {
+                    "triggered": assessment.triggered,
+                    "severity": assessment.severity,
+                    "rule_ids": list(assessment.rule_ids),
+                    "conflict_types": list(assessment.conflict_types),
+                    "reasons": list(assessment.reasons),
+                    "baseline_accounts": baseline.accounts_measured if baseline else 0,
+                },
+                latency,
             ),
         }
+
+    def tot_adjudication(self, state: ForecasterState) -> dict[str, Any]:
+        """Run the bounded Tree-of-Thought search (sections 15.2 to 15.6).
+
+        Four candidates, hard pruning, a frozen rubric, a beam of two, one
+        stress test each, and at most one consistency vote. The search either
+        selects a winner -- which becomes a draft decision verified like any
+        other -- or abstains, which is a red review case rather than a guess.
+
+        The outcome a winner carries is chosen from the four canonical classes
+        by a deterministic score. A model may argue each case; it cannot invent
+        an outcome, change a prior, or award itself a point.
+        """
+
+        bundle = state.get("evidence_bundle")
+        account = state["account"]
+        conflict = state.get("conflict")
+        assert bundle is not None and account is not None
+
+        generation, generation_ms = _timed(
+            lambda: self._runtime.adjudicator.generate_candidates(bundle)
+        )
+        result, search_ms = _timed(lambda: search(generation.candidates, bundle))
+
+        events = _trace(
+            state,
+            "tot_adjudication",
+            "tot_started",
+            {
+                "candidates": len(generation.candidates),
+                "source": generation.source,
+                "fallback_reason": generation.fallback_reason,
+                "severity": conflict.severity if conflict else "none",
+            },
+            generation_ms,
+            generation.usage.prompt_tokens,
+            generation.usage.completion_tokens,
+        )
+        events.extend(
+            _trace(
+                state,
+                "tot_adjudication",
+                "tot_completed",
+                {
+                    "branches": len(result.branches),
+                    "pruned": len(result.pruned),
+                    "survivors": [branch.outcome for branch in result.survivors],
+                    "scores": [round(branch.score, 4) for branch in result.survivors],
+                    "winner": result.winner.outcome if result.winner else None,
+                    "margin": round(result.margin, 4),
+                    "tie_broken_by_vote": result.tie_broken_by_vote,
+                    "abstained": result.abstained,
+                    "abstain_reason": result.abstain_reason,
+                },
+                search_ms,
+            )
+        )
+
+        branches = list(result.branches)
+        if result.winner is None:
+            return {
+                "candidates": branches,
+                "conflict": (conflict or ConflictAssessment()).model_copy(
+                    update={"resolved": False}
+                ),
+                **self._conflict_abstention(state, bundle, account, result),
+                "trace_summary": events,
+            }
+
+        resolved = (conflict or ConflictAssessment()).model_copy(update={"resolved": True})
+        decision, decision_ms = _timed(
+            lambda: self._decision_from_candidate(state, bundle, result, generation)
+        )
+        events.extend(
+            _trace(
+                state,
+                "tot_adjudication",
+                "decision_drafted",
+                {
+                    "outcome": decision.outcome,
+                    "narrative_source": decision.narrative_source,
+                    "confidence": decision.confidence,
+                    "applied_caps": list(decision.confidence_breakdown.applied_caps),
+                    "selected_by": "tree_of_thought",
+                    "agrees_with_model": decision.outcome == bundle.quantitative.predicted_outcome,
+                },
+                decision_ms,
+            )
+        )
+        return {
+            "candidates": branches,
+            "conflict": resolved,
+            "draft_decision": decision,
+            "trace_summary": events,
+        }
+
+    def _decision_from_candidate(
+        self,
+        state: ForecasterState,
+        bundle: EvidenceBundle,
+        result: ToTResult,
+        generation: CandidateGeneration,
+    ) -> ForecastDecision:
+        """Turn the winning branch into a decision the verifier can check."""
+
+        winner = result.winner
+        assert winner is not None
+        quantitative = bundle.quantitative
+
+        breakdown = compute_confidence(
+            bundle,
+            planned_sub_goals=len(state.get("plan", [])),
+            # The search reached a verdict that survived its own stress test,
+            # so the adjudication agrees with the label it selected. What the
+            # evidence says is already priced in through the citation split.
+            adjudicator_agrees=True,
+            conflict=state.get("conflict"),
+            retrieval_gap=bool(bundle.retrieval.uncovered_sub_goals),
+        )
+
+        limitations = [
+            "Selected by a bounded Tree-of-Thought search because the evidence "
+            "materially disagreed; the branch summaries and scores are in the trace.",
+            *self._intake_limitations(state.get("intake")),
+        ]
+        if winner.outcome != quantitative.predicted_outcome:
+            limitations.append(
+                f"The search selected {winner.outcome}, which is not the calibrated "
+                f"model's most likely outcome ({quantitative.predicted_outcome})."
+            )
+        if result.tie_broken_by_vote:
+            limitations.append("The two leading branches were separated by a consistency vote.")
+        if bundle.coverage.missing_sources:
+            limitations.append(
+                "Evidence was not available for: " + ", ".join(bundle.coverage.missing_sources)
+            )
+
+        cited = tuple(
+            dict.fromkeys((*winner.supporting_citation_ids, *winner.counterevidence_citation_ids))
+        )
+        return ForecastDecision(
+            account_id=bundle.account_id,
+            cutoff=bundle.cutoff,
+            outcome=winner.outcome,
+            distribution=quantitative.distribution,
+            confidence=breakdown.confidence,
+            confidence_breakdown=breakdown,
+            rationale=winner.rationale,
+            drivers=quantitative.drivers,
+            citations=bundle.supporting + bundle.context + bundle.guidance,
+            counterevidence=bundle.counterevidence,
+            cited_doc_ids=cited,
+            limitations=tuple(dict.fromkeys(limitations)),
+            recommended_action=(
+                "Review the branch summaries with the account team before acting: the "
+                "evidence disagreed and this outcome was selected over the alternatives."
+            ),
+            route="amber",
+            narrative_source=winner.source,
+            selected_by="tree_of_thought",
+            model_name=generation.model_name,
+        )
+
+    def _conflict_abstention(
+        self,
+        state: ForecasterState,
+        bundle: EvidenceBundle,
+        account: AccountProfile,
+        result: ToTResult,
+    ) -> dict[str, Any]:
+        """Return the state update for a search that could not choose.
+
+        Section 15.6: "If the tie persists, abstain and create a red review
+        case." The abstention reuses `InsufficientEvidenceDecision` because that
+        type has no outcome field, so a tie cannot leak a label the search
+        explicitly declined to pick.
+        """
+
+        high_value = self._runtime.high_value.is_high_value(account)
+        route, reason = abstention_route(
+            bundle.coverage, high_value, unresolved_conflict=result.abstain_reason
+        )
+        decision = InsufficientEvidenceDecision(
+            account_id=bundle.account_id,
+            cutoff=bundle.cutoff,
+            verified_metrics=bundle.quantitative.metrics,
+            gaps=(
+                f"The evidence disagrees and the search could not resolve it: "
+                f"{result.abstain_reason}.",
+                *(
+                    f"Branch {branch.outcome} scored {branch.score:.2f}"
+                    for branch in result.survivors
+                ),
+            ),
+            requested_data=(
+                RequestedData(
+                    source="human_review",
+                    detail=(
+                        "a reviewer's judgement on which of the contradicting signals "
+                        "should carry more weight"
+                    ),
+                    window="at this cutoff",
+                ),
+            ),
+            citations=bundle.supporting + bundle.counterevidence + bundle.context,
+            limitations=(
+                "No outcome label is reported: the verified evidence supports more than "
+                "one outcome and the bounded search declined to choose between them.",
+                *self._intake_limitations(state.get("intake")),
+            ),
+            recommended_action=(
+                "Escalate to a human reviewer with the branch summaries; the telemetry "
+                "above is verified and is the only position the system will assert."
+            ),
+            route=route,
+            route_reason=reason,
+            reason_code="UNRESOLVED_CONFLICT",
+        )
+        return {"final_result": decision, "route": route}
 
     # -- Adjudication and verification --------------------------------------
 
@@ -682,6 +916,7 @@ class GraphNodes:
             bundle,
             "The generated explanation failed output verification and was replaced "
             "with one composed from verified values.",
+            outcome=decision.outcome,
         )
         replaced = decision.model_copy(
             update={

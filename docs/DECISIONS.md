@@ -33,12 +33,19 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-025 | A run with no provider completes with a deterministic narrative rather than failing | Accepted | Section 14.3 requires exact telemetry with an unavailable-analysis notice; a sentence built only from verified values cannot hallucinate, and it caps the route at amber ([Phase 5](PHASE_5_STATUS.md)) |
 | D-026 | Shared section 9.1 contracts live at `meridian.contracts`, not inside `meridian.graph` | Accepted | Agents, guardrails, and the graph all depend on them; importing the graph package to name an agent's return type made the graph a dependency of the agents it is built from ([Phase 5](PHASE_5_STATUS.md)) |
 | D-027 | Add `prior_assessments` and `ForecastDecision.cited_doc_ids` to the section 9.2 field list | Accepted | The planner needs its own history as context, and output verification has to replay the citations a narrative *claimed* rather than the evidence set it was given ([Phase 5](PHASE_5_STATUS.md)) |
+| D-028 | At a conflict the outcome is selected from the four canonical classes by a deterministic score, never generated | Accepted | The four candidates are supplied one per outcome and the critic is deterministic, so a model may argue a case but cannot add an outcome, change a prior, or award a point ([Phase 6](PHASE_6_STATUS.md)) |
+| D-029 | Weight section 15.4's five rubric dimensions equally | Accepted | The plan names the dimensions and no weights; any other split would be a number chosen to no criterion. Frozen before evaluation per section 22.7 ([Phase 6](PHASE_6_STATUS.md)) |
+| D-030 | Measure `baseline_plausibility` against the most likely outcome rather than in absolute terms | Accepted | Four priors summing to one compress into a narrow band, and an absolute reading could not separate the model's clear favourite from an also-ran ([Phase 6](PHASE_6_STATUS.md)) |
+| D-031 | Skip a relative conflict rule when no portfolio baseline is available | Accepted | Comparing against a default of zero would classify every account as above median and fire the rule on the whole portfolio ([Phase 6](PHASE_6_STATUS.md)) |
+| D-032 | Run the ToT ablation on the development split only | Accepted | Section 22.7 forbids tuning against held-out outcomes, and the comparison exists to inform a threshold ([Phase 6](PHASE_6_STATUS.md)) |
+| D-033 | Send a failed Tree-of-Thought draft to the safe fallback rather than to linear regeneration | Accepted | `fast_adjudication` rebuilds the decision around the model's argmax, so regenerating a search winner there would return a different outcome under the same run id ([Phase 6](PHASE_6_STATUS.md)) |
 
 ## Decisions settled by measurement
 
 | ID | Decision | Outcome |
 | --- | --- | --- |
 | P-001 | Default embedding model `BAAI/bge-small-en-v1.5` | Retained; Recall@5 0.942 over 139 graded benchmark queries, served through ONNX rather than PyTorch ([Phase 3](PHASE_3_STATUS.md)) |
+| P-007 | Conflict-gated Tree-of-Thought over linear adjudication | Measured offline on the development split: the search agrees with the linear path on 86.5% of shared cases and declines 69 answers to catch 12 errors. Not yet earning its place; the provider arm is unrun ([Phase 6](PHASE_6_STATUS.md)) |
 | P-002 | Candidate depth 20, MMR/reranking to 5 | Retained; zero duplicate-parent citations across 243 queries, though MMR does not diversify on polarity ([Phase 3](PHASE_3_STATUS.md)) |
 | P-003 | Logistic regression plus tree-based candidate models | Logistic regression selected by a one-standard-error rule, isotonic calibration ([Phase 2](PHASE_2_STATUS.md)) |
 

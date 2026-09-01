@@ -628,3 +628,26 @@ def test_a_tool_returning_the_wrong_shape_is_a_loud_failure() -> None:
             {},
             AccountProfileResponse,
         )
+
+
+def test_the_deterministic_narrative_can_argue_a_selected_outcome() -> None:
+    """A fallback for a Tree-of-Thought winner must argue that winner.
+
+    Defaulting to the model's own label would produce a decision whose outcome
+    field and whose prose name different outcomes.
+    """
+
+    bundle = _bundle()
+    assert bundle.quantitative.predicted_outcome == "Churned"
+
+    selected = deterministic_draft(bundle, outcome="Renewed")
+    assert "Renewed" in selected.rationale
+    assert "Churned" not in selected.rationale
+    verification = verify_output(
+        selected.rationale,
+        selected.recommended_action,
+        selected.limitations,
+        selected.cited_doc_ids,
+        bundle,
+    )
+    assert verification.passed, verification.failures

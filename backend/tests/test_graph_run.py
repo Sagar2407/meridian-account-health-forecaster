@@ -28,6 +28,8 @@ import pytest
 from meridian.agents.evidence_retriever import EvidenceRetriever
 from meridian.agents.forecast_adjudicator import ForecastAdjudicator
 from meridian.contracts import (
+    OUTCOME_CLASSES,
+    TOT_BEAM_WIDTH,
     AssessmentRequest,
     Citation,
     ForecastDecision,
@@ -57,7 +59,7 @@ QUESTION = "What is the renewal outlook, and does support history explain it?"
 def accounts(runtime: RuntimeRepository) -> tuple[str, ...]:
     """Return a small, stable slice of the portfolio to index."""
 
-    return runtime.account_ids()[:6]
+    return runtime.account_ids()[:10]
 
 
 @pytest.fixture(scope="module")
@@ -87,10 +89,48 @@ def graph_runtime(
 
 
 @pytest.fixture(scope="module")
-def account_id(accounts: tuple[str, ...]) -> str:
-    """Return the account these runs assess."""
+def classified(graph_runtime: GraphRuntime, accounts: tuple[str, ...]) -> dict[str, list[str]]:
+    """Split the indexed accounts by whether the conflict gate fires on them.
 
-    return accounts[0]
+    Which accounts conflict depends on the evidence, so it is measured rather
+    than hard-coded: an account list pinned in a test would silently stop
+    testing what it names the first time the index or the rules change.
+    """
+
+    graph = build_graph(graph_runtime)
+    groups: dict[str, list[str]] = {"linear": [], "conflict": []}
+    for account in accounts:
+        run = run_assessment(graph, _request(account))
+        key = "conflict" if run.events("conflict_detected") else "linear"
+        groups[key].append(account)
+    return groups
+
+
+@pytest.fixture(scope="module")
+def account_id(classified: dict[str, list[str]]) -> str:
+    """Return an account the conflict gate clears, so the fast path runs."""
+
+    if not classified["linear"]:
+        pytest.skip("no indexed account takes the linear path")
+    return classified["linear"][0]
+
+
+@pytest.fixture(scope="module")
+def linear_accounts(classified: dict[str, list[str]]) -> list[str]:
+    """Return every indexed account the conflict gate clears."""
+
+    if len(classified["linear"]) < 4:
+        pytest.skip("too few linear-path accounts to run the adjudication variants")
+    return classified["linear"]
+
+
+@pytest.fixture(scope="module")
+def conflict_account(classified: dict[str, list[str]]) -> str:
+    """Return an account whose evidence the gate finds in material conflict."""
+
+    if not classified["conflict"]:
+        pytest.skip("no indexed account triggers the conflict gate")
+    return classified["conflict"][0]
 
 
 def _request(account_id: str, question: str = QUESTION, **overrides: Any) -> AssessmentRequest:
@@ -233,15 +273,15 @@ def test_the_adjudicator_makes_no_tool_calls(graph_runtime: GraphRuntime, accoun
 
 
 def test_the_decision_is_persisted_with_its_route(
-    graph_runtime: GraphRuntime, accounts: tuple[str, ...]
+    graph_runtime: GraphRuntime, linear_accounts: list[str]
 ) -> None:
     """Section 17.2 persists snapshots; Phase 5's deliverable requires it."""
 
-    run = run_assessment(build_graph(graph_runtime), _request(accounts[1]))
+    run = run_assessment(build_graph(graph_runtime), _request(linear_accounts[1]))
     assert run.assessment_id is not None
     assert graph_runtime.store is not None
 
-    stored = graph_runtime.store.recent_assessments(accounts[1])
+    stored = graph_runtime.store.recent_assessments(linear_accounts[1])
     assert stored[0].assessment_id == run.assessment_id
     assert stored[0].decision == run.route
     assert stored[0].cutoff == run.result.cutoff if run.result else False
@@ -501,14 +541,14 @@ def test_a_vague_request_asks_for_clarification(
 
 
 def test_a_request_to_act_is_answered_but_routed_to_a_person(
-    graph_runtime: GraphRuntime, accounts: tuple[str, ...]
+    graph_runtime: GraphRuntime, linear_accounts: list[str]
 ) -> None:
     """Section 16.5: an action is a human decision, so the assessment still runs."""
 
     run = run_assessment(
         build_graph(graph_runtime),
         _request(
-            accounts[2],
+            linear_accounts[2],
             question="Auto-decide the renewal action for this account and execute it.",
         ),
     )
@@ -580,6 +620,7 @@ def test_the_graph_is_section_14s_flowchart(graph_runtime: GraphRuntime) -> None
         "degraded_result",
         "conflict_gate",
         "fast_adjudication",
+        "tot_adjudication",
         "verify_output",
         "safe_fallback",
         "assign_route",
@@ -629,7 +670,7 @@ FABRICATING_REPLY = (
 
 
 def test_an_unverifiable_narrative_is_regenerated_once_then_replaced(
-    graph_runtime: GraphRuntime, accounts: tuple[str, ...]
+    graph_runtime: GraphRuntime, linear_accounts: list[str]
 ) -> None:
     """Section 14.3's safe fallback, and section 14.2's single regeneration.
 
@@ -641,7 +682,7 @@ def test_an_unverifiable_narrative_is_regenerated_once_then_replaced(
     """
 
     runtime = replace(graph_runtime, adjudicator=_adjudicator_saying(FABRICATING_REPLY))
-    run = run_assessment(build_graph(runtime), _request(accounts[3]))
+    run = run_assessment(build_graph(runtime), _request(linear_accounts[3]))
 
     assert len(run.events("decision_drafted")) == 2, "exactly one regeneration"
     assert len(run.events("output_verified")) == 3, "two checks plus the replacement"
@@ -656,7 +697,7 @@ def test_an_unverifiable_narrative_is_regenerated_once_then_replaced(
 
 
 def test_a_narrative_citing_an_unretrieved_document_is_caught(
-    graph_runtime: GraphRuntime, accounts: tuple[str, ...]
+    graph_runtime: GraphRuntime, linear_accounts: list[str]
 ) -> None:
     """The claimed citations are checked, not the evidence set they came from.
 
@@ -666,7 +707,7 @@ def test_a_narrative_citing_an_unretrieved_document_is_caught(
     """
 
     runtime = replace(graph_runtime, adjudicator=_adjudicator_saying(FABRICATING_REPLY))
-    run = run_assessment(build_graph(runtime), _request(accounts[4]))
+    run = run_assessment(build_graph(runtime), _request(linear_accounts[0]))
     reported = " ".join(
         str(event.payload.get("failures", "")) for event in run.events("output_verified")
     )
@@ -675,14 +716,14 @@ def test_a_narrative_citing_an_unretrieved_document_is_caught(
 
 
 def test_a_verified_model_narrative_is_released_as_written(
-    graph_runtime: GraphRuntime, accounts: tuple[str, ...]
+    graph_runtime: GraphRuntime, linear_accounts: list[str]
 ) -> None:
     """The fallback must not be the only path a model narrative can take."""
 
     # A narrative has to cite something the run actually retrieved, so the
     # document id comes from a deterministic run of the same account rather
     # than being invented here.
-    baseline = run_assessment(build_graph(graph_runtime), _request(accounts[5]))
+    baseline = run_assessment(build_graph(graph_runtime), _request(linear_accounts[2]))
     assert isinstance(baseline.result, ForecastDecision)
     doc_id = baseline.result.citations[0].doc_id
 
@@ -697,7 +738,7 @@ def test_a_verified_model_narrative_is_released_as_written(
         }
     )
     runtime = replace(graph_runtime, adjudicator=_adjudicator_saying(reply))
-    run = run_assessment(build_graph(runtime), _request(accounts[5]))
+    run = run_assessment(build_graph(runtime), _request(linear_accounts[2]))
 
     assert isinstance(run.result, ForecastDecision)
     assert run.result.narrative_source == "model"
@@ -785,3 +826,108 @@ def test_building_from_the_environment_degrades_rather_than_raises(
     assert assembled.repository is runtime
     assert assembled.has_model is False
     assert assembled.store is not None
+
+
+# -- The conflict gate and the ToT subgraph (plan section 15) ----------------
+
+
+def test_an_aligned_case_bypasses_the_tree_of_thought(
+    graph_runtime: GraphRuntime, account_id: str
+) -> None:
+    """Checkpoint 4.1: ToT is a conditional subgraph, never a default mode."""
+
+    run = run_assessment(build_graph(graph_runtime), _request(account_id))
+    assert run.events("conflict_detected") == ()
+    assert run.events("tot_started") == ()
+    assert run.events("conflict_evaluated"), "the gate still has to run and say so"
+    payload = run.events("conflict_evaluated")[0].payload
+    assert payload["triggered"] is False
+    assert payload["severity"] == "none"
+    assert isinstance(run.result, ForecastDecision)
+
+
+def test_a_conflict_case_activates_the_tree_of_thought(
+    graph_runtime: GraphRuntime, conflict_account: str
+) -> None:
+    """Section 15: a material conflict routes into the bounded search."""
+
+    run = run_assessment(build_graph(graph_runtime), _request(conflict_account))
+
+    detected = run.events("conflict_detected")
+    started = run.events("tot_started")
+    completed = run.events("tot_completed")
+    assert detected and started and completed
+    assert detected[0].payload["triggered"] is True
+    assert detected[0].payload["rule_ids"]
+    assert started[0].payload["candidates"] == 4
+    assert run.events("decision_drafted") or run.abstained
+
+
+def test_the_search_stores_branch_summaries_not_reasoning_prose(
+    graph_runtime: GraphRuntime, conflict_account: str
+) -> None:
+    """Section 15.6: store structured branch summaries and scores."""
+
+    run = run_assessment(build_graph(graph_runtime), _request(conflict_account))
+    payload = run.events("tot_completed")[0].payload
+
+    survivors = payload["survivors"]
+    assert isinstance(payload["branches"], int) and payload["branches"] >= 4
+    assert isinstance(survivors, list)
+    assert isinstance(payload["scores"], list)
+    assert len(survivors) <= TOT_BEAM_WIDTH
+    for banned in ("prompt", "reasoning", "chain_of_thought"):
+        assert banned not in payload
+
+
+def test_a_resolved_conflict_is_not_routed_as_an_unresolved_one(
+    graph_runtime: GraphRuntime, conflict_account: str
+) -> None:
+    """Section 16.5 escalates an *unresolved* severe conflict, not a settled one."""
+
+    run = run_assessment(build_graph(graph_runtime), _request(conflict_account))
+    if run.abstained:
+        pytest.skip("this account's conflict was not resolved, which the tie test covers")
+    assert isinstance(run.result, ForecastDecision)
+    assert any("Tree-of-Thought" in item for item in run.result.limitations)
+    assert run.result.cited_doc_ids
+
+
+def test_an_unresolved_conflict_abstains_and_opens_a_review_case(
+    graph_runtime: GraphRuntime, classified: dict[str, list[str]]
+) -> None:
+    """Section 15.6: if the tie persists, abstain and create a red review case."""
+
+    graph = build_graph(graph_runtime)
+    for account in classified["conflict"]:
+        run = run_assessment(graph, _request(account))
+        if not run.abstained:
+            continue
+        assert isinstance(run.result, InsufficientEvidenceDecision)
+        assert run.result.reason_code == "UNRESOLVED_CONFLICT"
+        assert not hasattr(run.result, "outcome")
+        assert run.route == "red"
+        assert run.review_case_id is not None
+        assert any("could not resolve" in gap for gap in run.result.gaps)
+        return
+    pytest.skip("no indexed account produced an unresolved conflict")
+
+
+def test_the_tot_path_never_runs_deeper_or_wider_than_its_bounds(
+    graph_runtime: GraphRuntime, classified: dict[str, list[str]]
+) -> None:
+    """The Phase 6 exit gate, asserted on real runs rather than on unit fixtures."""
+
+    graph = build_graph(graph_runtime)
+    searched = 0
+    for account in classified["conflict"]:
+        run = run_assessment(graph, _request(account))
+        payload = run.events("tot_completed")[0].payload
+        branches, survivors = payload["branches"], payload["survivors"]
+        assert isinstance(branches, int) and isinstance(survivors, list)
+        assert branches <= len(OUTCOME_CLASSES) + TOT_BEAM_WIDTH
+        assert len(survivors) <= TOT_BEAM_WIDTH
+        assert len(run.events("tot_started")) == 1, "the subgraph runs once per assessment"
+        searched += 1
+    if not searched:
+        pytest.skip("no indexed account triggered the conflict gate")

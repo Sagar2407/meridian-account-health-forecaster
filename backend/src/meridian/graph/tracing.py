@@ -33,6 +33,8 @@ GraphEvent = Literal[
     "conflict_detected",
     "conflict_evaluated",
     "tot_started",
+    "tot_completed",
+    "tot_pruned",
     "output_verified",
     "review_required",
     "run_completed",

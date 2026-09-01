@@ -44,6 +44,7 @@ ErrorCode = Literal[
     "MODEL_UNAVAILABLE",
     "INDEX_VERSION_MISMATCH",
     "RETRIEVAL_EXHAUSTED",
+    "UNRESOLVED_CONFLICT",
     "VERIFICATION_FAILED",
     "INTERNAL_ERROR",
 ]
@@ -72,6 +73,14 @@ SUB_GOAL_KINDS: tuple[SubGoalKind, ...] = (
 
 MIN_SUB_GOALS = 2
 MAX_SUB_GOALS = 4
+
+#: Bounds on the Tree-of-Thought search (plan section 14.2). They are constants
+#: rather than settings because the Phase 6 exit gate is that the depth and the
+#: beam width are provably bounded, and a bound an operator can raise at runtime
+#: is not one.
+MAX_TOT_DEPTH = 2
+TOT_BEAM_WIDTH = 2
+MAX_CANDIDATE_DRIVERS = 2
 
 #: Human-review bands (plan section 16.5). `blocked` is not a review queue item.
 Route = Literal["green", "amber", "red", "blocked"]
@@ -383,41 +392,69 @@ class EvidenceBundle(BaseModel):
 
 
 class ConflictAssessment(BaseModel):
-    """Whether evidence materially disagrees (plan section 9.1).
+    """Whether evidence materially disagrees (plan sections 9.1 and 15.1).
 
-    Phase 5 records that the gate ran and did not fire; the deterministic
-    triggers of section 15.1 arrive in Phase 6. `evaluated` exists so a trace
-    distinguishes "checked, no conflict" from "not checked", which a bare
-    `triggered=False` cannot.
+    `evaluated` exists so a trace distinguishes "checked, no conflict" from
+    "not checked", which a bare `triggered=False` cannot.
+
+    `resolved` matters for routing. Section 16.5 sends an *unresolved* severe
+    conflict to red; one the Tree-of-Thought search settled cleanly has been
+    dealt with, and treating it as unresolved would route every hard case to a
+    human whether or not the system managed it.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     triggered: bool = False
     evaluated: bool = True
+    resolved: bool = False
     conflict_types: tuple[str, ...] = ()
+    rule_ids: tuple[str, ...] = ()
     reasons: tuple[str, ...] = ()
     severity: Literal["none", "low", "moderate", "severe"] = "none"
 
+    @property
+    def unresolved_severe(self) -> bool:
+        """Return whether a severe conflict is still open."""
+
+        return self.severity == "severe" and not self.resolved
+
 
 class CandidateHypothesis(BaseModel):
-    """One branch of the bounded Tree-of-Thought search (plan section 9.1).
+    """One branch of the bounded Tree-of-Thought search (plan sections 9.1, 15.2).
 
-    Defined here with the rest of section 9.1 so the shared state can name it,
-    and because the state's `candidates` field would otherwise be untyped. The
-    conflict subgraph that produces these arrives in Phase 6; nothing in the
-    fast path writes one.
+    Section 15.2 fixes the contents: an outcome, the model prior for it, two or
+    fewer key drivers, supporting citation ids, the strongest single piece of
+    disconfirming evidence, and a concise falsifiable rationale. `depth` records
+    which level of the search produced it, so a stored branch summary can be
+    read back without reconstructing the tree.
+
+    What is deliberately absent is prose reasoning. Section 15.6 says to store
+    "structured branch summaries and scores, not hidden reasoning prose", so a
+    candidate carries a rationale a reader can check and nothing else.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     outcome: str = Field(min_length=1)
+    model_prior: float = Field(default=0.0, ge=0.0, le=1.0)
     rationale: str = Field(min_length=1, max_length=800)
+    key_drivers: tuple[str, ...] = Field(default=(), max_length=MAX_CANDIDATE_DRIVERS)
     supporting_citation_ids: tuple[str, ...] = ()
     counterevidence_citation_ids: tuple[str, ...] = ()
+    strongest_counterevidence: str = ""
     hard_check_passed: bool = True
     hard_check_failures: tuple[str, ...] = ()
     soft_scores: dict[str, float] = Field(default_factory=dict)
+    score: float = Field(default=0.0, ge=0.0, le=1.0)
+    depth: int = Field(default=1, ge=1, le=MAX_TOT_DEPTH)
+    source: Literal["model", "deterministic"] = "deterministic"
+
+    @property
+    def survived(self) -> bool:
+        """Return whether this branch may still win."""
+
+        return self.hard_check_passed
 
 
 class ConfidenceBreakdown(BaseModel):
@@ -486,6 +523,11 @@ class ForecastDecision(BaseModel):
     route: Route = "amber"
     route_reason: str = ""
     narrative_source: Literal["model", "deterministic"] = "deterministic"
+    #: Which adjudicator chose the outcome. It matters for recovery: a linear
+    #: draft can be regenerated linearly, but re-drafting a Tree-of-Thought
+    #: winner that way would quietly replace the search's selection with the
+    #: model's argmax and report the result as though the search had chosen it.
+    selected_by: Literal["linear", "tree_of_thought"] = "linear"
     model_name: str = ""
 
     @model_validator(mode="after")
@@ -661,10 +703,13 @@ class BlockedDecision(BaseModel):
 __all__ = [
     "ADVERSE_OUTCOMES",
     "FORBIDDEN_TRACE_KEYS",
+    "MAX_CANDIDATE_DRIVERS",
     "MAX_SUB_GOALS",
+    "MAX_TOT_DEPTH",
     "MIN_SUB_GOALS",
     "OUTCOME_CLASSES",
     "SUB_GOAL_KINDS",
+    "TOT_BEAM_WIDTH",
     "AssessmentRequest",
     "BlockedDecision",
     "CandidateHypothesis",

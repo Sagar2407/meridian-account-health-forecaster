@@ -6,7 +6,7 @@ Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous
 
 ## Current status
 
-**Phases 0 through 5 are complete.** Every exit gate passes, and none of them needs an API key.
+**Phases 0 through 6 are complete.** Every exit gate passes, and none of them needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
@@ -46,7 +46,18 @@ evidence, deterministic confidence and human-review routing, a SQLite checkpoint
 safe trace. Run one assessment with `make assess ACCOUNT=ACC-1042 OFFLINE=1`; evidence is in
 `docs/PHASE_5_STATUS.md`.
 
-Phase 6, the conflict gate and the bounded Tree-of-Thought subgraph, is next.
+Phase 6 delivered the conflict gate and the bounded Tree-of-Thought subgraph: eight deterministic
+conflict triggers, one argued candidate per canonical outcome, six hard checks that reject a branch
+outright, a frozen five-dimension critic rubric, a beam of two, one stress test per survivor, one
+consistency vote, and an abstention with a red review case when a tie persists. Reproduce the
+linear-versus-ToT comparison with `make evaluate-tot`; evidence is in `docs/PHASE_6_STATUS.md`.
+
+That comparison is worth reading before trusting the feature. Over the development split the gate
+fires on 51% of accounts, and in the offline configuration the search agrees with the linear path
+on 86.5% of the cases both answer while declining 69 answers to catch 12 errors. Phase 6 delivers
+the structure the plan specifies and the measurement showing the structure alone is not yet enough.
+
+Phase 7, the complete safety and human-review layer, is next.
 
 ### What one assessment does
 
@@ -59,14 +70,15 @@ validate_request ─► load_context ─► plan_sub_goals ─┬─► quantita
                                                     └────────────────────►    │ critical  │ sufficient
                                                                               ▼           ▼
                                                                     degraded_result   conflict_gate
-                                                                              │           │
-                                                                              │           ▼
-                                                                              │   fast_adjudication
-                                                                              │           │
-                                                                              │           ▼
-                                                                              │    verify_output
-                                                                              │      │ pass │ fail
-                                                                              └──────┴──►assign_route ─► persist
+                                                                              │        │        │
+                                                                              │  no conflict  conflict
+                                                                              │        ▼        ▼
+                                                                              │  fast_adjud.  tot_adjud.
+                                                                              │        │        │ tie
+                                                                              │        ▼        │
+                                                                              │  verify_output ◄┘
+                                                                              │   │ pass │ fail
+                                                                              └───┴──►assign_route ─► persist
 ```
 
 The outcome label always comes from the calibrated forecaster. A language model, when one is
@@ -134,6 +146,7 @@ make index             # build the FAISS retrieval index (Docker, several minute
 make retrieve ACCOUNT=ACC-1089 QUERY="renewal risk"   # retrieve evidence as JSON (Docker)
 make evaluate-retrieval  # retrieval benchmark and chunking ablation (Docker, ~20 minutes)
 make assess ACCOUNT=ACC-1042 OFFLINE=1   # one end-to-end assessment, no provider (Docker)
+make evaluate-tot        # linear versus conflict-gated ToT ablation (Docker, ~10 minutes)
 
 make format         # apply source formatting          (needs a host toolchain)
 make lint           # Python and TypeScript linting    (needs a host toolchain)

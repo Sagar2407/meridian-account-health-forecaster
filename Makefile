@@ -4,7 +4,7 @@ PYTHON ?= python3
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval assess phase0-verify docker-up docker-down
+.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot assess phase0-verify docker-up docker-down
 
 help:
 	@awk 'BEGIN {FS = ":.*## "; print "Meridian development commands:"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -61,6 +61,9 @@ retrieve: ## Retrieve evidence, e.g. make retrieve ACCOUNT=ACC-1089 QUERY="renew
 
 evaluate-retrieval: ## Run the retrieval benchmark and chunking ablation (Docker).
 	./scripts/python_in_docker.sh python scripts/evaluate_retrieval.py
+
+evaluate-tot: ## Compare linear adjudication with conflict-gated ToT (Docker).
+	./scripts/python_in_docker.sh python scripts/evaluate_tot.py $(if $(ACCOUNTS),--accounts $(ACCOUNTS),) $(if $(LIMIT),--limit $(LIMIT),)
 
 assess: ## Assess one account end to end, e.g. make assess ACCOUNT=ACC-1042 [OFFLINE=1].
 	./scripts/python_in_docker.sh python scripts/assess_account.py $(ACCOUNT) $(if $(QUESTION),"$(QUESTION)",) $(if $(OFFLINE),--offline,)

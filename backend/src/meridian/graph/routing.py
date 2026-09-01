@@ -114,6 +114,18 @@ def route_conflict(state: ForecasterState) -> str:
     return "fast_adjudication"
 
 
+def route_tot(state: ForecasterState) -> str:
+    """Route out of the Tree-of-Thought subgraph (section 15.6).
+
+    A search that selected a winner produces a draft, which is verified like any
+    other. One that abstained has already written its own final result and goes
+    straight to persistence: there is no narrative left to verify, and running
+    the verifier over an abstention would check claims nobody made.
+    """
+
+    return "verify_output" if state.get("draft_decision") is not None else "persist"
+
+
 def route_verification(state: ForecasterState) -> str:
     """Route on output verification (section 14.1: pass, regenerate, fallback)."""
 
@@ -122,6 +134,14 @@ def route_verification(state: ForecasterState) -> str:
         return "safe_fallback"
     if verification.passed:
         return "assign_route"
+
+    draft = state.get("draft_decision")
+    if draft is not None and draft.selected_by == "tree_of_thought":
+        # There is no linear regeneration that preserves the search's choice:
+        # `fast_adjudication` would rebuild the decision around the model's
+        # argmax and hand back a different outcome under the same run id. The
+        # safe fallback keeps the selected outcome and rewrites only the prose.
+        return "safe_fallback"
     if verification.attempts <= MAX_OUTPUT_REGENERATIONS:
         return "fast_adjudication"
     return "safe_fallback"
@@ -150,7 +170,7 @@ def human_route(
         red_reasons.append(f"the top two outcomes are within {margin:.2f}")
     if coverage.has_critical_gap:
         red_reasons.append("critical coverage is missing")
-    if conflict is not None and conflict.severity == "severe":
+    if conflict is not None and conflict.unresolved_severe:
         red_reasons.append("an unresolved severe conflict")
     if verification is not None and not verification.passed:
         red_reasons.append("output verification failed")
@@ -176,16 +196,25 @@ def human_route(
     return "green", "confidence, coverage, and verification all met the release bar"
 
 
-def abstention_route(coverage: CoverageReport, high_value: bool) -> tuple[Route, str]:
-    """Return the band for a degraded, no-label result.
+def abstention_route(
+    coverage: CoverageReport, high_value: bool, unresolved_conflict: str | None = None
+) -> tuple[Route, str]:
+    """Return the band for a degraded or abstained, no-label result.
 
     The instructor feedback recorded in section 2 asks for "impact-aware
     escalation": the same missing evidence matters more on an account the
     business cannot afford to be wrong about, so a high-value account escalates
     even when the gap itself is ordinary.
+
+    Section 15.6 adds one more red condition. A Tree-of-Thought search whose top
+    two branches stay tied after the consistency vote has not failed to find
+    evidence -- it has found evidence that genuinely points both ways, which is
+    precisely the case a person should look at.
     """
 
     reasons: list[str] = []
+    if unresolved_conflict:
+        reasons.append(f"the conflict was not resolved: {unresolved_conflict}")
     if coverage.has_critical_gap:
         reasons.append(f"critical coverage is missing: {'; '.join(coverage.critical_gaps)}")
     if high_value:
@@ -204,5 +233,6 @@ __all__ = [
     "route_conflict",
     "route_coverage",
     "route_intake",
+    "route_tot",
     "route_verification",
 ]

@@ -17,9 +17,11 @@ import pytest
 
 from meridian.contracts import (
     Citation,
+    ConfidenceBreakdown,
     ConflictAssessment,
     CoverageReport,
     EvidenceBundle,
+    ForecastDecision,
     GuardrailDecision,
     OutputVerification,
     QuantitativeEvidence,
@@ -113,6 +115,28 @@ def _bundle(**overrides: object) -> EvidenceBundle:
         "counterevidence": (),
     }
     return EvidenceBundle(**{**defaults, **overrides})
+
+
+def _decision(**overrides: object) -> ForecastDecision:
+    """Return a minimal released decision."""
+
+    defaults: dict[str, object] = {
+        "account_id": "ACC-1042",
+        "cutoff": CUTOFF,
+        "outcome": "Churned",
+        "distribution": dict(CLEAR),
+        "confidence": 0.8,
+        "confidence_breakdown": ConfidenceBreakdown(
+            calibrated_probability=0.7,
+            coverage_score=0.8,
+            agreement_score=1.0,
+            raw_confidence=0.8,
+            confidence=0.8,
+        ),
+        "rationale": "text",
+        "recommended_action": "review",
+    }
+    return ForecastDecision(**{**defaults, **overrides})
 
 
 def _state(**values: object) -> ForecasterState:
@@ -493,3 +517,45 @@ def test_a_repaired_output_is_capped_inside_the_calculation_too() -> None:
     )
     assert breakdown.confidence <= CAP_REPAIRED_VERIFICATION
     assert "repaired_output_verification" in breakdown.applied_caps
+
+
+def test_a_failed_tree_of_thought_draft_is_not_regenerated_linearly() -> None:
+    """Regenerating one linearly would swap the search's choice for the argmax.
+
+    `fast_adjudication` builds its decision around the calibrated model's most
+    likely outcome. Sending a failed Tree-of-Thought draft there would hand back
+    a different outcome under the same run id and report it as the search's.
+    """
+
+    failed = OutputVerification(passed=False, attempts=1, failures=("bad number",))
+    linear_draft = _decision(selected_by="linear")
+    tot_draft = _decision(selected_by="tree_of_thought")
+
+    assert (
+        route_verification(_state(output_verification=failed, draft_decision=linear_draft))
+        == "fast_adjudication"
+    )
+    assert (
+        route_verification(_state(output_verification=failed, draft_decision=tot_draft))
+        == "safe_fallback"
+    )
+
+
+def test_a_passing_tree_of_thought_draft_routes_normally() -> None:
+    """The special case is failure only; a verified search result is released."""
+
+    passed = OutputVerification(passed=True)
+    draft = _decision(selected_by="tree_of_thought")
+    assert route_verification(_state(output_verification=passed, draft_decision=draft)) == (
+        "assign_route"
+    )
+
+
+def test_an_unresolved_conflict_abstention_routes_red() -> None:
+    """Section 15.6: a persistent tie is a red review case, not an amber note."""
+
+    band, reason = abstention_route(
+        _coverage(), high_value=False, unresolved_conflict="the branches stayed tied"
+    )
+    assert band == "red"
+    assert "not resolved" in reason

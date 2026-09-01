@@ -62,6 +62,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | FAISS configuration and MMR parameters | Chunking ablation holding corpus, encoder, filters, top-k, and queries constant | Flat inner-product index and parent-child chunking retained on recall and citation quality, not on ranking metrics; see `docs/PHASE_3_STATUS.md` |
 | Provider-neutral LLM adapter | Offline structured-generation tests plus an opt-in live check | Anthropic reached through OpenRouter's OpenAI-compatible endpoint; strict `json_schema` with one repair attempt; see `docs/PHASE_4_STATUS.md` |
 | Whether the two evidence lanes run in parallel | Instrumented lanes recording entry and exit, checked for interval overlap | Confirmed concurrent; adjacent trace events were not treated as evidence; see `docs/PHASE_5_STATUS.md` |
+| Whether conflict-gated ToT beats linear adjudication | Both arms over the same 106 conflicting development accounts, paired on the cases both answered | Not on this evidence: 86.5% agreement, 69 declined answers for 12 caught errors against a 15.1% base rate; the provider arm is unrun; see `docs/PHASE_6_STATUS.md` |
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 
 ## Unresolved inputs
@@ -73,6 +74,7 @@ This matrix separates verified facts from provisional design choices and unresol
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
 | Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
 | The packaged 36-case guardrail set has not been run | Intake rule quality is unmeasured | Phase 7 runs it as its exit gate; running it now would tune the rules against the sentences they will be scored on |
+| The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
 | Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Consider a numeral-word pass in Phase 7's output guardrail |
 
 ## Deferred inputs

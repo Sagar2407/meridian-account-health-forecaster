@@ -131,6 +131,9 @@ Prior assessments are context, not truth. Every new assessment must re-query poi
 | Shared state and budgets | `meridian.graph.state` |
 | Node implementations | `meridian.graph.nodes` |
 | Deterministic edges and review bands | `meridian.graph.routing` |
+| Section 15.1 conflict triggers | `meridian.graph.conflict` |
+| The bounded Tree-of-Thought search | `meridian.graph.tot` |
+| Portfolio baselines for the relative rules | `meridian.features.baselines` |
 | Evidence-aware confidence | `meridian.graph.confidence` |
 | Topology, checkpointer, run API | `meridian.graph.builder` |
 | Safe trace events | `meridian.graph.tracing` |

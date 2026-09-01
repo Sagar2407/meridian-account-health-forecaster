@@ -33,6 +33,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from meridian.contracts import (
     ADVERSE_OUTCOMES,
+    MAX_CANDIDATE_DRIVERS,
+    CandidateHypothesis,
     Citation,
     EvidenceBundle,
     OutputVerification,
@@ -175,7 +177,7 @@ def allowed_numbers(bundle: EvidenceBundle) -> tuple[float, ...]:
     return tuple(sorted(values))
 
 
-def _written_numbers(text: str) -> tuple[float, ...]:
+def written_numbers(text: str) -> tuple[float, ...]:
     """Return the numerals a narrative states as claims."""
 
     found: list[float] = []
@@ -186,7 +188,7 @@ def _written_numbers(text: str) -> tuple[float, ...]:
     return tuple(found)
 
 
-def _is_verified(value: float, allowed: Sequence[float]) -> bool:
+def is_verified(value: float, allowed: Sequence[float]) -> bool:
     """Return whether a written number matches a verified value."""
 
     return any(
@@ -215,8 +217,8 @@ def verify_output(
     text = f"{rationale}\n{recommended_action}\n{' '.join(limitations)}"
 
     allowed = allowed_numbers(bundle)
-    written = _written_numbers(text)
-    unverified = [value for value in written if not _is_verified(value, allowed)]
+    written = written_numbers(text)
+    unverified = [value for value in written if not is_verified(value, allowed)]
     if unverified:
         failures.append(
             "states numbers that are not in the verified evidence: "
@@ -280,7 +282,9 @@ def _percentage(value: float) -> str:
     return f"{value * 100:.1f}"
 
 
-def deterministic_draft(bundle: EvidenceBundle, notice: str | None = None) -> AdjudicationDraft:
+def deterministic_draft(
+    bundle: EvidenceBundle, notice: str | None = None, outcome: str | None = None
+) -> AdjudicationDraft:
     """Compose a narrative from verified evidence and nothing else.
 
     Every numeral comes from `allowed_numbers`, so this draft passes
@@ -290,10 +294,15 @@ def deterministic_draft(bundle: EvidenceBundle, notice: str | None = None) -> Ad
     """
 
     quantitative = bundle.quantitative
-    outcome = quantitative.predicted_outcome or "an undetermined outcome"
+    # `outcome` is supplied when another adjudicator already chose one -- the
+    # Tree-of-Thought search, for instance. Defaulting to the model's own label
+    # would make the narrative argue a different outcome from the one the
+    # decision carries, which is worse than having no narrative at all.
+    selected = outcome or quantitative.predicted_outcome or "an undetermined outcome"
+    prior = quantitative.distribution.get(selected, quantitative.model_probability)
     parts = [
-        f"The calibrated forecaster puts {outcome} at "
-        f"{_percentage(quantitative.model_probability)}% for this account at the cutoff."
+        f"The calibrated forecaster puts {selected} at "
+        f"{_percentage(prior)}% for this account at the cutoff."
     ]
     if quantitative.drivers:
         drivers = ", ".join(
@@ -412,6 +421,145 @@ def evidence_brief(bundle: EvidenceBundle) -> str:
     return "\n".join(lines)
 
 
+# -- Conflict path: candidate generation (plan section 15.2) -----------------
+
+CANDIDATE_INSTRUCTIONS = (
+    "A deterministic gate has found that the evidence for this account disagrees with "
+    "itself, so each possible outcome is being argued separately before one is chosen.\n"
+    "You are given the four possible outcomes. Write one concise, falsifiable argument "
+    "for each -- including the ones you think are wrong.\n"
+    "Rules:\n"
+    "1. Do not change an outcome, and do not add or remove one.\n"
+    "2. Use only numbers that appear verbatim in the evidence below.\n"
+    "3. Cite supporting evidence by its exact document id, only from the ids listed.\n"
+    "4. Name the single strongest verified item that argues against each outcome, by id.\n"
+    "5. Name at most two key drivers per outcome, by their exact feature names.\n"
+    "6. Make each argument falsifiable: say what would show it to be wrong.\n"
+    "7. Do not claim certainty. You are arguing a case, not announcing a result."
+)
+
+
+class CandidateDraft(BaseModel):
+    """One argued outcome, as a model may supply it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    outcome: str = Field(default="", max_length=40)
+    rationale: str = Field(default="", max_length=700)
+    supporting_citation_ids: list[str] = Field(default_factory=list, max_length=MAX_CITED_IDS)
+    counterevidence_citation_ids: list[str] = Field(default_factory=list, max_length=MAX_CITED_IDS)
+    strongest_counterevidence: str = Field(default="", max_length=120)
+    key_drivers: list[str] = Field(default_factory=list, max_length=MAX_CANDIDATE_DRIVERS)
+
+
+class CandidateSet(BaseModel):
+    """One argument per canonical outcome."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    candidates: list[CandidateDraft] = Field(default_factory=list, max_length=8)
+
+
+@dataclass(frozen=True)
+class CandidateGeneration:
+    """Four candidates plus where they came from and what they cost."""
+
+    candidates: tuple[CandidateHypothesis, ...]
+    source: Literal["model", "deterministic"] = "deterministic"
+    usage: Usage = field(default_factory=Usage)
+    attempts: int = 0
+    model_name: str = ""
+    fallback_reason: str | None = None
+
+
+def _side(outcome: str) -> str:
+    """Return the signal that agrees with an outcome."""
+
+    return "adverse" if outcome in ADVERSE_OUTCOMES else "favorable"
+
+
+def _citations_pointing(bundle: EvidenceBundle, signal: str, limit: int) -> tuple[Citation, ...]:
+    """Return the highest-scoring citations carrying one signal."""
+
+    matching = [citation for citation in bundle.retrieval.citations if citation.signal == signal]
+    matching.sort(key=lambda item: -item.retrieval_score)
+    return tuple(matching[:limit])
+
+
+def _drivers_for(bundle: EvidenceBundle, outcome: str) -> tuple[str, ...]:
+    """Return up to two driver names that argue for `outcome`.
+
+    The forecaster reports contributions toward its own predicted class, so a
+    driver that supports that class argues for it, and one that opposes it
+    argues for an alternative. That is the only per-class attribution a single
+    calibrated model offers without refitting, and it is stated as such rather
+    than dressed up as a per-outcome explanation.
+    """
+
+    predicted = bundle.quantitative.predicted_outcome
+    wanted = "supports" if outcome == predicted else "opposes"
+    drivers = [driver for driver in bundle.quantitative.drivers if driver.direction == wanted]
+    drivers.sort(key=lambda item: -abs(item.contribution))
+    return tuple(driver.feature for driver in drivers[:MAX_CANDIDATE_DRIVERS])
+
+
+def deterministic_candidate(bundle: EvidenceBundle, outcome: str) -> CandidateHypothesis:
+    """Argue one outcome using only verified values (plan section 15.2)."""
+
+    prior = bundle.quantitative.distribution.get(outcome, 0.0)
+    agreeing = _citations_pointing(bundle, _side(outcome), 3)
+    opposing = _citations_pointing(
+        bundle, "favorable" if _side(outcome) == "adverse" else "adverse", 2
+    )
+    drivers = _drivers_for(bundle, outcome)
+
+    parts = [f"{outcome} carries a calibrated prior of {_percentage(prior)}%."]
+    if drivers:
+        named = ", ".join(drivers)
+        parts.append(f"The observed signals arguing for it are {named}.")
+    if agreeing:
+        parts.append(
+            "Retrieved evidence pointing the same way: "
+            + ", ".join(citation.doc_id for citation in agreeing)
+            + "."
+        )
+    if opposing:
+        parts.append(
+            "It would be wrong if "
+            + ", ".join(citation.doc_id for citation in opposing)
+            + " proves more material than the telemetry."
+        )
+    else:
+        parts.append("No retrieved evidence points the other way for this outcome.")
+
+    strongest = opposing[0].doc_id if opposing else "none"
+    return CandidateHypothesis(
+        outcome=outcome,
+        model_prior=round(prior, 6),
+        rationale=" ".join(parts),
+        key_drivers=drivers,
+        supporting_citation_ids=tuple(citation.doc_id for citation in agreeing),
+        counterevidence_citation_ids=tuple(citation.doc_id for citation in opposing),
+        strongest_counterevidence=strongest,
+        source="deterministic",
+    )
+
+
+def candidate_brief(bundle: EvidenceBundle, outcomes: Sequence[str]) -> str:
+    """Return the evidence and the outcomes a model must argue."""
+
+    listed = ", ".join(
+        f"{outcome} (prior {_percentage(bundle.quantitative.distribution.get(outcome, 0.0))}%)"
+        for outcome in outcomes
+    )
+    return (
+        f"{evidence_brief(bundle)}\n\n"
+        f"Argue each of these four outcomes, one candidate each: {listed}.\n"
+        "Driver names you may use: "
+        + (", ".join(driver.feature for driver in bundle.quantitative.drivers) or "none")
+    )
+
+
 class ForecastAdjudicator:
     """Draft and verify the narrative half of a decision."""
 
@@ -423,6 +571,68 @@ class ForecastAdjudicator:
         """Return whether a language-model provider is available."""
 
         return self._generator is not None
+
+    def generate_candidates(
+        self, bundle: EvidenceBundle, outcomes: Sequence[str] | None = None
+    ) -> CandidateGeneration:
+        """Argue every canonical outcome once (plan section 15.2).
+
+        A deterministic candidate is built for each outcome first and is the
+        floor. When a provider is configured its rationales replace the
+        templated ones, outcome by outcome -- but the outcome set, the model
+        priors, and the count are fixed here. A model cannot add an outcome,
+        drop one, or change a prior, so the search stays exactly four branches
+        wide however the generation goes.
+        """
+
+        classes = tuple(outcomes) if outcomes else tuple(bundle.quantitative.distribution)
+        baseline = {outcome: deterministic_candidate(bundle, outcome) for outcome in classes}
+
+        if self._generator is None:
+            return CandidateGeneration(
+                candidates=tuple(baseline.values()),
+                fallback_reason="no language-model provider is configured",
+            )
+
+        try:
+            result = generate_structured(
+                self._generator,
+                CandidateSet,
+                instructions=CANDIDATE_INSTRUCTIONS,
+                input_text=candidate_brief(bundle, classes),
+            )
+        except GenerationError as error:
+            return CandidateGeneration(
+                candidates=tuple(baseline.values()),
+                fallback_reason=f"candidate generation failed: {type(error).__name__}",
+            )
+
+        argued = 0
+        for draft in result.value.candidates:
+            if draft.outcome not in baseline or not draft.rationale.strip():
+                continue
+            baseline[draft.outcome] = baseline[draft.outcome].model_copy(
+                update={
+                    "rationale": draft.rationale.strip(),
+                    "key_drivers": tuple(draft.key_drivers[:MAX_CANDIDATE_DRIVERS]),
+                    "supporting_citation_ids": tuple(dict.fromkeys(draft.supporting_citation_ids)),
+                    "counterevidence_citation_ids": tuple(
+                        dict.fromkeys(draft.counterevidence_citation_ids)
+                    ),
+                    "strongest_counterevidence": draft.strongest_counterevidence.strip(),
+                    "source": "model",
+                }
+            )
+            argued += 1
+
+        return CandidateGeneration(
+            candidates=tuple(baseline.values()),
+            source="model" if argued else "deterministic",
+            usage=result.usage,
+            attempts=result.attempts,
+            model_name=result.model,
+            fallback_reason=None if argued else "the model argued no known outcome",
+        )
 
     def draft(self, bundle: EvidenceBundle, repair_note: str | None = None) -> DraftResult:
         """Return a drafted narrative, from the model when one is configured.
@@ -482,14 +692,22 @@ class ForecastAdjudicator:
 
 __all__ = [
     "ADJUDICATOR_INSTRUCTIONS",
+    "CANDIDATE_INSTRUCTIONS",
     "PROSE_SAFE_FIELD_NAMES",
     "AdjudicationDraft",
+    "CandidateDraft",
+    "CandidateGeneration",
+    "CandidateSet",
     "DraftResult",
     "ForecastAdjudicator",
     "allowed_numbers",
+    "candidate_brief",
+    "deterministic_candidate",
     "deterministic_draft",
     "evidence_brief",
+    "is_verified",
     "split_evidence",
     "verify_draft",
     "verify_output",
+    "written_numbers",
 ]

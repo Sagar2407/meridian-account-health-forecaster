@@ -22,6 +22,7 @@ from meridian.agents.forecast_adjudicator import ForecastAdjudicator
 from meridian.agents.orchestrator import Orchestrator
 from meridian.agents.quantitative_analyst import QuantitativeAnalyst
 from meridian.data.repository import RuntimeRepository
+from meridian.features.baselines import BaselineProvider
 from meridian.guardrails.policy import HighValuePolicy
 from meridian.llm.base import ProviderNotConfiguredError, StructuredGenerator
 from meridian.llm.providers import build_generator
@@ -66,6 +67,10 @@ class GraphRuntime:
     store: AssessmentStore | None = None
     artifact: ModelArtifact | None = None
     generator: StructuredGenerator | None = None
+    #: Portfolio medians for the two relative conflict rules (section 15.1).
+    #: Deferred rather than eager: the sweep costs about two seconds, and a
+    #: run that is blocked or degrades on coverage never reaches the gate.
+    baselines: BaselineProvider | None = None
 
     @property
     def has_model(self) -> bool:
@@ -88,6 +93,7 @@ class GraphRuntime:
         generator: StructuredGenerator | None = None,
         store: AssessmentStore | None = None,
         high_value: HighValuePolicy | None = None,
+        baselines: BaselineProvider | None = None,
     ) -> "GraphRuntime":
         """Build a runtime from parts, for tests and for `build`."""
 
@@ -102,6 +108,7 @@ class GraphRuntime:
             store=store,
             artifact=artifact,
             generator=generator,
+            baselines=baselines if baselines is not None else BaselineProvider.over(repository),
         )
 
     @classmethod
