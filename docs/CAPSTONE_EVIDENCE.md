@@ -66,17 +66,17 @@ records successes cannot fail, and a gate that cannot fail is decoration.
 Every number below is read from an artifact, and every artifact has a command
 that regenerates it. Nothing in the report should be typed by hand.
 
-Evaluation directories are named `<commit>-<timestamp>` and do not say which
-split they hold; the first line of each `REPORT.md` does, and
-`artifacts/evaluation/README.md` indexes them. Both published runs are at commit
-`6d148a7e504a`: `...T234800+0000` is **development** (207 accounts) and
-`...T234822+0000` is **test** (53 held out).
+Result directories are named `<commit>-<timestamp>`, so no fixed path points at
+the current one. `artifacts/evaluation/summary.json` does: every run republishes
+it with the headline for each split and the directory that produced it, and it
+is what the application's evaluation page reads. Cite the summary; use the
+directory it names for the full report, per-account rows, and plots.
 
 | Result | Value | Artifact | Command |
 | --- | ---: | --- | --- |
-| Macro F1, held-out (53 accounts) | 0.7490 | `.../6d148a7e504a-20260901T234822+0000/` | `make evaluate-system SPLIT=test` |
+| Macro F1, held-out (53 accounts) | 0.7490 | `artifacts/evaluation/summary.json` | `make evaluate-system SPLIT=test` |
 | Majority baseline it beats | 0.4595 | same | same |
-| Macro F1, development (207) | 0.8468 | `.../6d148a7e504a-20260901T234800+0000/` | `make evaluate-system` |
+| Macro F1, development (207) | 0.8468 | `artifacts/evaluation/summary.json` | `make evaluate-system` |
 | Supported-claim rate | 1.0000 | both result directories | same |
 | Exact numeric agreement | 1.0000 | both | same |
 | Wrong-account citations | 0 | both | same |

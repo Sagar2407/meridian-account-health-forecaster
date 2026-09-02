@@ -1128,6 +1128,96 @@ textarea {
   cursor: pointer;
 }
 
+/* -- The system evaluation's tables (plan section 20.6) ------------------- */
+
+.eval-system {
+  display: grid;
+  gap: 1.1rem;
+  margin: 0.9rem 0 1rem;
+}
+
+.eval-system__splits {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.eval-system__split {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 0.83rem;
+  cursor: pointer;
+}
+
+.eval-system__split[aria-pressed='true'] {
+  border-color: var(--cmu-red);
+  background: var(--cmu-red);
+  color: #fff;
+}
+
+.eval-system__provenance {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.83rem;
+}
+
+/* Wide tables scroll inside their own box rather than the page. */
+.eval-table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.eval-table caption {
+  margin-bottom: 0.4rem;
+  color: var(--ink-muted);
+  font-size: 0.83rem;
+  text-align: left;
+}
+
+.eval-table th,
+.eval-table td {
+  padding: 0.35rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.eval-table thead th,
+.eval-table tbody th {
+  text-align: left;
+  font-weight: 600;
+}
+
+/* The measurement that missed its target must be visible, not buried in a
+   column a reader skims past. */
+.eval-table tr[data-met='NOT MET'] td:last-child {
+  color: var(--status-red);
+  font-weight: 600;
+}
+
+.eval-table td[data-diagonal='true'] {
+  background: var(--surface-sunken);
+  font-weight: 600;
+}
+
+.eval-table th[data-route='green'] {
+  color: var(--status-green);
+}
+
+.eval-table th[data-route='amber'] {
+  color: var(--status-amber);
+}
+
+.eval-table th[data-route='red'] {
+  color: var(--status-red);
+}
+
 /* -- Recent activity, history, notes -------------------------------------- */
 
 .recent-list li,

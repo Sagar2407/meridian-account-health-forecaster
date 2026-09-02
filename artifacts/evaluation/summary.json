@@ -1,0 +1,381 @@
+{
+  "abstained": 16,
+  "accuracy": 0.8649,
+  "auto_release_rate": 0.0,
+  "brier": 0.0671,
+  "citation_precision": 1.0,
+  "completion_rate": 1.0,
+  "driver_overlap": 0.4279,
+  "escalation_rate": 0.6415,
+  "exact_numeric_agreement": 1.0,
+  "expected_calibration_error": 0.1712,
+  "headline_split": "test",
+  "macro_f1": 0.749,
+  "majority_baseline_accuracy": 0.4595,
+  "post_cutoff_citation_count": 0,
+  "release_rate": 0.6981,
+  "released": 37,
+  "runs": 53,
+  "splits": {
+    "development": {
+      "abstained": 70,
+      "accuracy": 0.9197,
+      "auto_release_rate": 0.029,
+      "brier": 0.05,
+      "citation_precision": 1.0,
+      "commit": "dc737e3a3078",
+      "completion_rate": 1.0,
+      "confidence_bands": [
+        {
+          "band": "low",
+          "count": 3,
+          "error_rate": 0.33333333333333337,
+          "lower": 0.0,
+          "upper": 0.5
+        },
+        {
+          "band": "medium",
+          "count": 60,
+          "error_rate": 0.15000000000000002,
+          "lower": 0.5,
+          "upper": 0.75
+        },
+        {
+          "band": "high",
+          "count": 74,
+          "error_rate": 0.013513513513513487,
+          "lower": 0.75,
+          "upper": 1.01
+        }
+      ],
+      "confusion_matrix": {
+        "classes": [
+          "Churned",
+          "Contracted",
+          "Expanded",
+          "Renewed"
+        ],
+        "rows": [
+          [
+            34,
+            1,
+            0,
+            0
+          ],
+          [
+            3,
+            7,
+            2,
+            0
+          ],
+          [
+            0,
+            1,
+            66,
+            0
+          ],
+          [
+            0,
+            1,
+            2,
+            20
+          ]
+        ]
+      },
+      "directory": "dc737e3a3078-20260902T005438+0000",
+      "driver_overlap": 0.4526,
+      "escalation_rate": 0.6425,
+      "exact_numeric_agreement": 1.0,
+      "expected_calibration_error": 0.1568,
+      "generated_at": "2026-09-02T00:54:38+00:00",
+      "macro_f1": 0.8468,
+      "majority_baseline_accuracy": 0.4891,
+      "per_class": {
+        "Churned": {
+          "f1": 0.9444,
+          "precision": 0.9189,
+          "recall": 0.9714,
+          "support": 35
+        },
+        "Contracted": {
+          "f1": 0.6364,
+          "precision": 0.7,
+          "recall": 0.5833,
+          "support": 12
+        },
+        "Expanded": {
+          "f1": 0.9302,
+          "precision": 1.0,
+          "recall": 0.8696,
+          "support": 23
+        },
+        "Renewed": {
+          "f1": 0.9635,
+          "precision": 0.9429,
+          "recall": 0.9851,
+          "support": 67
+        }
+      },
+      "post_cutoff_citation_count": 0,
+      "release_rate": 0.6618,
+      "release_targets": [
+        {
+          "direction": "at_least",
+          "measured": 0.8468,
+          "met": true,
+          "metric": "Macro F1",
+          "target": 0.7
+        },
+        {
+          "direction": "at_least",
+          "measured": 1.0,
+          "met": true,
+          "metric": "Exact numeric agreement",
+          "target": 1.0
+        },
+        {
+          "direction": "at_least",
+          "measured": 1.0,
+          "met": true,
+          "metric": "Supported-claim rate",
+          "target": 0.95
+        },
+        {
+          "direction": "at_most",
+          "measured": 0,
+          "met": true,
+          "metric": "Wrong-account citations",
+          "target": 0.0
+        },
+        {
+          "direction": "at_most",
+          "measured": 0,
+          "met": true,
+          "metric": "Post-cutoff citations",
+          "target": 0.0
+        },
+        {
+          "direction": "at_most",
+          "measured": 0.1568,
+          "met": false,
+          "metric": "Expected calibration error",
+          "target": 0.1
+        },
+        {
+          "direction": "at_least",
+          "measured": 1.0,
+          "met": true,
+          "metric": "Exhausted-retrieval safe fallback",
+          "target": 1.0
+        }
+      ],
+      "released": 137,
+      "routing_quality": {
+        "amber": {
+          "auto_released": false,
+          "count": 68,
+          "error_rate": 0.0294,
+          "errors": 2
+        },
+        "green": {
+          "auto_released": true,
+          "count": 6,
+          "error_rate": 0.0,
+          "errors": 0
+        },
+        "red": {
+          "auto_released": false,
+          "count": 63,
+          "error_rate": 0.127,
+          "errors": 8
+        }
+      },
+      "runs": 207,
+      "supported_claim_rate": 1.0,
+      "total_tokens": 0,
+      "wrong_account_citation_count": 0
+    },
+    "test": {
+      "abstained": 16,
+      "accuracy": 0.8649,
+      "auto_release_rate": 0.0,
+      "brier": 0.0671,
+      "citation_precision": 1.0,
+      "commit": "dc737e3a3078",
+      "completion_rate": 1.0,
+      "confidence_bands": [
+        {
+          "band": "low",
+          "count": 1,
+          "error_rate": 1.0,
+          "lower": 0.0,
+          "upper": 0.5
+        },
+        {
+          "band": "medium",
+          "count": 22,
+          "error_rate": 0.18181818181818177,
+          "lower": 0.5,
+          "upper": 0.75
+        },
+        {
+          "band": "high",
+          "count": 14,
+          "error_rate": 0.0,
+          "lower": 0.75,
+          "upper": 1.01
+        }
+      ],
+      "confusion_matrix": {
+        "classes": [
+          "Churned",
+          "Contracted",
+          "Expanded",
+          "Renewed"
+        ],
+        "rows": [
+          [
+            6,
+            3,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            16,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            8
+          ]
+        ]
+      },
+      "directory": "dc737e3a3078-20260902T000322+0000",
+      "driver_overlap": 0.4279,
+      "escalation_rate": 0.6415,
+      "exact_numeric_agreement": 1.0,
+      "expected_calibration_error": 0.1712,
+      "generated_at": "2026-09-02T00:03:22+00:00",
+      "macro_f1": 0.749,
+      "majority_baseline_accuracy": 0.4595,
+      "per_class": {
+        "Churned": {
+          "f1": 0.75,
+          "precision": 0.8571,
+          "recall": 0.6667,
+          "support": 9
+        },
+        "Contracted": {
+          "f1": 0.2857,
+          "precision": 0.2,
+          "recall": 0.5,
+          "support": 2
+        },
+        "Expanded": {
+          "f1": 0.9412,
+          "precision": 1.0,
+          "recall": 0.8889,
+          "support": 9
+        },
+        "Renewed": {
+          "f1": 0.9412,
+          "precision": 0.9412,
+          "recall": 0.9412,
+          "support": 17
+        }
+      },
+      "post_cutoff_citation_count": 0,
+      "release_rate": 0.6981,
+      "release_targets": [
+        {
+          "direction": "at_least",
+          "measured": 0.749,
+          "met": true,
+          "metric": "Macro F1",
+          "target": 0.7
+        },
+        {
+          "direction": "at_least",
+          "measured": 1.0,
+          "met": true,
+          "metric": "Exact numeric agreement",
+          "target": 1.0
+        },
+        {
+          "direction": "at_least",
+          "measured": 1.0,
+          "met": true,
+          "metric": "Supported-claim rate",
+          "target": 0.95
+        },
+        {
+          "direction": "at_most",
+          "measured": 0,
+          "met": true,
+          "metric": "Wrong-account citations",
+          "target": 0.0
+        },
+        {
+          "direction": "at_most",
+          "measured": 0,
+          "met": true,
+          "metric": "Post-cutoff citations",
+          "target": 0.0
+        },
+        {
+          "direction": "at_most",
+          "measured": 0.1712,
+          "met": false,
+          "metric": "Expected calibration error",
+          "target": 0.1
+        },
+        {
+          "direction": "at_least",
+          "measured": null,
+          "met": null,
+          "metric": "Exhausted-retrieval safe fallback",
+          "note": "not measured in this run",
+          "target": 1.0
+        }
+      ],
+      "released": 37,
+      "routing_quality": {
+        "amber": {
+          "auto_released": false,
+          "count": 19,
+          "error_rate": 0.1053,
+          "errors": 2
+        },
+        "green": {
+          "auto_released": true,
+          "count": 0,
+          "error_rate": null,
+          "errors": 0
+        },
+        "red": {
+          "auto_released": false,
+          "count": 18,
+          "error_rate": 0.2222,
+          "errors": 4
+        }
+      },
+      "runs": 53,
+      "supported_claim_rate": 1.0,
+      "total_tokens": 0,
+      "wrong_account_citation_count": 0
+    }
+  },
+  "supported_claim_rate": 1.0,
+  "total_tokens": 0,
+  "wrong_account_citation_count": 0
+}

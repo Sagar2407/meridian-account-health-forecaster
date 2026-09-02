@@ -4,10 +4,15 @@ Each directory is one run of `make evaluate-system`, named `<commit>-<timestamp>
 The directory name does not say which split it holds; the first line of its
 `REPORT.md` does.
 
-| Directory | Split | Accounts |
-| --- | --- | ---: |
-| `6d148a7e504a-20260901T234800+0000` | development | 207 |
-| `6d148a7e504a-20260901T234822+0000` | test (held out) | 53 |
+`summary.json` is the stable entry point: every run rewrites it with each
+split's headline numbers and the directory that produced them, so nothing has to
+guess which timestamped directory is current. It is what the application's
+evaluation page reads, and what documentation should cite.
+
+| Split | Accounts | Where |
+| --- | ---: | --- |
+| development | 207 | named by `summary.json` |
+| test (held out) | 53 | named by `summary.json` |
 
 Both were produced offline at zero tokens against the frozen thresholds
 (digest `5e23d7f9d9fef896`, v1), which were fixed before the held-out split was

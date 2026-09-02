@@ -44,6 +44,37 @@ from meridian_eval.training import plot_confusion, plot_reliability
 #: a result set per run.
 RESULTS_ROOT = repository_root() / "artifacts" / "evaluation"
 
+#: The cross-run summary the served evaluation page reads. Result directories
+#: are named for a commit and a moment, so nothing in the application can point
+#: at "the current one" without globbing a directory it does not own. This file
+#: is that pointer: one flat headline plus each split's detail, rewritten in
+#: place by every run so the page always reads the newest measurement.
+SUMMARY_FILENAME = "summary.json"
+
+#: The scalars the evaluation page shows without opening anything. They are the
+#: release targets plus the operational numbers a reader asks for next.
+SUMMARY_HEADLINE: tuple[str, ...] = (
+    "macro_f1",
+    "accuracy",
+    "majority_baseline_accuracy",
+    "expected_calibration_error",
+    "brier",
+    "supported_claim_rate",
+    "exact_numeric_agreement",
+    "citation_precision",
+    "driver_overlap",
+    "wrong_account_citation_count",
+    "post_cutoff_citation_count",
+    "auto_release_rate",
+    "release_rate",
+    "escalation_rate",
+    "completion_rate",
+    "runs",
+    "released",
+    "abstained",
+    "total_tokens",
+)
+
 #: Section 22.6's provisional gates. Targets, not claimed results -- the report
 #: prints each beside what was measured and says plainly which were not met.
 RELEASE_TARGETS: dict[str, tuple[str, float, str]] = {
@@ -552,11 +583,107 @@ def _write_plots(collection: RunCollection, folder: Path) -> None:
     )
 
 
+def _split_summary(result: dict[str, Any], folder: Path) -> dict[str, Any]:
+    """Return one split's entry: the flat headline, plus what a table needs."""
+
+    correctness = result["forecast_correctness"]
+    calibration = result["calibration"]
+    grounding = result["grounded_explanation"]
+    operations = result["operational_reliability"]
+    flat: dict[str, Any] = {
+        "macro_f1": correctness["macro_f1"],
+        "accuracy": correctness["accuracy"],
+        "majority_baseline_accuracy": correctness["majority_baseline_accuracy"],
+        "expected_calibration_error": calibration["expected_calibration_error"],
+        "brier": calibration["brier"],
+        "supported_claim_rate": grounding["supported_claim_rate"],
+        "exact_numeric_agreement": grounding["exact_numeric_agreement"],
+        "citation_precision": grounding["citation_precision"],
+        "driver_overlap": grounding["driver_overlap"],
+        "wrong_account_citation_count": grounding["wrong_account_citation_count"],
+        "post_cutoff_citation_count": grounding["post_cutoff_citation_count"],
+        "auto_release_rate": calibration["auto_release_rate"],
+        "release_rate": operations["release_rate"],
+        "escalation_rate": operations["escalation_rate"],
+        "completion_rate": operations["completion_rate"],
+        "runs": operations["runs"],
+        "released": correctness["released"],
+        "abstained": correctness["abstained"],
+        "total_tokens": operations["tokens"]["total"],
+    }
+    return {
+        **flat,
+        "directory": folder.name,
+        "generated_at": result["manifest"]["generated_at"],
+        "commit": result["manifest"]["commit"][:12],
+        "per_class": correctness["per_class"],
+        "confusion_matrix": correctness["confusion_matrix"],
+        "confidence_bands": calibration["confidence_bands"],
+        # The error rate inside each review band -- what a reviewer is
+        # implicitly promised when a run is routed green rather than red.
+        "routing_quality": calibration["routing_quality"],
+        "release_targets": result["release_targets"],
+    }
+
+
+def publish_summary(
+    result: dict[str, Any],
+    folder: Path,
+    root: Path | None = None,
+) -> Path:
+    """Merge this run into the summary the evaluation page reads.
+
+    One run evaluates one split, so this reads whatever is already published,
+    replaces the entry for the split just run, and leaves the other alone. A
+    development run therefore never erases the held-out numbers, and neither
+    silently goes stale: each carries the commit and moment it was measured at.
+
+    The flat headline is the held-out split when there is one, because that is
+    the released measurement. With only a development run published it is that
+    instead, and `headline_split` says which -- an unlabelled headline that
+    quietly changes meaning would be worse than no headline.
+    """
+
+    directory = root if root is not None else RESULTS_ROOT
+    path = directory / SUMMARY_FILENAME
+    published: dict[str, Any] = {}
+    if path.is_file():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(existing, dict) and isinstance(existing.get("splits"), dict):
+                published = existing["splits"]
+        except (OSError, json.JSONDecodeError):
+            # A corrupt summary is replaced, not repaired: it is derived data,
+            # and every run rewrites it from the result it just computed.
+            published = {}
+
+    split = str(result["manifest"]["split"])
+    published[split] = _split_summary(result, folder)
+    headline_split = "test" if "test" in published else sorted(published)[0]
+    headline = {key: published[headline_split][key] for key in SUMMARY_HEADLINE}
+
+    directory.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            _json_safe({**headline, "headline_split": headline_split, "splits": published}),
+            indent=2,
+            sort_keys=True,
+            default=str,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 __all__ = [
     "RELEASE_TARGETS",
     "RESULTS_ROOT",
+    "SUMMARY_FILENAME",
+    "SUMMARY_HEADLINE",
     "assemble",
     "manifest",
+    "publish_summary",
     "render",
     "write",
 ]

@@ -113,6 +113,11 @@ and no served module may import them.
   hold per-class matrices are written by Phase 10's full evaluation run. The
   page names each unrun dimension and its command rather than drawing an empty
   chart, which would imply a measurement nobody made.
+
+  **Resolved in Phase 12.** Phase 10's evaluation ran, and Phase 12 published
+  its results as `artifacts/evaluation/summary.json`. The page now renders the
+  release targets, the per-class table, the confusion matrix, and the error
+  rate inside each review band, for either split.
 - **The review queue orders by route then age, not by ACV or renewal
   proximity.** Section 20.5 asks for all four. The queue's rows carry the case,
   not the account's commercial terms, so the other two would need either a join

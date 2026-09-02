@@ -1,6 +1,6 @@
 # Meridian evaluation report
 
-Commit `6d148a7e504a` (working-tree state not determined), split **development**, provider **none (deterministic)**, generated 2026-09-01T23:48:00+00:00.
+Commit `dc737e3a3078` (working-tree state not determined), split **development**, provider **none (deterministic)**, generated 2026-09-02T00:54:38+00:00.
 
 Thresholds `5e23d7f9d9fef896` (v1), dataset `absent`, model `logistic_regression` / `isotonic`.
 
@@ -98,11 +98,11 @@ Error rate inside each review band -- what a reviewer is implicitly promised:
 
 | Path | Runs | p50 | p95 |
 | --- | ---: | ---: | ---: |
-| fast | 100 | 171.6000 ms | 271.7000 ms |
-| tree_of_thought | 37 | 163.6000 ms | 209.0000 ms |
-| abstained | 70 | 173.1000 ms | 252.7000 ms |
+| fast | 100 | 162.0000 ms | 329.0000 ms |
+| tree_of_thought | 37 | 164.9000 ms | 234.0000 ms |
+| abstained | 70 | 169.5000 ms | 323.9000 ms |
 | blocked | 0 | not measured ms | not measured ms |
-| **overall** | 207 | 171.0000 ms | 257.6000 ms |
+| **overall** | 207 | 165.4000 ms | 312.5000 ms |
 
 ## Threshold study (plan section 22.6)
 
@@ -110,7 +110,7 @@ Measured on the **development** split over 207 accounts. Section 22.7 forbids tu
 
 At the frozen bands (green 0.85, amber 0.7, digest `5e23d7f9d9fef896`): **6 of 207 auto-released** (0.0290), 0 of them wrong.
 
-The most permissive band measured (green 0.6, amber 0.5) would auto-release 70 (0.3382) with 4 wrong (0.0571 of what it released). The full sweep is in `threshold_study.csv`.
+The most permissive band measured (green 0.6, amber 0.5) would auto-release 69 (0.3333) with 4 wrong (0.0580 of what it released). The full sweep is in `threshold_study.csv`.
 
 ## Artifacts in this directory
 

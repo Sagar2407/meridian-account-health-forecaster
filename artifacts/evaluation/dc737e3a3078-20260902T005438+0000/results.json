@@ -1,33 +1,33 @@
 {
   "calibration": {
-    "auto_release_rate": 0.0,
-    "brier": 0.0671,
+    "auto_release_rate": 0.029,
+    "brier": 0.05,
     "confidence_bands": [
       {
         "band": "low",
-        "count": 1,
-        "error_rate": 1.0,
+        "count": 3,
+        "error_rate": 0.33333333333333337,
         "lower": 0.0,
         "upper": 0.5
       },
       {
         "band": "medium",
-        "count": 22,
-        "error_rate": 0.18181818181818177,
+        "count": 60,
+        "error_rate": 0.15000000000000002,
         "lower": 0.5,
         "upper": 0.75
       },
       {
         "band": "high",
-        "count": 14,
-        "error_rate": 0.0,
+        "count": 74,
+        "error_rate": 0.013513513513513487,
         "lower": 0.75,
         "upper": 1.01
       }
     ],
-    "expected_calibration_error": 0.1712,
-    "log_loss": 0.4585,
-    "released": 37,
+    "expected_calibration_error": 0.1568,
+    "log_loss": 0.3711,
+    "released": 137,
     "reliability": [
       {
         "accuracy": null,
@@ -58,72 +58,72 @@
         "mean_confidence": null
       },
       {
-        "accuracy": 0.0,
+        "accuracy": 0.6666666666666666,
         "bin_lower": 0.4,
         "bin_upper": 0.5,
-        "count": 1,
-        "mean_confidence": 0.484547
+        "count": 3,
+        "mean_confidence": 0.4423034905144905
       },
       {
-        "accuracy": 0.8181818181818182,
+        "accuracy": 0.8846153846153846,
         "bin_lower": 0.5,
         "bin_upper": 0.6000000000000001,
-        "count": 11,
-        "mean_confidence": 0.5705445454545456
+        "count": 26,
+        "mean_confidence": 0.5788695940914829
       },
       {
-        "accuracy": 0.6666666666666666,
+        "accuracy": 0.76,
         "bin_lower": 0.6000000000000001,
         "bin_upper": 0.7000000000000001,
-        "count": 6,
-        "mean_confidence": 0.6496866666666666
+        "count": 25,
+        "mean_confidence": 0.6524295587823701
       },
       {
         "accuracy": 1.0,
         "bin_lower": 0.7000000000000001,
         "bin_upper": 0.8,
-        "count": 7,
-        "mean_confidence": 0.7405897142857143
+        "count": 25,
+        "mean_confidence": 0.7651937119633121
       },
       {
         "accuracy": 1.0,
         "bin_lower": 0.8,
         "bin_upper": 0.9,
-        "count": 6,
-        "mean_confidence": 0.85026363997014
+        "count": 22,
+        "mean_confidence": 0.8501234178739001
       },
       {
-        "accuracy": 1.0,
+        "accuracy": 0.9722222222222222,
         "bin_lower": 0.9,
         "bin_upper": 1.0,
-        "count": 6,
-        "mean_confidence": 0.9485699818936485
+        "count": 36,
+        "mean_confidence": 0.9441871440337274
       }
     ],
     "routing_quality": {
       "amber": {
         "auto_released": false,
-        "count": 19,
-        "error_rate": 0.1053,
+        "count": 68,
+        "error_rate": 0.0294,
         "errors": 2
       },
       "green": {
         "auto_released": true,
-        "count": 0,
-        "error_rate": null,
+        "count": 6,
+        "error_rate": 0.0,
         "errors": 0
       },
       "red": {
         "auto_released": false,
-        "count": 18,
-        "error_rate": 0.2222,
-        "errors": 4
+        "count": 63,
+        "error_rate": 0.127,
+        "errors": 8
       }
     }
   },
   "forecast_correctness": {
-    "abstained": 16,
-    "accuracy": 0.8649,
+    "abstained": 70,
+    "accuracy": 0.9197,
     "beats_majority": true,
     "blocked": 0,
     "confusion_matrix": {
@@ -135,128 +135,128 @@
       ],
       "rows": [
         [
-          6,
+          34,
+          1,
+          0,
+          0
+        ],
+        [
           3,
-          0,
-          0
-        ],
-        [
-          1,
-          1,
-          0,
+          7,
+          2,
           0
         ],
         [
           0,
           1,
-          16,
+          66,
           0
         ],
         [
           0,
-          0,
           1,
-          8
+          2,
+          20
         ]
       ]
     },
-    "macro_f1": 0.749,
-    "majority_baseline_accuracy": 0.4595,
+    "macro_f1": 0.8468,
+    "majority_baseline_accuracy": 0.4891,
     "majority_class": "Renewed",
     "per_class": {
       "Churned": {
-        "f1": 0.75,
-        "precision": 0.8571,
-        "recall": 0.6667,
-        "support": 9
+        "f1": 0.9444,
+        "precision": 0.9189,
+        "recall": 0.9714,
+        "support": 35
       },
       "Contracted": {
-        "f1": 0.2857,
-        "precision": 0.2,
-        "recall": 0.5,
-        "support": 2
+        "f1": 0.6364,
+        "precision": 0.7,
+        "recall": 0.5833,
+        "support": 12
       },
       "Expanded": {
-        "f1": 0.9412,
+        "f1": 0.9302,
         "precision": 1.0,
-        "recall": 0.8889,
-        "support": 9
+        "recall": 0.8696,
+        "support": 23
       },
       "Renewed": {
-        "f1": 0.9412,
-        "precision": 0.9412,
-        "recall": 0.9412,
-        "support": 17
+        "f1": 0.9635,
+        "precision": 0.9429,
+        "recall": 0.9851,
+        "support": 67
       }
     },
-    "released": 37,
+    "released": 137,
     "slices": {
       "region": [
         {
-          "count": 7,
+          "count": 19,
           "group": "APAC",
-          "macro_f1": null
+          "macro_f1": 0.9529914529914529
         },
         {
-          "count": 12,
+          "count": 38,
           "group": "EMEA",
-          "macro_f1": 1.0
+          "macro_f1": 0.9113475177304964
         },
         {
-          "count": 1,
+          "count": 15,
           "group": "LATAM",
-          "macro_f1": null
+          "macro_f1": 0.820054945054945
         },
         {
-          "count": 17,
+          "count": 65,
           "group": "NA",
-          "macro_f1": 0.3868421052631579
+          "macro_f1": 0.8005115089514067
         }
       ],
       "segment": [
         {
-          "count": 13,
+          "count": 55,
           "group": "Enterprise",
-          "macro_f1": 0.6499999999999999
+          "macro_f1": 0.8375398794753633
         },
         {
-          "count": 16,
+          "count": 60,
           "group": "Mid-Market",
-          "macro_f1": 0.7142857142857143
+          "macro_f1": 0.810956416464891
         },
         {
-          "count": 8,
+          "count": 22,
           "group": "Strategic",
-          "macro_f1": null
+          "macro_f1": 0.875
         }
       ]
     }
   },
   "grounded_explanation": {
     "citation_precision": 1.0,
-    "conflicting_runs": 15,
-    "counterevidence_inclusion_rate_on_conflict": 0.4667,
-    "driver_overlap": 0.4279,
+    "conflicting_runs": 37,
+    "counterevidence_inclusion_rate_on_conflict": 0.6757,
+    "driver_overlap": 0.4526,
     "exact_numeric_agreement": 1.0,
     "judge_metrics": null,
     "judge_note": "Section 22.2 permits an LLM judge score only after validation against a double-reviewed human sample. No such sample exists, so no judge metric is reported. Every measure above is deterministic.",
     "post_cutoff_citation_count": 0,
-    "released": 37,
-    "runs_with_citations": 37,
-    "runs_with_ground_truth_drivers": 37,
+    "released": 137,
+    "runs_with_citations": 137,
+    "runs_with_ground_truth_drivers": 137,
     "supported_claim_rate": 1.0,
     "unsupported_numeric_claim_count": 0,
     "verified_first_attempt_rate": 1.0,
     "wrong_account_citation_count": 0
   },
   "manifest": {
-    "commit": "6d148a7e504a075739f99b0f9dab985abb2f3f3c",
+    "commit": "dc737e3a3078da311298796f2501a46c003ba1dd",
     "dataset_digest": "absent",
     "environment": {
       "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
       "python": "3.12.14"
     },
-    "generated_at": "2026-09-01T23:48:22+00:00",
+    "generated_at": "2026-09-02T00:54:38+00:00",
     "model": {
       "calibration": "isotonic",
       "name": "logistic_regression",
@@ -264,7 +264,7 @@
       "split_digest": "f3deae08ce6c97c618fa07a43ff65698811d5796cea449f00d797ae1ec91c487"
     },
     "provider": "none (deterministic)",
-    "split": "test",
+    "split": "development",
     "thresholds": {
       "agreement_weight": 0.15,
       "amber_minimum_confidence": 0.7,
@@ -283,46 +283,46 @@
     "working_tree_clean": null
   },
   "operational_reliability": {
-    "abstention_rate": 0.3019,
+    "abstention_rate": 0.3382,
     "completion_rate": 1.0,
-    "escalation_rate": 0.6415,
+    "escalation_rate": 0.6425,
     "exhausted_retrieval_fallback": {
-      "runs": 0,
-      "safe_fallback_rate": null
+      "runs": 1,
+      "safe_fallback_rate": 1.0
     },
     "latency": {
       "abstained": {
-        "p50_ms": 170.1,
-        "p95_ms": 210.5
+        "p50_ms": 169.5,
+        "p95_ms": 323.9
       },
       "blocked": {
         "p50_ms": null,
         "p95_ms": null
       },
       "fast": {
-        "p50_ms": 185.5,
-        "p95_ms": 331.4
+        "p50_ms": 162.0,
+        "p95_ms": 329.0
       },
       "overall": {
-        "p50_ms": 179.8,
-        "p95_ms": 291.2
+        "p50_ms": 165.4,
+        "p95_ms": 312.5
       },
       "tree_of_thought": {
-        "p50_ms": 179.1,
-        "p95_ms": 202.0
+        "p50_ms": 164.9,
+        "p95_ms": 234.0
       }
     },
     "node_error_count": 0,
     "path_counts": {
-      "abstained": 16,
+      "abstained": 70,
       "blocked": 0,
-      "fast": 22,
-      "tree_of_thought": 15
+      "fast": 100,
+      "tree_of_thought": 37
     },
     "regeneration_rate": 0.0,
-    "release_rate": 0.6981,
-    "retrieval_retry_rate": 0.1132,
-    "runs": 53,
+    "release_rate": 0.6618,
+    "retrieval_retry_rate": 0.0918,
+    "runs": 207,
     "tokens": {
       "completion": 0,
       "model_calls": 0,
@@ -333,7 +333,7 @@
   "release_targets": [
     {
       "direction": "at_least",
-      "measured": 0.749,
+      "measured": 0.8468,
       "met": true,
       "metric": "Macro F1",
       "target": 0.7
@@ -368,17 +368,16 @@
     },
     {
       "direction": "at_most",
-      "measured": 0.1712,
+      "measured": 0.1568,
       "met": false,
       "metric": "Expected calibration error",
       "target": 0.1
     },
     {
       "direction": "at_least",
-      "measured": null,
-      "met": null,
+      "measured": 1.0,
+      "met": true,
       "metric": "Exhausted-retrieval safe fallback",
-      "note": "not measured in this run",
       "target": 1.0
     }
   ],
@@ -501,39 +500,39 @@
     "unclassified_categories": []
   },
   "threshold_study": {
-    "abstained": 16,
-    "accounts": 53,
-    "accuracy_on_released": 0.8378,
+    "abstained": 70,
+    "accounts": 207,
+    "accuracy_on_released": 0.927,
     "candidates": 29,
     "frozen": {
-      "amber": 19,
+      "amber": 68,
       "amber_minimum": 0.7,
-      "auto_release_rate": 0.0,
-      "auto_released": 0,
-      "auto_released_error_rate": null,
+      "auto_release_rate": 0.029,
+      "auto_released": 6,
+      "auto_released_error_rate": 0.0,
       "auto_released_errors": 0,
       "digest": "5e23d7f9d9fef896",
       "green_minimum": 0.85,
-      "red": 18,
-      "released": 37,
-      "review_load": 53,
-      "review_load_rate": 1.0,
+      "red": 63,
+      "released": 137,
+      "review_load": 201,
+      "review_load_rate": 0.971,
       "version": "v1"
     },
     "most_permissive_measured": {
-      "amber": 15,
+      "amber": 57,
       "amber_minimum": 0.5,
-      "auto_release_rate": 0.3396,
-      "auto_released": 18,
-      "auto_released_error_rate": 0.1667,
-      "auto_released_errors": 3,
+      "auto_release_rate": 0.3333,
+      "auto_released": 69,
+      "auto_released_error_rate": 0.058,
+      "auto_released_errors": 4,
       "green_minimum": 0.6,
-      "red": 4,
-      "released": 37,
-      "review_load": 35,
-      "review_load_rate": 0.6604
+      "red": 11,
+      "released": 137,
+      "review_load": 138,
+      "review_load_rate": 0.6667
     },
-    "released": 37,
-    "split": "test"
+    "released": 137,
+    "split": "development"
   }
 }

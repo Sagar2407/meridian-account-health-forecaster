@@ -277,6 +277,7 @@ gate expressed as a function signature.
   abstained rather than forecasting. No held-out account did, so that split
   reports the target as not measured. One observation is a demonstration that
   the path works, not a rate.
-- **The result directory is not committed.** `artifacts/` is git-ignored, so
-  the numbers above are reproducible from this commit rather than stored with
-  it: `make evaluate-system SPLIT=test`.
+- **The result directory was not committed when this phase ran.** `artifacts/`
+  was git-ignored then; Phase 12 committed it, so the numbers above are now
+  both stored with the repository and reproducible from it with
+  `make evaluate-system SPLIT=test`.

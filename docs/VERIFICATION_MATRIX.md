@@ -74,10 +74,7 @@ This matrix separates verified facts from provisional design choices and unresol
 
 | Choice | Why provisional | Resolution method |
 | --- | --- | --- |
-| Confidence weights and route thresholds | Implemented in `meridian.graph.confidence` and `meridian.graph.routing`, but still the plan's initial policy values | Development calibration and route-cost analysis, frozen before held-out evaluation |
-| Tool timeout of 20 seconds and one transient retry | Chosen before any latency measurement | Measure tool latency in Phase 10 observability |
 | Render hosting | Portfolio recommendation, not a course mandate | Deployment feasibility and cost review |
-| Fast-path latency target | Provisional target | Measure after implementation |
 
 ## Resolved by measurement
 
@@ -91,6 +88,8 @@ This matrix separates verified facts from provisional design choices and unresol
 | Whether conflict-gated ToT beats linear adjudication | Both arms over the same 106 conflicting development accounts, paired on the cases both answered | Not on this evidence: 86.5% agreement, 69 declined answers for 12 caught errors against a 15.1% base rate; the provider arm is unrun; see `docs/PHASE_6_STATUS.md` |
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 | Whether the packaged guardrail policy passes its hard safety gate | All 36 cases through the offline graph, with per-case behavioural grading and whole-result leakage checks | 0/15 hard false passes, 0/21 false blocks, 0 leakage findings, and 36/36 behavioural checks passed; see `docs/PHASE_7_STATUS.md` |
+| Confidence weights and route thresholds | Frozen in `meridian.graph.thresholds` before the held-out split was evaluated, with a content digest a test pins | `5e23d7f9d9fef896` (v1); the sweep that informed them runs on development data only; see `docs/PHASE_10_STATUS.md` |
+| Tool timeout of 20 seconds, and the fast-path latency target | Measured across every assessed account on both splits | Offline, p50 is 160 ms (held out) and 165 ms (development); p95 is 261 ms and 313 ms -- roughly two orders below the 20 s timeout. Reported per path in each `results.json` |
 | Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts, repeated over 12 in Phase 12 | **No.** 0 auto-released at either size; 6 of 6 and then 12 of 12 queued for review. The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
 | What loosening the review bands would buy | 29 candidate band pairs replayed over 207 development runs | Twelve times the release rate (6 to 70 of 207) at a 5.7% unreviewed error rate. No threshold was changed: the trade is a business decision; see `docs/PHASE_10_STATUS.md` |
 | Whether the confidence score ranks correctly | Error rate inside each review band, 207 development runs | Yes: 0.000 green, 0.029 amber, 0.127 red, and all 8 errors landed in red. ECE says the absolute scale is over-confident even though the ranking is sound |

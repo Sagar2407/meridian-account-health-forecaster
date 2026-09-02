@@ -2,9 +2,10 @@
  * The evaluation page (plan section 20.6).
  *
  * Section 20.6 lists metrics from every evaluation dimension. What this page
- * shows is what the harnesses have actually written: the safety report, the
- * Tree-of-Thought ablation, and the retrieval benchmark, each read from its
- * published artifact.
+ * shows is what the harnesses have actually written: the system evaluation --
+ * correctness, calibration, grounding, and the operational numbers -- plus the
+ * safety report, the Tree-of-Thought ablation, and the retrieval benchmark,
+ * each read from its published artifact.
  *
  * A dimension whose harness has not been run says so, by name, with the command
  * that produces it. That is the honest rendering: a dashboard that draws an
@@ -16,9 +17,16 @@ import { Link } from 'react-router-dom'
 
 import { fetchEvaluation, type EvaluationResult } from '../api'
 import { formatMetric } from './formatMetric'
+import { SystemEvaluation } from './SystemEvaluation'
 import { EmptyNote, Spinner, SyntheticBanner } from '../components/Primitives'
 
 const EVALUATIONS: { name: string; title: string; blurb: string }[] = [
+  {
+    name: 'system',
+    title: 'Forecast correctness, calibration, and routing',
+    blurb:
+      'Every assessed account in one split, run through the real graph against the frozen thresholds. The held-out split is the released measurement; the development split is where the bands were chosen.',
+  },
   {
     name: 'guardrails',
     title: 'Safety routing',
@@ -52,6 +60,16 @@ const HEADLINE: Record<string, string[]> = {
   ],
   tot: ['conflict_rate', 'paired_cases', 'agreement_rate'],
   retrieval: ['recall_at_5', 'precision_at_5', 'mrr'],
+  system: [
+    'macro_f1',
+    'majority_baseline_accuracy',
+    'expected_calibration_error',
+    'supported_claim_rate',
+    'exact_numeric_agreement',
+    'auto_release_rate',
+    'runs',
+    'total_tokens',
+  ],
 }
 
 export function EvaluationPage() {
@@ -141,6 +159,9 @@ export function EvaluationPage() {
                       </div>
                     ))}
                 </dl>
+                {item.name === 'system' && result.metrics ? (
+                  <SystemEvaluation metrics={result.metrics} />
+                ) : null}
                 <details className="eval-raw">
                   <summary>Every metric in {result.artifact}</summary>
                   <dl className="eval-metrics eval-metrics--dense">

@@ -25,6 +25,7 @@ from meridian.api.routes.evaluations import ARTIFACTS
 from meridian.data.paths import repository_root
 
 SCRIPTS = repository_root() / "scripts"
+HARNESS = repository_root() / "evaluation"
 
 pytestmark = pytest.mark.skipif(
     not SCRIPTS.is_dir(),
@@ -50,12 +51,16 @@ def test_the_named_command_writes_the_artifact_the_endpoint_reads(name: str) -> 
     script = producing_script(command)
     assert script.is_file(), f"{name}: `{command}` maps to {script.name}, which does not exist"
 
-    source = script.read_text(encoding="utf-8")
     filename = Path(relative).name
-    assert filename in source, (
-        f"{name}: the endpoint reads {relative}, but {script.name} never mentions "
-        f"{filename}. Either the script does not write it -- in which case the "
-        f"endpoint reports `not_run` permanently -- or the path is stale."
+    # The script, then the harness package it drives. A script that delegates
+    # the write to `meridian_eval` is still a command that produces the file;
+    # only a filename nothing anywhere writes is the defect being caught.
+    searched = [script, *sorted(HARNESS.rglob("*.py"))]
+    assert any(filename in path.read_text(encoding="utf-8") for path in searched), (
+        f"{name}: the endpoint reads {relative}, but neither {script.name} nor the "
+        f"evaluation harness ever mentions {filename}. Either nothing writes it -- "
+        f"in which case the endpoint reports `not_run` permanently -- or the path "
+        f"is stale."
     )
 
 

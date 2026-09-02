@@ -489,6 +489,120 @@ describe('EvaluationPage', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders the correctness, calibration, and routing tables, and switches split', async () => {
+    const summary = {
+      headline_split: 'test',
+      macro_f1: 0.749,
+      splits: {
+        test: {
+          directory: 'abc123-20260902T000322+0000',
+          commit: 'abc123def456',
+          per_class: {
+            Churned: {
+              precision: 0.8571,
+              recall: 0.6667,
+              f1: 0.75,
+              support: 9,
+            },
+          },
+          confusion_matrix: {
+            classes: ['Churned', 'Renewed'],
+            rows: [
+              [6, 3],
+              [0, 8],
+            ],
+          },
+          routing_quality: {
+            green: { count: 0, errors: 0, error_rate: 0, auto_released: true },
+            red: {
+              count: 16,
+              errors: 4,
+              error_rate: 0.25,
+              auto_released: false,
+            },
+          },
+          release_targets: [
+            { metric: 'Macro F1', target: 0.7, measured: 0.749, met: true },
+            {
+              metric: 'Expected calibration error',
+              target: 0.1,
+              measured: 0.1712,
+              met: false,
+            },
+          ],
+        },
+        development: {
+          directory: 'abc123-20260902T005438+0000',
+          commit: 'abc123def456',
+          per_class: {
+            Contracted: {
+              precision: 0.7,
+              recall: 0.5833,
+              f1: 0.6364,
+              support: 12,
+            },
+          },
+          release_targets: [],
+        },
+      },
+    }
+    stubApi((url) =>
+      url.includes('/api/evaluations/system')
+        ? {
+            eval_id: 'system',
+            status: 'published',
+            command: 'make evaluate-system',
+            artifact: 'artifacts/evaluation/summary.json',
+            metrics: summary,
+            detail: '',
+          }
+        : {
+            eval_id: 'other',
+            status: 'not_run',
+            command: 'make evaluate-tot',
+            artifact: 'artifacts/tot/tot_ablation.json',
+            metrics: null,
+            detail: 'This evaluation has not been run in this checkout.',
+          },
+    )
+
+    render(
+      <MemoryRouter>
+        <EvaluationPage />
+      </MemoryRouter>,
+    )
+
+    // A target that was missed must read as missed, not as a number the eye
+    // slides over. This is the one release target the system does not meet.
+    expect(await screen.findByText('NOT MET')).toBeInTheDocument()
+
+    // A class name appears in the per-class table and again down the confusion
+    // matrix, so each assertion is scoped to the table it means.
+    const perClass = screen.getByRole('table', { name: 'Per class' })
+    expect(within(perClass).getByText('0.8571')).toBeInTheDocument()
+
+    const matrix = screen.getByRole('table', {
+      name: 'Confusion matrix — rows are truth, columns prediction',
+    })
+    expect(within(matrix).getByText('6')).toBeInTheDocument()
+
+    const bands = screen.getByRole('table', {
+      name: 'Error rate inside each review band — what a reviewer is promised',
+    })
+    expect(within(bands).getByText('red')).toBeInTheDocument()
+
+    // The held-out split leads, because it is the released measurement.
+    const heldOut = screen.getByRole('button', { name: 'Held out' })
+    expect(heldOut).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Development' }))
+    const development = await screen.findByRole('table', { name: 'Per class' })
+    expect(within(development).getByText('Contracted')).toBeInTheDocument()
+    // This split publishes no release targets in the stub, so the missed-target
+    // row must be gone rather than left over from the split before it.
+    expect(screen.queryByText('NOT MET')).not.toBeInTheDocument()
+  })
+
   it('says which evaluations have not been run, with the command that produces them', async () => {
     stubApi(() => ({
       eval_id: 'tot',
@@ -810,10 +924,12 @@ describe('page branches that only appear when something goes wrong', () => {
       </MemoryRouter>,
     )
 
+    // One per evaluation the page lists: the system evaluation, the guardrail
+    // suite, the Tree-of-Thought ablation, and the retrieval benchmark.
     const notes = await screen.findAllByText(
       'This evaluation could not be read.',
     )
-    expect(notes).toHaveLength(3)
+    expect(notes).toHaveLength(4)
   })
 })
 

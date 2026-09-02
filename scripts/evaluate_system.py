@@ -29,7 +29,7 @@ from meridian.data.splits import read_split  # noqa: E402
 from meridian.graph.runtime import GraphRuntime  # noqa: E402
 from meridian.graph.thresholds import THRESHOLDS  # noqa: E402
 from meridian.settings import Settings, get_settings  # noqa: E402
-from meridian_eval.report import assemble, write  # noqa: E402
+from meridian_eval.report import assemble, publish_summary, write  # noqa: E402
 from meridian_eval.repository import EvaluationRepository  # noqa: E402
 from meridian_eval.system_run import collect_runs  # noqa: E402
 
@@ -110,6 +110,13 @@ def main(argv: list[str] | None = None) -> int:
         guardrails=guardrails,
     )
     folder = write(result, collection, destination=args.output)
+    # The served evaluation page reads one summary rather than globbing for the
+    # newest timestamped directory, so publish this run into it. Skipped when
+    # the caller redirected the output: a run written somewhere else is not the
+    # published result and must not overwrite what is.
+    if args.output is None:
+        summary = publish_summary(result, folder)
+        print(f"summary: {summary}", file=sys.stderr)
 
     targets = result["release_targets"]
     unmet = [row for row in targets if row["met"] is False]
