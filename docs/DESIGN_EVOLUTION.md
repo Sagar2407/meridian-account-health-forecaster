@@ -31,7 +31,7 @@ Three outcomes appear throughout:
 | Four reviewer actions; reason codes become regression cases | 6.1 | Held | `ReviewerDecision`, `artifacts/traces/human_review.json` |
 | LangSmith as the observability layer | 6.1 | **Changed** | Local tracing mandatory; LangSmith optional |
 | LLM judge for driver fidelity, validated against human review | 6.1 | **Not built** | No double-reviewed sample exists; no judge metric reported |
-| Guardrail-stack ablation (none / input / +execution / full) | 6.1 | **Not built** | Only the ToT and chunking ablations were run |
+| Guardrail-stack ablation (none / input / +execution / full) | 6.1 | Held | `artifacts/safety/guardrail_stack.json`; execution stage is structural, see below |
 
 ## Checkpoint 1.1 — scoping
 
@@ -189,11 +189,18 @@ No such sample exists, so no judge metric is reported anywhere. Every published
 grounding measure is deterministic. Reporting an unvalidated judge score would
 have been the exact overclaim the checkpoint was guarding against.
 
-**Not built: the guardrail-stack ablation.** 6.1 proposed a second ablation
-comparing no guardrails, input-only, input-plus-execution, and the full stack.
-Only the ToT and chunking ablations were run. The 36-case guardrail suite
-measures the full stack's false-pass and false-block rates, but it does not
-attribute those to individual layers.
+**Held, with a caveat 6.1 could not have known.** The second ablation was built:
+four arms over the same 36 cases, in `artifacts/safety/guardrail_stack.json`.
+Removing intake takes the hard false-pass rate from 0.0000 to **0.7333**; the
+other two layers are indistinguishable from the full stack on this suite.
+
+The caveat is 6.1's third arm. "Input plus execution" assumes execution-stage
+controls are a layer you can switch off. In the built system they are
+structural -- argument validation, an injected role allowlist, and a refusal at
+assembly -- so there is no arm to run, and the comparison holds them fixed and
+says so. The same turns out to be true of leakage: post-cutoff and wrong-account
+citations are zero even with evidence screening removed, because the cutoff
+lives in the loader rather than in a guardrail.
 
 ## What the checkpoints did not anticipate
 

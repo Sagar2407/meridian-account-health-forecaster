@@ -40,6 +40,12 @@ const EVALUATIONS: { name: string; title: string; blurb: string }[] = [
       'Both arms over the same conflicting development accounts, paired on the cases both answered.',
   },
   {
+    name: 'guardrail_stack',
+    title: 'What each guardrail layer is worth',
+    blurb:
+      'The same 36 cases through four stacks: no guardrails, intake only, intake plus evidence screening, and the full stack that ships.',
+  },
+  {
     name: 'retrieval',
     title: 'Retrieval benchmark',
     blurb:
@@ -60,6 +66,7 @@ const HEADLINE: Record<string, string[]> = {
   ],
   tot: ['conflict_rate', 'paired_cases', 'agreement_rate'],
   retrieval: ['recall_at_5', 'precision_at_5', 'mrr'],
+  guardrail_stack: ['cases'],
   system: [
     'macro_f1',
     'majority_baseline_accuracy',

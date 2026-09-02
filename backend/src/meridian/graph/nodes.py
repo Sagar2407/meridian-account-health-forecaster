@@ -32,6 +32,7 @@ from meridian.agents.forecast_adjudicator import (
     verify_output,
 )
 from meridian.contracts import (
+    AssessmentRequest,
     BlockedDecision,
     Citation,
     ConflictAssessment,
@@ -42,6 +43,7 @@ from meridian.contracts import (
     GuardrailDecision,
     InsufficientEvidenceDecision,
     NodeError,
+    OutputVerification,
     QuantitativeEvidence,
     RequestedData,
     RetrievalEvidence,
@@ -59,7 +61,7 @@ from meridian.graph.runtime import GraphRuntime
 from meridian.graph.state import ForecasterState
 from meridian.graph.tot import ToTResult, search
 from meridian.graph.tracing import GraphEvent, TraceRecorder
-from meridian.guardrails.evidence import screen_evidence
+from meridian.guardrails.evidence import EvidenceScreening, screen_evidence
 from meridian.guardrails.intake import evaluate_intake
 from meridian.guardrails.runtime import RunBudget
 
@@ -256,13 +258,55 @@ class GraphNodes:
     def __init__(self, runtime: GraphRuntime) -> None:
         self._runtime = runtime
 
+    # -- Guardrail seams ----------------------------------------------------
+    #
+    # Section 22.4's second ablation asks what each guardrail layer is worth,
+    # which cannot be answered without running the graph with a layer removed.
+    # These three methods are the only places a subclass can do that. They are
+    # seams, not switches: each calls the real check, there is no configuration
+    # that changes them, and the only subclass that overrides any of them lives
+    # in `meridian_eval`, which no served module may import (section 8.4).
+
+    def screen(
+        self,
+        quantitative: QuantitativeEvidence,
+        retrieval: RetrievalEvidence,
+        account_id: str,
+        cutoff: date,
+    ) -> EvidenceScreening:
+        """Screen merged evidence for leakage and provenance (section 16.3)."""
+
+        return screen_evidence(quantitative, retrieval, account_id, cutoff)
+
+    def validate_intake(self, request: AssessmentRequest) -> GuardrailDecision:
+        """Return the intake verdict for one request (section 16.2)."""
+
+        return evaluate_intake(request, self._runtime.repository)
+
+    def verify(
+        self,
+        decision: ForecastDecision,
+        bundle: EvidenceBundle,
+        attempts: int,
+    ) -> OutputVerification:
+        """Replay a draft against the evidence it rests on (section 16.4)."""
+
+        return verify_output(
+            decision.rationale,
+            decision.recommended_action,
+            decision.limitations,
+            decision.cited_doc_ids,
+            bundle,
+            attempts,
+        )
+
     # -- Intake -------------------------------------------------------------
 
     def intake(self, state: ForecasterState) -> dict[str, Any]:
         """Validate the request against the intake guardrails (section 16.2)."""
 
         request = state["request"]
-        decision, latency = _timed(lambda: evaluate_intake(request, self._runtime.repository))
+        decision, latency = _timed(lambda: self.validate_intake(request))
         started = _trace(
             state,
             "validate_request",
@@ -541,7 +585,7 @@ class GraphNodes:
         expected_cutoff = min(
             account.effective_cutoff, requested_cutoff or account.effective_cutoff
         )
-        screening = screen_evidence(quantitative, retrieval, account.account_id, expected_cutoff)
+        screening = self.screen(quantitative, retrieval, account.account_id, expected_cutoff)
 
         if not screening.quantitative_valid:
             quantitative = quantitative.model_copy(
@@ -1137,16 +1181,7 @@ class GraphNodes:
 
         previous = state.get("output_verification")
         attempts = (previous.attempts + 1) if previous is not None else 1
-        verification, latency = _timed(
-            lambda: verify_output(
-                decision.rationale,
-                decision.recommended_action,
-                decision.limitations,
-                decision.cited_doc_ids,
-                bundle,
-                attempts,
-            )
-        )
+        verification, latency = _timed(lambda: self.verify(decision, bundle, attempts))
         guardrail = GuardrailDecision(
             stage="output",
             outcome="pass" if verification.passed else "review",

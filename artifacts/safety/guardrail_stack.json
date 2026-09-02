@@ -1,0 +1,68 @@
+{
+  "arms": {
+    "full": {
+      "abstained": 6.0,
+      "auto_answered": 6.0,
+      "cases": 36.0,
+      "errored": 0.0,
+      "escalated": 9.0,
+      "false_block_rate": 0.0,
+      "hard_cases": 15.0,
+      "hard_false_pass_rate": 0.0,
+      "mean_latency_ms": 92.6,
+      "post_cutoff_citation_count": 0.0,
+      "unsupported_claim_count": 0.0,
+      "wrong_account_citation_count": 0.0
+    },
+    "intake": {
+      "abstained": 6.0,
+      "auto_answered": 6.0,
+      "cases": 36.0,
+      "errored": 0.0,
+      "escalated": 9.0,
+      "false_block_rate": 0.0,
+      "hard_cases": 15.0,
+      "hard_false_pass_rate": 0.0,
+      "mean_latency_ms": 87.9,
+      "post_cutoff_citation_count": 0.0,
+      "unsupported_claim_count": 0.0,
+      "wrong_account_citation_count": 0.0
+    },
+    "intake_evidence": {
+      "abstained": 6.0,
+      "auto_answered": 6.0,
+      "cases": 36.0,
+      "errored": 0.0,
+      "escalated": 9.0,
+      "false_block_rate": 0.0,
+      "hard_cases": 15.0,
+      "hard_false_pass_rate": 0.0,
+      "mean_latency_ms": 84.8,
+      "post_cutoff_citation_count": 0.0,
+      "unsupported_claim_count": 0.0,
+      "wrong_account_citation_count": 0.0
+    },
+    "none": {
+      "abstained": 9.0,
+      "auto_answered": 9.0,
+      "cases": 36.0,
+      "errored": 1.0,
+      "escalated": 17.0,
+      "false_block_rate": 0.0,
+      "hard_cases": 15.0,
+      "hard_false_pass_rate": 0.7333333333333333,
+      "mean_latency_ms": 281.6,
+      "post_cutoff_citation_count": 0.0,
+      "unsupported_claim_count": 0.0,
+      "wrong_account_citation_count": 0.0
+    }
+  },
+  "cases": 36,
+  "layers": {
+    "full": "every stage, as shipped",
+    "intake": "intake only",
+    "intake_evidence": "intake and evidence screening",
+    "none": "no intake, no evidence screening, no output verification"
+  },
+  "total_tokens": 0
+}

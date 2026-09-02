@@ -4,7 +4,7 @@ PYTHON ?= python3
 PNPM ?= pnpm
 UV ?= uv
 
-.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot evaluate-guardrails evaluate-system assess traces scan e2e screenshots bootstrap prod-build prod-up prod-down phase0-verify docker-up docker-down
+.PHONY: help setup dev dev-backend dev-frontend format lint typecheck test security check data validate-data train predict index retrieve evaluate-retrieval evaluate-tot evaluate-guardrails evaluate-guardrail-stack evaluate-system assess traces scan e2e screenshots bootstrap prod-build prod-up prod-down phase0-verify docker-up docker-down
 
 help:
 	@awk 'BEGIN {FS = ":.*## "; print "Meridian development commands:"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -78,6 +78,9 @@ evaluate-tot: ## Compare linear adjudication with conflict-gated ToT (Docker).
 
 evaluate-guardrails: ## Run the 36 packaged guardrail cases and write the safety report (Docker).
 	./scripts/python_in_docker.sh python scripts/evaluate_guardrails.py $(if $(LIMIT),--limit $(LIMIT),) $(if $(REGRESSIONS),--file-regressions,)
+
+evaluate-guardrail-stack: ## Compare guardrail stacks: none, intake, +evidence, full (Docker).
+	./scripts/python_in_docker.sh python scripts/evaluate_guardrail_stack.py
 
 scan: ## Run one bounded portfolio scan, e.g. make scan LIMIT=10 [CONCURRENCY=4] (Docker).
 	./scripts/python_in_docker.sh python scripts/scan_portfolio.py $(if $(LIMIT),--limit $(LIMIT),) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(HORIZON),--horizon-days $(HORIZON),)

@@ -129,6 +129,60 @@ transaction. An approval remains audit history but is not treated as a model
 failure. A second decision on the same case returns a conflict rather than
 silently overwriting the first reviewer.
 
+## What each guardrail layer is worth
+
+Checkpoint 6.1 proposed a second ablation beside the Tree-of-Thought one:
+compare no guardrails, input only, input plus execution, and the full stack. It
+was built in Phase 12 and runs with `make evaluate-guardrail-stack`; the arms
+are in `artifacts/safety/guardrail_stack.json`.
+
+The same 36 cases go through four stacks, differing only in how many layers run.
+Nothing else changes: same accounts, same questions, offline, zero tokens.
+
+| Arm | Hard false pass | False block | Answered | Escalated | Errored | Mean latency |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| none | **0.7333** | 0.0000 | 9 | 17 | 1 | 281.6 ms |
+| intake | 0.0000 | 0.0000 | 6 | 9 | 0 | 87.9 ms |
+| intake + evidence | 0.0000 | 0.0000 | 6 | 9 | 0 | 84.8 ms |
+| full | 0.0000 | 0.0000 | 6 | 9 | 0 | 92.6 ms |
+
+**Intake is carrying the safety property.** Remove it and 11 of 15 hard cases
+are answered or escalated instead of refused, one crashes outright -- a
+non-existent account reaches the loader, because nothing checked it existed --
+and mean latency triples, since a refused request otherwise costs nothing.
+
+**The other two layers are indistinguishable from the full stack on this
+suite**, on every measure. That is a negative result and it is reported as one.
+It does not show that evidence screening and output verification do nothing: it
+shows that these 36 cases do not exercise them, which is consistent with the
+system evaluation, where output regeneration is 0.0000 because no draft has yet
+failed verification. A suite that cannot separate two arms is evidence about the
+suite as much as about the arms.
+
+**Execution-stage controls are not an arm, and that is the third finding.** In
+this system they are structural: the registry validates every tool argument, the
+per-role allowlist is injected rather than supplied, and `assert_no_dangerous_tools`
+refuses at assembly. There is no configuration that removes them, so the honest
+comparison holds them fixed and says so rather than inventing a fourth arm that
+would really be a different system.
+
+The same is true of leakage. **Post-cutoff and wrong-account citations are zero
+in every arm, including the one with evidence screening removed**, because the
+cutoff is enforced in the loader and in retrieval rather than by a guardrail
+stage. Point-in-time safety is not a layer that can be ablated here; it is where
+the data comes from.
+
+### The weakening lives outside the served system
+
+An ablation needs the graph to run with a guardrail absent, and building that as
+a configuration switch would have put a way to disable safety checks into the
+production builder. It is not built that way. `meridian.graph.nodes` exposes
+three seams -- `validate_intake`, `screen`, and `verify` -- each of which calls
+the real check. The only subclass that overrides them is in
+`meridian_eval.guardrail_ablation`, and `test_import_boundary.py` fails the
+build if any served module imports that package. `build_graph` gained one
+optional `nodes` argument; nothing reachable from the API or the CLI passes it.
+
 ## Known limitations
 
 - The evaluation is deterministic and offline. That is the configuration whose

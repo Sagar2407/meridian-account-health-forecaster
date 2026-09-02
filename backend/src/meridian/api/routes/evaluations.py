@@ -35,7 +35,7 @@ router = APIRouter(tags=["evaluations"])
 #: The published evaluations, and how each is produced. The identifier in the
 #: URL is the evaluation's name, not a per-run id: these are reproducible
 #: artifacts tied to a commit, so there is exactly one current result each.
-EvaluationName = Literal["guardrails", "tot", "retrieval", "system"]
+EvaluationName = Literal["guardrails", "tot", "retrieval", "system", "guardrail_stack"]
 
 ARTIFACTS: dict[str, tuple[str, str, bool]] = {
     # name: (artifact path relative to the repository root, command, costs money)
@@ -51,6 +51,12 @@ ARTIFACTS: dict[str, tuple[str, str, bool]] = {
     # a moment, so this reads the summary every run republishes rather than
     # globbing for the newest directory from inside the served application.
     "system": ("artifacts/evaluation/summary.json", "make evaluate-system", False),
+    # Checkpoint 6.1's second ablation: what each guardrail layer is worth.
+    "guardrail_stack": (
+        "artifacts/safety/guardrail_stack.json",
+        "make evaluate-guardrail-stack",
+        False,
+    ),
 }
 
 

@@ -72,6 +72,7 @@ def build_graph(
     runtime: GraphRuntime,
     checkpointer: BaseCheckpointSaver[Any] | None = None,
     adjudication: Adjudication = "conflict_gated",
+    nodes: GraphNodes | None = None,
 ) -> Any:
     """Compile the assessment graph for one runtime.
 
@@ -83,13 +84,20 @@ def build_graph(
             fast path instead, which is the control arm section 15.7's ablation
             needs. The gate still runs and still records what it found, so the
             control arm can be compared case by case rather than in aggregate.
+        nodes: The node implementations. Defaults to the real ones, and the
+            only caller that supplies its own is section 22.4's guardrail
+            ablation, which needs to run the graph with one guardrail layer
+            removed to measure what that layer is worth. It lives in
+            `meridian_eval`, which no served module may import (section 8.4),
+            so nothing reachable from the API or the CLI can weaken a guardrail
+            by passing this.
 
     Returns:
         The compiled graph. Its type is LangGraph's and is deliberately not
         re-exported: callers use `run_assessment` rather than driving it.
     """
 
-    nodes = GraphNodes(runtime)
+    nodes = nodes if nodes is not None else GraphNodes(runtime)
     graph: StateGraph[ForecasterState, None, ForecasterState, ForecasterState] = StateGraph(
         ForecasterState
     )

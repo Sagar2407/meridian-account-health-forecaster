@@ -90,6 +90,7 @@ directory it names for the full report, per-account rows, and plots.
 | Exact-disposition match (stricter reading) | 0.6944 | same | same |
 | Retrieval chunking ablation | see table | `artifacts/retrieval/chunking_ablation.csv` | `make evaluate-retrieval` |
 | ToT vs linear adjudication | see file | `artifacts/tot/tot_ablation.json` | `make evaluate-tot` |
+| Guardrail stack: removing intake | 0.0000 → 0.7333 hard false pass | `artifacts/safety/guardrail_stack.json` | `make evaluate-guardrail-stack` |
 | Bounded portfolio scan, 12 accounts | see file | `artifacts/portfolio/portfolio_scan.json` | `make scan LIMIT=12` |
 
 Two properties of the evaluation are worth claiming explicitly, because they are
@@ -126,7 +127,7 @@ guessed:
 | At the frozen bands, auto-release is near zero — 6 of 207 on development, 0 of 53 held out | `results.json`; `threshold_study.csv` |
 | Driver overlap with ground truth is 0.4526 (dev) / 0.4279 (test) | `results.json` |
 | No LLM judge, so no judge-scored dimension is reported | `docs/DESIGN_EVOLUTION.md`; §22.2 note in every report |
-| No guardrail-stack ablation | `docs/DESIGN_EVOLUTION.md` |
+| Evidence screening and output verification are not separable from the full stack on the 36-case suite | `artifacts/safety/guardrail_stack.json`; reported as a negative result |
 | Every published result is from the deterministic path: 0 tokens, 0 model calls | `total_tokens: 0` in every artifact |
 | Synthetic narratives may inflate retrieval and explanation scores | plan §27 risk register; `docs/PHASE_3_STATUS.md` |
 | The ablation corpus is 853 documents, not the full 12,860 | `docs/PHASE_3_STATUS.md` |
@@ -166,6 +167,7 @@ Listed so the report cannot overclaim by omission:
 make phase0-verify                 # the authoritative gate: lint, types, tests, policy
 make traces                        # the four representative traces
 make evaluate-guardrails           # the 36-case safety suite
+make evaluate-guardrail-stack      # what each guardrail layer is worth
 make evaluate-retrieval            # retrieval benchmark and chunking ablation
 make evaluate-tot                  # linear vs conflict-gated adjudication
 make evaluate-system               # development split

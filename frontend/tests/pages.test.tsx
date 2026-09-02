@@ -925,11 +925,12 @@ describe('page branches that only appear when something goes wrong', () => {
     )
 
     // One per evaluation the page lists: the system evaluation, the guardrail
-    // suite, the Tree-of-Thought ablation, and the retrieval benchmark.
+    // suite, the Tree-of-Thought ablation, the guardrail-stack ablation, and
+    // the retrieval benchmark.
     const notes = await screen.findAllByText(
       'This evaluation could not be read.',
     )
-    expect(notes).toHaveLength(4)
+    expect(notes).toHaveLength(5)
   })
 })
 
