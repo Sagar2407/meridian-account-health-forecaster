@@ -1,11 +1,10 @@
-"""What each guardrail layer is worth (plan section 22.4, Checkpoint 6.1).
+"""What each guardrail layer is worth (plan section 22.4).
 
-Checkpoint 6.1 proposed two ablations. The Tree-of-Thought one was built in
-Phase 6; this is the other: hold the corpus, the accounts, and the questions
-constant, and vary only how many guardrail layers run.
+The layered guardrail design is only worth its cost if the layers do something,
+and the way to find out is to remove them: hold the corpus, the accounts, and
+the questions constant, and vary only how many guardrail layers run.
 
-The arms follow the checkpoint's own list, mapped onto the five stages this
-system actually has:
+The arms, mapped onto the five stages this system has:
 
 * **none** -- intake, evidence screening, and output verification all removed.
 * **intake** -- intake only; evidence and output removed.
@@ -13,7 +12,7 @@ system actually has:
 * **full** -- every stage, which is what ships.
 
 **Execution-stage controls are not an arm, and that is a finding rather than an
-omission.** In this system they are structural: the tool registry validates
+omission.** They are structural: the tool registry validates
 every argument, the per-role allowlist is injected rather than supplied, and
 `assert_no_dangerous_tools` refuses at assembly. Removing them would not be a
 system with fewer guardrails, it would be a system with a different tool
@@ -266,7 +265,7 @@ def run_case(
 
 
 def summarise(frame: pd.DataFrame) -> dict[str, dict[str, float]]:
-    """Return the four rates Checkpoint 6.1 named, per arm.
+    """Return the four rates that separate the arms.
 
     A hard case is one policy requires the system to refuse. A false pass is one
     it answered anyway; a false block is an answerable case it refused. Leakage

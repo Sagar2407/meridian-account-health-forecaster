@@ -17,9 +17,3 @@ The system is read-only decision support. It produces advisory forecasts and
 routes what it is unsure of to a human reviewer. It takes no action on any
 customer, sends no message, and changes no record outside its own application
 memory.
-
--------------------------------------------------------------------------------
-
-This project was built as a capstone for the Carnegie Mellon University Agentic
-AI Program. It is not affiliated with, endorsed by, or a product of Carnegie
-Mellon University.

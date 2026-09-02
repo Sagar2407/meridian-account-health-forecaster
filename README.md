@@ -1,6 +1,6 @@
 # Meridian Enterprise Account Health Forecaster
 
-Meridian is a CMU Agentic AI Program capstone project for a read-only autonomous decision-support system. Given a fictional B2B SaaS customer account, it will forecast `Churned`, `Contracted`, `Renewed`, or `Expanded`; explain the result with exact metrics and point-in-time evidence; recommend an appropriate next step; and decide whether the advisory result can be released or requires human review.
+Meridian is a read-only autonomous decision-support system for renewal forecasting. Given a B2B SaaS customer account, it forecasts `Churned`, `Contracted`, `Renewed`, or `Expanded`; explains the result with exact metrics and point-in-time evidence; recommends a next step; and decides whether the advisory result can be released or needs human review.
 
 > All account, company, person, usage, ticket, note, event, and outcome data in this repository is synthetic. The system is decision support and must not make customer-facing or commercial commitments.
 
@@ -14,11 +14,12 @@ I do*.
 Meridian answers that and nothing more. It forecasts one of four renewal outcomes from
 point-in-time evidence, shows the metrics and documents behind the call, and — the part that
 matters — **declines when the evidence will not support an answer**. On the held-out split it
-abstained on 16 of 53 accounts and routed all but zero of the rest to a person.
+abstained on 16 of 53 accounts and sent every one of the remaining 37 to a reviewer rather than
+releasing it unchecked.
 
 It sends no email, changes no record, and commits to no price. Every result is advisory.
 
-## How the course techniques are implemented
+## How it works
 
 Each of these is a real path through the code, not a label:
 
@@ -140,12 +141,11 @@ which also states the one thing that is not solved: the image ships without the 
 and the retrieval index, so a deployment today starts degraded until one of three documented options
 is chosen.
 
-Phase 12 assembled the capstone evidence package: every Module 7 report section mapped to the code
-or artifact behind it, the architecture diagram corrected against the compiled graph, four
-representative traces captured from real runs, and the checkpoint-by-checkpoint record of which
-design commitments held, changed, or were never built. The evaluation artifacts are now committed
-rather than gitignored, because a citation to a path no clone contains is not evidence. Start at
-`docs/CAPSTONE_EVIDENCE.md`; what still needs a person is in `docs/SUBMISSION_CHECKLIST.md`.
+Phase 12 assembled the evidence package: every claim mapped to the code or artifact behind it, the
+architecture diagram corrected against the compiled graph, four representative traces captured from
+real runs, and a stage-by-stage record of which design commitments held, changed, or were never
+built. The evaluation artifacts are committed rather than gitignored, because a citation to a path
+no clone contains is not evidence. Start at `docs/EVIDENCE_MAP.md`.
 
 ## What it looks like
 
@@ -361,10 +361,9 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 ## Documentation map
 
 - `AGENTS.md` — repository operating instructions
-- `docs/PROJECT_CONTEXT.md` — problem, users, and what each checkpoint committed to
-- `docs/CAPSTONE_EVIDENCE.md` — every report section mapped to the code or artifact behind it
-- `docs/DESIGN_EVOLUTION.md` — which checkpoint commitments held, changed, or were not built
-- `docs/SUBMISSION_CHECKLIST.md` — what the repository carries, and what still needs you
+- `docs/PROJECT_CONTEXT.md` — problem, users, and what each design stage committed to
+- `docs/EVIDENCE_MAP.md` — every claim mapped to the code or artifact behind it
+- `docs/DESIGN_EVOLUTION.md` — which design commitments held, changed, or were not built
 - `docs/REQUIREMENTS.md` — numbered requirements and acceptance conditions
 - `docs/ARCHITECTURE.md` — final architecture and control flow
 - `docs/DATA_SAFETY.md` — cutoff, leakage, immutability, and validation policy
@@ -385,7 +384,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_8_STATUS.md` — served API, portfolio scan, and its bounds
 - `docs/PHASE_9_STATUS.md` — the React application, its journeys, and what they found
 - `docs/PHASE_10_STATUS.md` — frozen thresholds, the held-out evaluation, and its limitations
-- `docs/PHASE_12_STATUS.md` — the capstone evidence package and its exit gate
+- `docs/PHASE_12_STATUS.md` — the evidence package and its exit gate
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster
 - `docs/ENVIRONMENT.md` — observed and supported development environments
@@ -472,29 +471,9 @@ completes without a provider, writes a deterministic narrative, and says so in i
 Licensed under the [Apache License 2.0](LICENSE). See [`NOTICE`](NOTICE) for the synthetic-data and
 decision-support statements that travel with it.
 
-Built as a capstone for the Carnegie Mellon University Agentic AI Program. Not affiliated with,
-endorsed by, or a product of Carnegie Mellon University. The synthetic dataset, its generator, and
-the packaged evaluation sets were supplied with the course brief and are reproduced here unchanged;
-`dataset/` is a byte-exact copy of the committed archive, and a test fails the build if the two
-diverge.
+The dataset, its generator, and the packaged evaluation sets are synthetic and reproduce
+byte for byte from a fixed seed. `dataset/` is a browsable copy of the committed archive, and a test
+fails the build if the two diverge.
 
 Built with LangGraph, FastAPI, scikit-learn, FAISS, fastembed, React, and the Model Context Protocol
 SDK.
-
-## Module 7 deliverables
-
-The completed capstone must include:
-
-- A final report submitted as PDF or DOCX.
-- A public GitHub repository with architecture, setup, usage, code, examples, and evaluation artifacts.
-- An 8–10 minute recorded presentation for a technical audience.
-- A document containing the video link and a two-to-three-sentence summary.
-- Optionally, a 90-second elevator pitch.
-
-The report template, presentation outline, and any separate detailed grading rubric are intentionally deferred and are not active project blockers.
-
-`docs/SUBMISSION_CHECKLIST.md` tracks each of these, separating what the
-repository already carries from what needs a person. `docs/CAPSTONE_EVIDENCE.md`
-maps every report section to the code, test, or artifact behind it — and lists
-what this system deliberately does not do, so the report cannot overclaim by
-omission.

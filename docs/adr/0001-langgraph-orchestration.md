@@ -6,7 +6,7 @@
 
 ## Context
 
-The capstone needs explicit routing, parallel analysis and retrieval, bounded retry behavior,
+The system needs explicit routing, parallel analysis and retrieval, bounded retry behavior,
 checkpointed state, human-review interrupts, and traceable execution. The submitted design evolved
 from a single ReAct loop into four collaborating logical agents and a conflict-gated Tree-of-Thought
 subgraph.

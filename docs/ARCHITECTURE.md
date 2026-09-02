@@ -190,7 +190,7 @@ a real call so the shortcut cannot quietly diverge.
 
 ## Superseded implementation details
 
-The Checkpoint 4.1 table mapped generator and critic roles to CrewAI and LangChain and described MCP as a state manager. The latest implementation plan supersedes that mapping:
+An earlier design mapped generator and critic roles to CrewAI and LangChain and described MCP as a state manager. The implementation plan supersedes that mapping:
 
 - No CrewAI dependency is required for version 1.
 - LangGraph implements the generator/critic subgraph and all orchestration.

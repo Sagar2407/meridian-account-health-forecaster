@@ -1,12 +1,12 @@
 # Verification Matrix
 
-This matrix separates verified facts from provisional design choices and unresolved submission inputs.
+This matrix separates verified facts from provisional design choices and open questions.
 
 ## Verified facts
 
 | Claim | Evidence | Status |
 | --- | --- | --- |
-| Dataset is fully synthetic | Dataset README and all checkpoints | Verified |
+| Dataset is fully synthetic | Dataset README and the generator in `dataset/` | Verified |
 | Random seed is `20260721` | `config.py` and dataset README | Verified |
 | Dataset as-of date is `2026-06-28` | `config.py`, README, implementation plan | Verified |
 | Forecast horizon is 90 days | `config.py`; `days_to_renewal` contains only 90 | Verified |
@@ -22,12 +22,11 @@ This matrix separates verified facts from provisional design choices and unresol
 | The eight section 12.1 tools refuse path, SQL, URL, shell, over-wide window, and role-spoofing arguments | 48 tests in `test_tools_registry.py` | Verified in Phase 4 |
 | No module outside `meridian.llm.openai_compatible` imports a provider SDK | `test_only_the_named_adapter_may_import_a_provider_sdk` | Verified in Phase 4 |
 | Raw sources include records after per-account effective cutoffs | Direct point-in-time audit | Verified |
-| The final logical architecture has four agents | Checkpoint 5.1 and implementation plan | Verified |
-| ToT is conflict-only, depth 2, beam width 2, with four root outcomes | Checkpoint 4.1 and implementation plan | Verified |
+| The final logical architecture has four agents | Implementation plan section 13 | Verified |
+| ToT is conflict-only, depth 2, beam width 2, with four root outcomes | Implementation plan section 15 | Verified |
 | LangGraph owns orchestration; MCP exposes tools/resources | Implementation-plan Section 2.2 | Verified; resolves older wording |
-| CrewAI is not required for version 1 | Implementation-plan Section 2.2 | Verified; supersedes Checkpoint 4.1 tool mapping |
-| Exhausted retrieval must not produce an unsupported categorical label | Instructor feedback recorded in plan and Checkpoint 6.1 | Verified |
-| Module 7 requires a final report, public repo, and 8–10 minute technical presentation | User-provided Module 7 Canvas text | Verified |
+| CrewAI is not required for version 1 | Implementation-plan Section 2.2 | Verified; supersedes the earlier tool mapping |
+| Exhausted retrieval must not produce an unsupported categorical label | Design review recorded in the implementation plan | Verified |
 | `csm_notes.csv` has 6,420 rows | Parsed row count; `wc -l` overcounts because note bodies contain newlines | Verified in Phase 1 |
 | Cutoff filtering removes 17,927 fact rows (14,931 usage, 1,506 tickets, 1,376 notes, 114 events) | `make data` output; `test_no_runtime_record_postdates_its_account_cutoff` | Verified in Phase 1 |
 | `adoption_level_last_q` reaches 109.04, exceeding its documented 0–100 range | `account_features.csv`; supersedes the data dictionary | Verified in Phase 1 |
@@ -98,35 +97,26 @@ This matrix separates verified facts from provisional design choices and unresol
 
 | Item | Consequence | Next action |
 | --- | --- | --- |
-| Deadline year/timezone absent from pasted text | Submission scheduling risk | Verify Canvas deadline directly |
 | The dataset, model, and index are not in the production image | A Render deployment starts degraded, with three subsystems absent | Bake them in, build them in the image, or attach a disk; the trade is cost against build time (`docs/DEPLOYMENT.md`) |
-| No deploy has happened and no live URL exists | The plan's public-application-URL deliverable is open | Follow `docs/DEPLOYMENT.md` once the repository is public |
-| No recorded demo video | The plan asks for a backup recording | Record one against the local production image or the live URL |
+| No deploy has happened and no live URL exists | Cold-start and warm-start behaviour are unmeasured | Follow `docs/DEPLOYMENT.md` |
 | Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
-| Public repository and live-demo URLs absent | Final report/presentation incomplete | Create during Phase 11 |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
 | Expected calibration error is 0.1712 held out, against a 0.10 target | The release bands sit on an over-confident probability scale | Refit calibration on development data and re-freeze; section 22.7 forbids recalibrating on the held-out result now measured |
 | Auto-release rate is 0.0000 on the held-out split | The system produces only review load | The measured trade-off is recorded; choosing a band is the owner's decision |
 | `Contracted` has two held-out examples | Its per-class F1 of 0.2857 is not a measurement | Report it, do not read it |
 | The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
 | Serving state is per process and in memory | Live runs, scans, and rate-limit windows do not survive a restart or a second replica | Correct for the single-container target; a scaled deployment needs a shared store |
-| The evaluation page has no confusion matrix or calibration curve | Section 20.6 lists both; the current artifacts are scalar | Phase 10's full evaluation writes the per-class artifacts the page would draw |
 | Accessibility is checked structurally, not audited | Landmarks, heading counts, accessible names, and overflow are asserted; no axe or WCAG audit has been run | Run an automated audit before the public release |
 | Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Normalize a bounded number-word vocabulary before public evaluation |
 
-## Deferred inputs
+## Readiness
 
-The official report template, presentation outline, and any separate detailed grading rubric are intentionally out of scope for now. Do not raise them as unresolved inputs until the user reactivates them.
+All twelve phases are complete. The latest `make phase0-verify` rebuilt both
+locked images and passed formatting, lint, strict typing, 614 backend tests at
+94.8% coverage, 95 frontend tests, the production frontend build, the repository
+policy scan over 335 files, and both live container health checks.
 
-## Readiness decision
-
-Phases 0 through 10 are complete, and Phase 11's configuration is built and
-verified locally though not deployed. The latest `make phase0-verify` rebuilt both
-locked images, passed formatting, lint, strict typing, 485 backend container
-tests at 95.24% coverage, 7 frontend tests, the production frontend build, the
-repository policy scan over 242 files, and both live container health checks. The separate
-Phase 7 safety run passed all 36 cases without a provider, the Phase 8 scan held
-its concurrency and budget bounds, the Phase 9 browser suite passed 24
-journeys with none skipped, and the Phase 10 held-out evaluation ran against
-frozen thresholds. Phase 11 may begin; deferred submission artifacts do not
-affect implementation readiness.
+The safety suite passes all 36 cases without a provider, the portfolio scan holds
+its concurrency and budget bounds, the browser suite passes 24 journeys with none
+skipped, and the held-out evaluation ran against frozen thresholds. What remains
+open is listed above; none of it blocks the system from running.

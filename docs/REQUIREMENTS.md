@@ -1,6 +1,6 @@
 # Requirements
 
-These requirements consolidate the six checkpoint submissions, the latest implementation plan, the dataset documentation, and Module 7. The implementation plan resolves conflicts in earlier implementation details.
+These requirements consolidate the six design stages, the implementation plan, and the dataset documentation. The implementation plan resolves conflicts in earlier implementation details.
 
 ## Product requirements
 
@@ -60,15 +60,6 @@ These requirements consolidate the six checkpoint submissions, the latest implem
 - **ER-005 — Retrieval:** Evaluate Recall@5, MRR, nDCG, wrong-account rate, post-cutoff rate, duplicate rate, and downstream correctness.
 - **ER-006 — Reliability:** Evaluate exhausted-retrieval behavior, completion, latency, retries, escalations, cost, resume behavior, and portfolio concurrency.
 - **ER-007 — Integrity:** Freeze thresholds before the held-out run and tie every claimed result to an immutable artifact containing commit, data, model, prompt, and environment versions.
-
-## Module 7 deliverable requirements
-
-- **CR-001 — Final report:** Submit the required template as PDF or DOCX and cover problem, users, scope, architecture, evolution, implementation, evaluation, safety, limitations, next steps, and public repository link.
-- **CR-002 — Public repository:** Provide an accessible public GitHub repository containing README, architecture, setup, usage, code/notebooks, examples, and evaluation artifacts.
-- **CR-003 — Presentation:** Record an 8–10 minute presentation for a technical audience.
-- **CR-004 — Video-link document:** Submit an accessible video link with a two-to-three-sentence summary alongside the report.
-- **CR-005 — Cohesion:** Final materials shall present one integrated design story rather than six checkpoint submissions placed side by side.
-- **CR-006 — Data policy:** Use only public, synthetic, or anonymized information and exclude proprietary, confidential, private, or sensitive organizational data.
 
 ## Phase 0 acceptance criteria
 

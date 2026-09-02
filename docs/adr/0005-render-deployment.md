@@ -6,7 +6,7 @@
 
 ## Context
 
-The capstone needs a public, portfolio-grade demonstration with simple reviewer access and a small
+The project needs a public, portfolio-grade demonstration with simple reviewer access and a small
 operational footprint. Local development uses two containers, while public deployment benefits from
 one web service and tightly controlled synthetic demo data.
 
@@ -26,5 +26,5 @@ Render's secret store. Deployment implementation is intentionally deferred to it
 ## Alternatives considered
 
 - Separate static hosting and API hosting could optimize each tier but complicates CORS and review setup.
-- A large cloud platform offers more controls but adds infrastructure disproportionate to the capstone.
+- A large cloud platform offers more controls but adds infrastructure disproportionate to the project.
 - A local-only demo is cheapest but does not satisfy the desired public portfolio experience.

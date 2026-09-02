@@ -53,7 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title=settings.app_name,
         version=settings.app_version,
         description=(
-            "Read-only decision support for the synthetic Meridian capstone dataset. "
+            "Read-only decision support over the synthetic Meridian dataset. "
             "Every result is advisory: the service assesses accounts and routes what it "
             "is unsure of to a person, and it takes no action on any customer."
         ),

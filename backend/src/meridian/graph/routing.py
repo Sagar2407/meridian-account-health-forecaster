@@ -310,8 +310,8 @@ def abstention_route(
 ) -> RouteVerdict:
     """Return the band for a degraded or abstained, no-label result.
 
-    The instructor feedback recorded in section 2 asks for "impact-aware
-    escalation": the same missing evidence matters more on an account the
+    Escalation here is impact-aware: the same missing evidence matters more
+    on an account the
     business cannot afford to be wrong about, so a high-value account escalates
     even when the gap itself is ordinary.
 

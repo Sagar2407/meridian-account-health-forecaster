@@ -353,7 +353,7 @@ class RetrievalEvidence(BaseModel):
     def exhausted(self) -> bool:
         """Return whether retrieval produced no account evidence at all.
 
-        This is the condition the plan's instructor feedback addresses: the run
+        This is the condition the degraded-mode requirement addresses: the run
         must degrade to verified telemetry rather than forecasting blindly.
         """
 
@@ -556,7 +556,7 @@ class ForecastDecision(BaseModel):
 class RequestedData(BaseModel):
     """One specific thing a human could supply to unblock a run.
 
-    The instructor feedback asks for a *targeted* data request rather than a
+    A degraded result has to ask for something *specific* rather than register a
     general complaint, so each item names the source and the window.
     """
 

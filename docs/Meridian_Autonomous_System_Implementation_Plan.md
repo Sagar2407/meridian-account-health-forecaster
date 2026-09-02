@@ -2,7 +2,7 @@
 
 ## Detailed Autonomous Agentic AI System Implementation Plan
 
-**Purpose:** This document is the build specification for the final CMU Agentic AI Program capstone. It is written so that a coding agent such as Claude Code, Codex, Grok, Gemini CLI, or another capable software agent can implement the application without needing to reinterpret the submitted project requirements.
+**Purpose:** This document is the build specification for Meridian. It is written so that a coding agent such as Claude Code, Codex, Grok, Gemini CLI, or another capable software agent can implement the application without needing to reinterpret the design requirements.
 
 **Primary build target:** Local Docker with a React and TypeScript frontend, FastAPI backend, LangGraph orchestration, an MCP-compatible tool layer, local FAISS retrieval, and a provider-neutral LLM adapter.
 
@@ -44,37 +44,37 @@ The source datasets remain immutable. Autonomy applies to analysis, orchestratio
 
 ## 2. Locked requirements and traceability
 
-The following requirements came from the submitted checkpoints and are non-negotiable unless a later checkpoint explicitly superseded an earlier implementation detail.
+The following requirements came from the six design stages and are non-negotiable unless a later stage explicitly superseded an earlier implementation detail.
 
 | Source | Locked requirement | Implementation commitment |
 | --- | --- | --- |
-| Checkpoint 1.1 | Forecast renewal outcome, explain drivers, recommend action, and admit insufficient evidence | Typed `ForecastDecision` and `InsufficientEvidenceDecision` outputs |
-| Checkpoint 1.1 | Intended users are CSMs, FEs, TAMs, CS leaders, and reviewers | Portfolio, account, assessment, and review-queue screens |
-| Checkpoint 2.1 | ReAct-style iterative reasoning | Orchestrator plan, parallel actions, observations, coverage gate, bounded retry loop |
-| Checkpoint 2.1 | Separate deterministic computation from probabilistic reasoning | Quantitative Analyst calls code-only tools; the LLM never calculates telemetry metrics |
-| Checkpoint 2.1 | Working and long-term memory | LangGraph state/checkpointer plus persisted assessment history and reviewer feedback |
-| Checkpoint 2.1 | Reconcile conflicts or escalate | Deterministic conflict gate, scoped ToT, and review routing |
-| Checkpoint 3.1 | Semantic retrieval only for qualitative evidence | FAISS index for notes, tickets, QBRs, events, and the knowledge base; telemetry is excluded |
-| Checkpoint 3.1 | BGE or E5 embeddings, FAISS prototype, Pinecone production path | Default `BAAI/bge-small-en-v1.5` with FAISS; vector-store adapter retained |
-| Checkpoint 3.1 | Parent-child chunking, top-k 5, MMR/reranking | Child chunks retrieve precisely; parent documents supply context; candidate 20 to MMR 5 |
-| Checkpoint 3.1 | Hard `account_id`, date, and recency filters | Metadata filtering occurs before result acceptance and is verified after retrieval |
-| Checkpoint 3.1 | Target label never retrievable | Outcome and latent fields are absent from runtime profiles, tools, prompts, and indexes |
-| Checkpoint 4.1 | ToT only at conflict adjudication | A conditional LangGraph subgraph, never a default reasoning mode |
-| Checkpoint 4.1 | Four root hypotheses, depth 2, beam width 2 | Explicit candidate generation, hard pruning, top-two stress test, and bounded tie handling |
-| Checkpoint 4.1 | Deterministic hard checks plus LLM critic soft scoring | Hard validator can veto any branch; critic cannot override hard policy |
-| Checkpoint 5.1 | Exactly four specialized agents | Orchestrator/Planner, Quantitative Analyst, Evidence Retriever, Forecast Adjudicator |
-| Checkpoint 5.1 | Hybrid compiled graph with parallel evidence lanes | LangGraph `StateGraph` with explicit nodes, edges, fan-out, fan-in, and bounded cycles |
-| Checkpoint 5.1 | Shared-state source of truth | Typed LangGraph state with persistent checkpoints; tools/resources exposed through MCP |
-| Instructor feedback after 5.1 | Handle exhausted retrieval without blindly forecasting | Verified-telemetry degraded response, evidence-gap notice, targeted data request, and impact-aware escalation |
-| Checkpoint 6.1 | Layered intake, execution, adjudication, output, runtime guardrails | Dedicated policy functions and graph nodes at every boundary |
-| Checkpoint 6.1 | Green, amber, and red human-review routing | Frozen threshold configuration and review-case workflow |
-| Checkpoint 6.1 | Five-dimension evaluation scorecard | Forecast, grounding, calibration, safety routing, and operational reliability suites |
-| Checkpoint 6.1 | LangSmith tracing and regression loop | Optional LangSmith integration plus mandatory local structured traces |
-| Module 7 | Public GitHub repository and reproducible review | Complete README, source, tests, sample outputs, evaluation artifacts, Docker instructions, and public link |
+| Stage 1 | Forecast renewal outcome, explain drivers, recommend action, and admit insufficient evidence | Typed `ForecastDecision` and `InsufficientEvidenceDecision` outputs |
+| Stage 1 | Intended users are CSMs, FEs, TAMs, CS leaders, and reviewers | Portfolio, account, assessment, and review-queue screens |
+| Stage 2 | ReAct-style iterative reasoning | Orchestrator plan, parallel actions, observations, coverage gate, bounded retry loop |
+| Stage 2 | Separate deterministic computation from probabilistic reasoning | Quantitative Analyst calls code-only tools; the LLM never calculates telemetry metrics |
+| Stage 2 | Working and long-term memory | LangGraph state/checkpointer plus persisted assessment history and reviewer feedback |
+| Stage 2 | Reconcile conflicts or escalate | Deterministic conflict gate, scoped ToT, and review routing |
+| Stage 3 | Semantic retrieval only for qualitative evidence | FAISS index for notes, tickets, QBRs, events, and the knowledge base; telemetry is excluded |
+| Stage 3 | BGE or E5 embeddings, FAISS prototype, Pinecone production path | Default `BAAI/bge-small-en-v1.5` with FAISS; vector-store adapter retained |
+| Stage 3 | Parent-child chunking, top-k 5, MMR/reranking | Child chunks retrieve precisely; parent documents supply context; candidate 20 to MMR 5 |
+| Stage 3 | Hard `account_id`, date, and recency filters | Metadata filtering occurs before result acceptance and is verified after retrieval |
+| Stage 3 | Target label never retrievable | Outcome and latent fields are absent from runtime profiles, tools, prompts, and indexes |
+| Stage 4 | ToT only at conflict adjudication | A conditional LangGraph subgraph, never a default reasoning mode |
+| Stage 4 | Four root hypotheses, depth 2, beam width 2 | Explicit candidate generation, hard pruning, top-two stress test, and bounded tie handling |
+| Stage 4 | Deterministic hard checks plus LLM critic soft scoring | Hard validator can veto any branch; critic cannot override hard policy |
+| Stage 5 | Exactly four specialized agents | Orchestrator/Planner, Quantitative Analyst, Evidence Retriever, Forecast Adjudicator |
+| Stage 5 | Hybrid compiled graph with parallel evidence lanes | LangGraph `StateGraph` with explicit nodes, edges, fan-out, fan-in, and bounded cycles |
+| Stage 5 | Shared-state source of truth | Typed LangGraph state with persistent checkpoints; tools/resources exposed through MCP |
+| Design review after stage 5 | Handle exhausted retrieval without blindly forecasting | Verified-telemetry degraded response, evidence-gap notice, targeted data request, and impact-aware escalation |
+| Stage 6 | Layered intake, execution, adjudication, output, runtime guardrails | Dedicated policy functions and graph nodes at every boundary |
+| Stage 6 | Green, amber, and red human-review routing | Frozen threshold configuration and review-case workflow |
+| Stage 6 | Five-dimension evaluation scorecard | Forecast, grounding, calibration, safety routing, and operational reliability suites |
+| Stage 6 | LangSmith tracing and regression loop | Optional LangSmith integration plus mandatory local structured traces |
+| Delivery | Public repository and reproducible review | Complete README, source, tests, sample outputs, evaluation artifacts, Docker instructions, and a public link |
 
 ### 2.1 Canonical implementation terminology
 
-Use the actual archive names, not representative filenames from earlier checkpoint prose:
+Use the actual archive names, not the representative filenames used in earlier design prose:
 
 - `data/accounts.csv`
 - `data/usage_weekly.csv`
@@ -92,7 +92,7 @@ Use the actual archive names, not representative filenames from earlier checkpoi
 
 1. **LangGraph owns runtime state.** A typed LangGraph state object and checkpointer are the actual per-run shared state. MCP standardizes access to tools and resources. It should not be described in code as a magical state transport.
 2. **MCP realizes the submitted state-manager intent.** Every MCP call receives validated `run_id`, `account_id`, and `as_of_date` context, while returned observations are merged into the LangGraph state. Long-term assessment memory may also be exposed as MCP resources/tools.
-3. **No CrewAI dependency is required in version 1.** The generator and critic roles described in Checkpoint 4.1 are implemented as nodes inside the Forecast Adjudicator LangGraph subgraph. This preserves the capability while avoiding two competing orchestration frameworks.
+3. **No CrewAI dependency is required in version 1.** The generator and critic roles described in stage 4 are implemented as nodes inside the Forecast Adjudicator LangGraph subgraph. This preserves the capability while avoiding two competing orchestration frameworks.
 4. **Do not expose hidden chain-of-thought.** Persist structured candidate summaries, scores, citations, counterevidence, decisions, and route reasons. Do not store or display private free-form reasoning traces.
 
 ---
@@ -114,7 +114,7 @@ Use the actual archive names, not representative filenames from earlier checkpoi
 - Evaluation harnesses and visual results.
 - Local Docker and public Render deployment.
 
-### 3.2 Explicit non-goals for the capstone version
+### 3.2 Explicit non-goals for version 1
 
 - No real company, customer, employee, or Adobe data.
 - No live CRM, email, Slack, ticketing, billing, or contract system integration.
@@ -122,7 +122,7 @@ Use the actual archive names, not representative filenames from earlier checkpoi
 - No autonomous commercial decision or discount approval.
 - No source-record mutation.
 - No model fine-tuning requirement.
-- No live news dependency. The synthetic external-event source is sufficient for the final capstone.
+- No live news dependency. The synthetic external-event source is sufficient for version 1.
 - No Pinecone requirement. The adapter may document it as a scale path, but FAISS is the implemented store.
 - No microservice fleet. The local system remains a modular monolith plus a frontend, with an MCP boundary that can be separated later.
 
@@ -130,7 +130,7 @@ Use the actual archive names, not representative filenames from earlier checkpoi
 
 ## 4. Definition of done
 
-The capstone is complete only when all of the following are true:
+Version 1 is complete only when all of the following are true:
 
 1. `docker compose up --build` starts the complete local application.
 2. A user can select an account and run an assessment from the React interface.
@@ -172,7 +172,7 @@ The capstone is complete only when all of the following are true:
 | Tool protocol | Official MCP Python SDK | Demonstrates standard tools/resources while keeping business logic reusable |
 | Observability | Structured JSON logs plus optional LangSmith | Repository works without a paid key while satisfying the submitted trace design |
 | Tests | pytest, pytest-asyncio, Playwright, Vitest | Unit, graph, API, and browser coverage |
-| Packaging | Docker Compose locally; single multi-stage Dockerfile publicly | Easy grading and one-service public hosting |
+| Packaging | Docker Compose locally; single multi-stage Dockerfile publicly | Simple review and one-service public hosting |
 | CI | GitHub Actions | Lint, tests, data checks, build, and optional deploy |
 
 Do not hard-code package versions in this planning document. The implementing agent must select compatible current releases, create a lockfile, and record the resolved versions in the README and generated environment report.
@@ -1118,7 +1118,7 @@ Return stable error codes such as `ACCOUNT_NOT_FOUND`, `REQUEST_BLOCKED`, `CRITI
 
 ### 20.7 Visual direction
 
-Use a clean enterprise dashboard. CMU red `#9E1B32` may be used as a restrained accent, with accessible neutral backgrounds and semantic green/amber/red status colors. Verify contrast and responsive behavior at desktop and tablet widths.
+Use a clean enterprise dashboard. A deep red `#9E1B32` may be used as a restrained accent, with accessible neutral backgrounds and semantic green/amber/red status colors. Verify contrast and responsive behavior at desktop and tablet widths.
 
 ---
 
@@ -1481,7 +1481,7 @@ Each phase has an exit gate. Do not start the next phase until the current gate 
 - Implement intake, context load, planner, parallel Quantitative Analyst and Evidence Retriever, fan-in, coverage gate, fast adjudication, verification, and routing.
 - Add SQLite checkpointer.
 - Stream safe graph events.
-- Implement degraded retrieval behavior from instructor feedback.
+- Implement the degraded retrieval behavior the design review requires.
 
 **Deliverables**
 
@@ -1617,21 +1617,20 @@ Each phase has an exit gate. Do not start the next phase until the current gate 
 - A fresh reviewer can follow the README and run the app locally.
 - The public link completes all curated demo paths without exposing a key.
 
-### Phase 12: Final capstone evidence package
+### Phase 12: Evidence package
 
 **Tasks**
 
-- Map every Module 7 report section to repository evidence.
+- Map every claim the project makes about itself to repository evidence.
 - Capture final architecture diagram and UI screenshots.
 - Select representative traces: fast path, ToT path, degraded path, and human-review path.
-- Summarize development evolution from Modules 1 through 6.
+- Summarize how the design evolved across its six stages.
 - Record actual evaluation results, limitations, and next steps.
 
 **Deliverables**
 
 - Final report source material.
 - Public links.
-- Submission checklist.
 
 **Exit gate**
 
@@ -1729,23 +1728,6 @@ The README must contain:
 
 ---
 
-## 30. Final capstone report evidence map
-
-| Module 7 report section | Repository evidence |
-| --- | --- |
-| Project title | README title and app landing page |
-| Problem and user | README problem section and portfolio UX |
-| Goal and scope | README scope, safety docs, definition of done |
-| Final architecture | `docs/architecture.md`, LangGraph source, diagrams, traces |
-| Design evolution | Checkpoint traceability table and final report narrative |
-| Implementation overview | Stack table, repository tree, model/index manifests |
-| Evaluation and results | `artifacts/evaluation/` and evaluation dashboard |
-| Safety and reliability | `docs/safety.md`, guardrail results, degraded and review traces |
-| Limitations and next steps | README and final evaluation report |
-| Public GitHub repository | Repository URL, setup, code, samples, and run instructions |
-
----
-
 ## 31. Recommended build order summary
 
 The critical path is:
@@ -1764,7 +1746,7 @@ Data safety
 -> public deployment and final evidence package
 ```
 
-Do not start with the frontend or a broad chat interface. The strongest capstone is one in which the data boundary, evidence contracts, failure behavior, and evaluation harness are correct before visual polish is added.
+Do not start with the frontend or a broad chat interface. The strongest build is one in which the data boundary, evidence contracts, failure behavior, and evaluation harness are correct before visual polish is added.
 
 ---
 

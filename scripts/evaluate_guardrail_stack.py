@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure what each guardrail layer is worth (Checkpoint 6.1's second ablation).
+"""Measure what each guardrail layer is worth.
 
 Run with `make evaluate-guardrail-stack`. Four arms over the same 36 packaged
 cases, differing only in how many guardrail layers run: none, intake only,

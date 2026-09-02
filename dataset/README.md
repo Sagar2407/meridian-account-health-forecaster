@@ -21,7 +21,7 @@ target and ground-truth explanations for evaluation.
 
 ## 1. Why this is generated (and why that's a feature)
 
-Real account data can't be used for a public coursework project, and no single
+Real account data can't be used in a public repository, and no single
 public dataset carries usage telemetry **and** account metadata **and** CSM notes
 in one coherent world. So this dataset is generated from an explicit causal model
 in which the true churn drivers are **known**. That yields two things a
@@ -141,7 +141,7 @@ Validation (from the last run):
 
 ---
 
-## 6. How it exercises the six capstone concepts
+## 6. What an agent built on this has to exercise
 
 - **Tool calling** — wrap the CSVs behind tools: `get_account`, `get_usage_series`,
   `list_tickets`, `rank_portfolio_by_risk`, `get_external_events`. The agent calls

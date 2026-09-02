@@ -376,7 +376,7 @@ def test_exhausted_retrieval_never_emits_a_categorical_label(
     assert run.abstained is True
     assert not hasattr(run.result, "outcome")
     assert run.result.reason_code == "RETRIEVAL_EXHAUSTED"
-    # The degraded answer is not an empty one: section 2's instructor feedback
+    # The degraded answer is not an empty one: the degraded-mode requirement
     # asks for verified telemetry, a gap notice, and a targeted data request.
     assert run.result.verified_metrics
     assert run.result.gaps
@@ -919,7 +919,7 @@ def test_building_from_the_environment_degrades_rather_than_raises(
 def test_an_aligned_case_bypasses_the_tree_of_thought(
     graph_runtime: GraphRuntime, account_id: str
 ) -> None:
-    """Checkpoint 4.1: ToT is a conditional subgraph, never a default mode."""
+    """Tree-of-Thought is a conditional subgraph, never a default mode."""
 
     run = run_assessment(build_graph(graph_runtime), _request(account_id))
     assert run.events("conflict_detected") == ()

@@ -153,7 +153,7 @@ export function App() {
       <footer className="app-footer">
         <p>
           Read-only decision support over synthetic data. No automated customer
-          action. CMU Agentic AI capstone.
+          action.
         </p>
       </footer>
     </>

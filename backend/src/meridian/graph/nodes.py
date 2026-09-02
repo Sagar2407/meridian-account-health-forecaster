@@ -1271,8 +1271,8 @@ class GraphNodes:
     def degraded(self, state: ForecasterState) -> dict[str, Any]:
         """Return verified telemetry and an evidence-gap notice, with no label.
 
-        This is the behaviour the instructor feedback recorded in section 2 asks
-        for: a verified-telemetry response, an evidence-gap notice, a targeted
+        This is what degraded mode owes a reader: a verified-telemetry
+        response, an evidence-gap notice, a targeted
         data request, and impact-aware escalation. `InsufficientEvidenceDecision`
         has no outcome field, so this path cannot emit a categorical forecast
         even by mistake.

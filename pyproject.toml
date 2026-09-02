@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "meridian-autonomous-agent"
 version = "0.1.0"
-description = "Point-in-time-safe autonomous account-health forecasting capstone"
+description = "Point-in-time-safe autonomous account-health forecasting"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [

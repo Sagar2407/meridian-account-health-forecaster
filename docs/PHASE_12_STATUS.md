@@ -1,4 +1,4 @@
-# Phase 12 status: final capstone evidence package
+# Phase 12 status: the evidence package
 
 Status: **Complete; exit gate passed on 2026-09-01**
 
@@ -13,19 +13,18 @@ have caught the second.
 
 | Plan task | Status | Evidence |
 | --- | --- | --- |
-| Map every Module 7 report section to repository evidence | PASS | `docs/CAPSTONE_EVIDENCE.md` |
+| Map every claim to repository evidence | PASS | `docs/EVIDENCE_MAP.md` |
 | Capture final architecture diagram and UI screenshots | PASS | `docs/ARCHITECTURE.md` (corrected); `docs/screenshots/` |
 | Select representative traces: fast, ToT, degraded, human review | PASS | `artifacts/traces/`; `make traces` |
 | Summarise development evolution from Modules 1 through 6 | PASS | `docs/DESIGN_EVOLUTION.md` |
-| Record actual evaluation results, limitations, and next steps | PASS | `docs/CAPSTONE_EVIDENCE.md`; results table with a command per row |
-| Submission checklist | PASS | `docs/SUBMISSION_CHECKLIST.md` |
-| Public links | BLOCKED | Repository is private and nothing is deployed; both are the owner's decisions |
+| Record actual evaluation results, limitations, and next steps | PASS | `docs/EVIDENCE_MAP.md`; results table with a command per row |
+| Public deployment link | BLOCKED | Nothing is deployed yet; see `docs/DEPLOYMENT.md` |
 
 ## Exit gate
 
 | Criterion | Result | How it was checked |
 | --- | --- | --- |
-| No claimed feature lacks code or evidence | PASS | Every row of `docs/CAPSTONE_EVIDENCE.md` names a file, test, or artifact |
+| No claimed feature lacks code or evidence | PASS | Every row of `docs/EVIDENCE_MAP.md` names a file, test, or artifact |
 | No claimed result lacks a reproducible metric artifact | PASS | Every result row names the artifact and the command that regenerates it |
 
 ## Five things this phase found
@@ -33,10 +32,9 @@ have caught the second.
 ### The evaluation artifacts were not in the repository
 
 `artifacts/` was gitignored in its entirety, so a reviewer cloning the repository
-would have found no evaluation results at all — while `docs/CAPSTONE_EVIDENCE.md`
-was about to cite thirty files inside it. Module 7 asks a public repository to
-carry its evaluation artifacts, and a citation to a path no clone contains is not
-evidence.
+would have found no evaluation results at all — while `docs/EVIDENCE_MAP.md`
+was about to cite thirty files inside it. A citation to a path no clone contains
+is not evidence.
 
 The whole tree is 676 KB of text and plots. The two things the ignore rule was
 really protecting against — the trained model and the FAISS index — live under
@@ -182,9 +180,9 @@ that shows agreement would be worse than no trace at all.
 
 ## Known limitations
 
-- **Two deliverables cannot be finished here.** "Public links" needs a public
-  repository and a live URL, both of which are the owner's decisions. They are
-  listed as blocked rather than quietly dropped.
+- **The deployment link cannot be produced here.** It needs a running
+  deployment, which needs a decision about how the dataset, model, and index
+  reach the image. Listed as blocked rather than quietly dropped.
 - **No cold-start or warm-start timings.** Nothing is deployed, so there is
   nothing to measure. `docs/DEPLOYMENT.md` says what to measure once there is.
 - **The evidence map is a map, not a report.** It says where each claim is

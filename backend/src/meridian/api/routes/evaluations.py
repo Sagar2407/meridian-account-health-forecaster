@@ -51,7 +51,7 @@ ARTIFACTS: dict[str, tuple[str, str, bool]] = {
     # a moment, so this reads the summary every run republishes rather than
     # globbing for the newest directory from inside the served application.
     "system": ("artifacts/evaluation/summary.json", "make evaluate-system", False),
-    # Checkpoint 6.1's second ablation: what each guardrail layer is worth.
+    # The guardrail-stack ablation: what each guardrail layer is worth.
     "guardrail_stack": (
         "artifacts/safety/guardrail_stack.json",
         "make evaluate-guardrail-stack",

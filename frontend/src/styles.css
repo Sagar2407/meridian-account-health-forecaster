@@ -1,7 +1,7 @@
 /*
  * Clean enterprise dashboard (plan section 20.7).
  *
- * CMU red is an accent, not a theme: it marks the brand and the primary action
+ * The brand red is an accent, not a theme: it marks identity and the primary action
  * and appears nowhere else, so the semantic green/amber/red of the review bands
  * never competes with it for meaning. Every status colour is paired with a word
  * as well as a hue, because a badge that only differs by colour is unreadable
@@ -13,8 +13,8 @@
  */
 
 :root {
-  --cmu-red: #9e1b32;
-  --cmu-red-dark: #7d1527;
+  --brand: #9e1b32;
+  --brand-dark: #7d1527;
 
   --surface: #ffffff;
   --surface-sunken: #f6f7f9;
@@ -92,7 +92,7 @@ p {
 }
 
 a {
-  color: var(--cmu-red);
+  color: var(--brand);
 }
 
 code {
@@ -103,7 +103,7 @@ code {
 }
 
 :focus-visible {
-  outline: 3px solid var(--cmu-red);
+  outline: 3px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -123,7 +123,7 @@ code {
   z-index: 100;
   padding: 0.6rem 1rem;
   border-radius: 0 0 var(--radius) 0;
-  background: var(--cmu-red);
+  background: var(--brand);
   color: #fff;
 }
 
@@ -160,7 +160,7 @@ code {
   width: 0.6rem;
   height: 1.8rem;
   border-radius: 3px;
-  background: var(--cmu-red);
+  background: var(--brand);
 }
 
 .app-bar__sub {
@@ -190,7 +190,7 @@ code {
 
 .app-bar nav a.active {
   background: var(--surface-sunken);
-  color: var(--cmu-red);
+  color: var(--brand);
 }
 
 .health-pill {
@@ -265,7 +265,7 @@ code {
   margin-bottom: 1.25rem;
   padding: 0.65rem 0.9rem;
   border: 1px solid var(--border-strong);
-  border-left: 4px solid var(--cmu-red);
+  border-left: 4px solid var(--brand);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink-muted);
@@ -299,14 +299,14 @@ code {
 }
 
 .button--primary {
-  border-color: var(--cmu-red);
-  background: var(--cmu-red);
+  border-color: var(--brand);
+  background: var(--brand);
   color: #fff;
 }
 
 .button--primary:hover:not(:disabled) {
-  border-color: var(--cmu-red-dark);
-  background: var(--cmu-red-dark);
+  border-color: var(--brand-dark);
+  background: var(--brand-dark);
 }
 
 .button--ghost {
@@ -402,8 +402,8 @@ code {
 }
 
 .chip--emphasis {
-  border-color: var(--cmu-red);
-  color: var(--cmu-red);
+  border-color: var(--brand);
+  color: var(--brand);
 }
 /* Evidence signals, in the API's own vocabulary. */
 .chip--favorable {
@@ -601,7 +601,7 @@ textarea {
   fill: rgb(158 27 50 / 8%);
 }
 .chart__line {
-  stroke: var(--cmu-red);
+  stroke: var(--brand);
   stroke-width: 2;
 }
 .chart__cutoff {
@@ -733,7 +733,7 @@ textarea {
 .distribution__fill {
   display: block;
   height: 100%;
-  background: var(--cmu-red);
+  background: var(--brand);
 }
 
 .distribution__value {
@@ -888,7 +888,7 @@ textarea {
 .drawer__excerpt {
   margin: 0.5rem 0;
   padding: 0.75rem;
-  border-left: 3px solid var(--cmu-red);
+  border-left: 3px solid var(--brand);
   border-radius: 0 8px 8px 0;
   background: var(--surface-sunken);
   font-size: 0.88rem;
@@ -933,7 +933,7 @@ textarea {
 }
 
 .timeline__item--lane::before {
-  background: var(--cmu-red);
+  background: var(--brand);
 }
 
 .timeline__event {
@@ -995,8 +995,8 @@ textarea {
 }
 
 .queue-item.is-selected {
-  border-color: var(--cmu-red);
-  box-shadow: inset 3px 0 0 var(--cmu-red);
+  border-color: var(--brand);
+  box-shadow: inset 3px 0 0 var(--brand);
 }
 
 .queue-item__account {
@@ -1153,8 +1153,8 @@ textarea {
 }
 
 .eval-system__split[aria-pressed='true'] {
-  border-color: var(--cmu-red);
-  background: var(--cmu-red);
+  border-color: var(--brand);
+  background: var(--brand);
   color: #fff;
 }
 
@@ -1344,7 +1344,7 @@ textarea {
   height: 100%;
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--cmu-red);
+  border-left: 3px solid var(--brand);
   border-radius: 8px;
   color: inherit;
   text-decoration: none;
@@ -1359,7 +1359,7 @@ textarea {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--cmu-red);
+  color: var(--brand);
 }
 
 .curated__label {

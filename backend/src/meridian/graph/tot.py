@@ -1,8 +1,8 @@
 """The bounded Tree-of-Thought subgraph (plan section 15.2 to 15.6).
 
 This runs only when the deterministic gate in `meridian.graph.conflict` fires.
-Checkpoint 4.1 is explicit that Tree-of-Thought is "a conditional LangGraph
-subgraph, never a default reasoning mode", and the cost is the reason: four
+Tree-of-Thought is a conditional subgraph here, never a default reasoning
+mode, and the cost is the reason: four
 candidates, a critic pass, and up to two stress tests are several times the work
 of a linear adjudication.
 

@@ -471,7 +471,7 @@ def test_an_adverse_call_on_an_ordinary_account_is_not_automatically_red() -> No
 
 
 def test_an_abstention_escalates_on_impact_as_well_as_on_gaps() -> None:
-    """The instructor feedback asks for impact-aware escalation, not gap counting."""
+    """Escalation is impact-aware, not a count of how many gaps there are."""
 
     assert abstention_route(_coverage(), high_value=False).route == "amber"
     assert abstention_route(_coverage(), high_value=True).route == "red"

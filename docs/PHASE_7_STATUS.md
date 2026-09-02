@@ -131,10 +131,10 @@ silently overwriting the first reviewer.
 
 ## What each guardrail layer is worth
 
-Checkpoint 6.1 proposed a second ablation beside the Tree-of-Thought one:
-compare no guardrails, input only, input plus execution, and the full stack. It
-was built in Phase 12 and runs with `make evaluate-guardrail-stack`; the arms
-are in `artifacts/safety/guardrail_stack.json`.
+The layered guardrail design is only worth its cost if the layers do something.
+The way to find out is to remove them, which is what `make evaluate-guardrail-stack`
+does: no guardrails, intake only, intake plus evidence screening, and the full
+stack. The arms are in `artifacts/safety/guardrail_stack.json`.
 
 The same 36 cases go through four stacks, differing only in how many layers run.
 Nothing else changes: same accounts, same questions, offline, zero tokens.

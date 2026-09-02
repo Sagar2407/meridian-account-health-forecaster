@@ -2,19 +2,18 @@
 
 ## Purpose
 
-This repository contains the CMU Agentic AI Program capstone: a read-only Enterprise Account Health Forecaster for the fictional B2B SaaS vendor Meridian. It predicts one of four renewal outcomes, explains the drivers with verifiable evidence, recommends a bounded next action, and routes uncertain or consequential cases to human review.
+This repository contains Meridian, a read-only Enterprise Account Health Forecaster for a fictional B2B SaaS vendor of the same name. It predicts one of four renewal outcomes, explains the drivers with verifiable evidence, recommends a bounded next action, and routes uncertain or consequential cases to human review.
 
 ## Source-of-truth order
 
 When sources disagree, use this precedence:
 
-1. `docs/source/MODULE_7_CAPSTONE_REQUIREMENTS.md` for final submission requirements.
-2. `docs/Meridian_Autonomous_System_Implementation_Plan.md` for the current build specification and explicit resolutions of earlier design conflicts.
-3. Checkpoints 1.1–6.1 for design history, with later checkpoints superseding earlier details.
-4. The extracted dataset `README.md`, `DATA_DICTIONARY.md`, `config.py`, and actual packaged artifacts for schema and data facts.
-5. Generated documentation and code, which must remain consistent with the sources above.
+1. `docs/Meridian_Autonomous_System_Implementation_Plan.md` for the current build specification and explicit resolutions of earlier design conflicts.
+2. `docs/DESIGN_EVOLUTION.md` for design history: what an earlier decision committed to, and what the build did with it.
+3. The extracted dataset `README.md`, `DATA_DICTIONARY.md`, `config.py`, and actual packaged artifacts for schema and data facts.
+4. Generated documentation and code, which must remain consistent with the sources above.
 
-Do not treat old representative filenames or framework mappings as current requirements.
+Do not treat superseded filenames or framework mappings as current requirements.
 
 ## Mandatory reading
 
