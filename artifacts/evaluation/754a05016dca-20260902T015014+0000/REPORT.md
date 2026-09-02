@@ -1,8 +1,8 @@
 # Meridian evaluation report
 
-Commit `dc737e3a3078` (working-tree state not determined), split **test**, provider **none (deterministic)**, generated 2026-09-02T00:03:22+00:00.
+Commit `754a05016dca` (working-tree state not determined), split **test**, provider **none (deterministic)**, generated 2026-09-02T01:50:14+00:00.
 
-Thresholds `5e23d7f9d9fef896` (v1), dataset `absent`, model `logistic_regression` / `isotonic`.
+Thresholds `5e23d7f9d9fef896` (v1), dataset `absent`, model `logistic_regression` / `isotonic`, prompts `2b996f4bb4c449ae` (4).
 
 Every number in this report is read from `results.json` in this same directory. Nothing here is typed by hand.
 
@@ -66,6 +66,17 @@ Confusion matrix (rows are truth, columns are prediction):
 
 Section 22.2 permits an LLM judge score only after validation against a double-reviewed human sample. No such sample exists, so no judge metric is reported. Every measure above is deterministic.
 
+### Downstream correctness (ER-005)
+
+The retrieval benchmark grades whether the right passage came back. This grades what the answer did with it, on the runs that already happened.
+
+| Condition | Runs | Accuracy |
+| --- | ---: | ---: |
+| All released and graded | 37 | 0.8378 |
+| Retrieval satisfied on the first round | 32 | 0.8438 |
+| Retrieval rewritten and retried | 5 | 0.8000 |
+| Fewer than three citations | 5 | 0.8000 |
+
 ## 22.3 Calibration
 
 | Measure | Value |
@@ -99,11 +110,29 @@ Error rate inside each review band -- what a reviewer is implicitly promised:
 
 | Path | Runs | p50 | p95 |
 | --- | ---: | ---: | ---: |
-| fast | 22 | 171.1000 ms | 272.8000 ms |
-| tree_of_thought | 15 | 158.4000 ms | 194.3000 ms |
-| abstained | 16 | 154.8000 ms | 256.4000 ms |
+| fast | 22 | 149.3000 ms | 228.1000 ms |
+| tree_of_thought | 15 | 145.7000 ms | 213.4000 ms |
+| abstained | 16 | 152.5000 ms | 239.1000 ms |
 | blocked | 0 | not measured ms | not measured ms |
-| **overall** | 53 | 160.2000 ms | 261.3000 ms |
+| **overall** | 53 | 148.2000 ms | 230.7000 ms |
+
+### Resume behaviour (ER-006)
+
+4 red-routed run(s) were paused on section 16.6's interrupt and handed a typed reviewer decision.
+
+| Measure | Value |
+| --- | ---: |
+| Resumed | 1.0000 |
+| Ran to completion | 1.0000 |
+| Case resolved | 1.0000 |
+| Mean resume latency | 7.7000 ms |
+
+| Action | Attempts | Paused | Resumed | Finished |
+| --- | ---: | ---: | ---: | ---: |
+| approve | 1 | 1 | 1 | 1 |
+| override | 1 | 1 | 1 | 1 |
+| request_data | 1 | 1 | 1 | 1 |
+| escalate | 1 | 1 | 1 | 1 |
 
 ## Threshold study (plan section 22.6)
 

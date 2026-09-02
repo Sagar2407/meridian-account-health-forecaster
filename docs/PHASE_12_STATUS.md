@@ -120,6 +120,34 @@ summary would not have reached a deployment. It is now copied in: it is
 committed, under a megabyte, and the endpoint that reads it is part of the
 served application.
 
+### Three numbered requirements had unmet clauses
+
+Reading `docs/REQUIREMENTS.md` against what the artifacts actually contain found
+three requirements that were listed as satisfied while a clause of each was not
+measured at all:
+
+- **ER-005** asks for retrieval metrics "and downstream correctness". Passage
+  quality was measured; what the answer did with the passage was not. It is now
+  read off runs that already happened, so it costs nothing: on the held-out
+  split, accuracy is **0.8438** when retrieval was satisfied on the first round
+  and **0.8000** when it had to be rewritten and retried. Small samples, and the
+  direction is the one you would expect.
+- **ER-006** lists "resume behaviour" beside completion and latency, and nothing
+  measured it. Four red-routed runs are now paused on the interrupt and resumed,
+  one per reviewer action: **4 of 4 resume, finish, and resolve their case**, at
+  a mean of about 8 ms.
+- **ER-007** requires each result tied to an artifact naming the commit, data,
+  model, **prompt**, and environment versions. Four of five were recorded. The
+  manifest now carries a digest per prompt and one version across them.
+
+Registering the prompts found a fourth instruction nobody had counted: the MCP
+server's own `instructions` field. This system never puts it in a prompt -- its
+client is in-process -- but any other MCP client would read it into a model's
+context, so it is versioned with the rest rather than excluded by a rule nobody
+would revisit. `test_prompt_registry.py` scans the source for
+`*_INSTRUCTIONS` constants and fails if one is not registered, which is how that
+one was found.
+
 ## The traces
 
 Four runs, one per path, captured by `make traces` offline at zero tokens. The

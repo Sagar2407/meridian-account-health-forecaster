@@ -19,6 +19,7 @@ lets a configured model write the narratives, which costs money per account.
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -26,10 +27,12 @@ sys.path.insert(0, str(REPOSITORY_ROOT / "backend" / "src"))
 sys.path.insert(0, str(REPOSITORY_ROOT / "evaluation"))
 
 from meridian.data.splits import read_split  # noqa: E402
+from meridian.graph import build_graph, sqlite_checkpointer  # noqa: E402
 from meridian.graph.runtime import GraphRuntime  # noqa: E402
 from meridian.graph.thresholds import THRESHOLDS  # noqa: E402
 from meridian.settings import Settings, get_settings  # noqa: E402
 from meridian_eval.report import assemble, publish_summary, write  # noqa: E402
+from meridian_eval.resume_check import run_resume_check  # noqa: E402
 from meridian_eval.repository import EvaluationRepository  # noqa: E402
 from meridian_eval.system_run import collect_runs  # noqa: E402
 
@@ -56,6 +59,15 @@ def _parser() -> argparse.ArgumentParser:
         help="Let a configured model write the narratives; this costs money per account",
     )
     parser.add_argument("--output", type=Path, help="Write the result directory here")
+    parser.add_argument(
+        "--resume-sample",
+        type=int,
+        default=4,
+        help=(
+            "How many red-routed accounts to pause and resume for ER-006. "
+            "Zero skips the check; the default covers the four reviewer actions once each."
+        ),
+    )
     return parser
 
 
@@ -104,10 +116,28 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, json.JSONDecodeError):
             guardrails = {"reason": f"{GUARDRAIL_ARTIFACT} could not be read"}
 
+    # ER-006: resume behaviour, measured on accounts that actually routed red so
+    # there is something to pause. Control flow works or it does not, so a small
+    # sample across the four reviewer actions answers it; the whole split would
+    # cost minutes to learn nothing more.
+    resume = None
+    scratch = tempfile.TemporaryDirectory()
+    if args.resume_sample:
+        red = [run.account_id for run in collection.runs if run.route == "red"]
+        sample = red[: args.resume_sample]
+        if sample:
+            print(f"  resume check over {len(sample)} red-routed account(s)", file=sys.stderr)
+            with sqlite_checkpointer(Path(scratch.name) / "resume.sqlite3") as saver:
+                resume, _ = run_resume_check(build_graph(runtime, checkpointer=saver), sample)
+        else:
+            resume = {"reason": "no run routed red in this split, so none could pause"}
+    scratch.cleanup()
+
     result = assemble(
         collection,
         provider="configured model" if args.use_provider else "none (deterministic)",
         guardrails=guardrails,
+        resume=resume,
     )
     folder = write(result, collection, destination=args.output)
     # The served evaluation page reads one summary rather than globbing for the

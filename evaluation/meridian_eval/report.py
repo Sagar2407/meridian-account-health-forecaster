@@ -28,6 +28,7 @@ import numpy as np
 from meridian.contracts import OUTCOME_CLASSES
 from meridian.data.paths import repository_root
 from meridian.graph.thresholds import THRESHOLDS
+from meridian.prompts import prompt_manifest
 from meridian_eval.dimensions import (
     calibration,
     forecast_correctness,
@@ -173,6 +174,8 @@ def manifest(split: str, provider: str) -> dict[str, Any]:
         "split": split,
         "provider": provider,
         "dataset_digest": dataset_digest,
+        # ER-007 names prompts among the versions a result must be tied to.
+        "prompts": prompt_manifest(),
         "model": {
             "name": model.get("model_name", "absent"),
             "calibration": model.get("calibration_method", "absent"),
@@ -233,6 +236,7 @@ def assemble(
     provider: str,
     guardrails: dict[str, Any] | None = None,
     retrieval: dict[str, Any] | None = None,
+    resume: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compute every dimension and the release-target table.
 
@@ -241,6 +245,8 @@ def assemble(
         provider: How the runs were generated, for the manifest.
         guardrails: The safety report's metrics, when one has been run.
         retrieval: The retrieval benchmark's metrics, when one has been run.
+        resume: What ER-006 asks about paused runs: whether a red-routed run,
+            handed a reviewer's decision, comes back and finishes.
 
     Returns:
         The complete result, ready to be written and rendered.
@@ -277,7 +283,12 @@ def assemble(
                 "artifacts/safety/guardrail_eval.json"
             )
         },
-        "operational_reliability": reliability,
+        "operational_reliability": {
+            **reliability,
+            # ER-006 lists resume behaviour beside completion and latency, so it
+            # is reported in the same block rather than in an annex.
+            "resume": resume or {"reason": "not measured in this pass; pass --check-resume"},
+        },
         "threshold_study": study.summary(),
         "release_targets": [_target_row(name, value) for name, value in measured.items()],
     }
@@ -328,7 +339,8 @@ def render(result: dict[str, Any]) -> str:
         "",
         f"Thresholds `{info['thresholds']['digest']}` ({info['thresholds']['version']}), "
         f"dataset `{info['dataset_digest'][:12]}`, model "
-        f"`{info['model']['name']}` / `{info['model']['calibration']}`.",
+        f"`{info['model']['name']}` / `{info['model']['calibration']}`, "
+        f"prompts `{info['prompts']['version']}` ({info['prompts']['count']}).",
         "",
         "Every number in this report is read from `results.json` in this same "
         "directory. Nothing here is typed by hand.",
@@ -425,6 +437,28 @@ def render(result: dict[str, Any]) -> str:
         "",
         str(grounding.get("judge_note", "")),
         "",
+        "### Downstream correctness (ER-005)",
+        "",
+        "The retrieval benchmark grades whether the right passage came back. This "
+        "grades what the answer did with it, on the runs that already happened.",
+        "",
+        "| Condition | Runs | Accuracy |",
+        "| --- | ---: | ---: |",
+    ]
+    downstream = grounding.get("downstream_correctness") or {}
+    lines += [
+        f"| All released and graded | {downstream.get('graded', 0)} | "
+        f"{_format(downstream.get('accuracy_all'))} |",
+    ]
+    for label, key in (
+        ("Retrieval satisfied on the first round", "first_round_retrieval"),
+        ("Retrieval rewritten and retried", "retrieval_retried"),
+        ("Fewer than three citations", "fewer_than_three_citations"),
+    ):
+        row = downstream.get(key) or {}
+        lines.append(f"| {label} | {row.get('runs', 0)} | {_format(row.get('accuracy'))} |")
+    lines += [
+        "",
         "## 22.3 Calibration",
         "",
         "| Measure | Value |",
@@ -476,6 +510,37 @@ def render(result: dict[str, Any]) -> str:
         f"| **overall** | {reliability.get('runs', 0)} | {_format(overall.get('p50_ms'))} ms | "
         f"{_format(overall.get('p95_ms'))} ms |"
     )
+
+    # ER-006 lists resume behaviour beside completion and latency.
+    resume = reliability.get("resume") or {}
+    lines += ["", "### Resume behaviour (ER-006)", ""]
+    if resume.get("paused"):
+        lines += [
+            f"{resume['paused']} red-routed run(s) were paused on section 16.6's "
+            "interrupt and handed a typed reviewer decision.",
+            "",
+            "| Measure | Value |",
+            "| --- | ---: |",
+            f"| Resumed | {_format(resume.get('resume_rate'))} |",
+            f"| Ran to completion | {_format(resume.get('completion_rate'))} |",
+            f"| Case resolved | {_format(resume.get('case_resolution_rate'))} |",
+            f"| Mean resume latency | {_format(resume.get('mean_resume_latency_ms'))} ms |",
+            "",
+            "| Action | Attempts | Paused | Resumed | Finished |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+        for action, row in (resume.get("by_action") or {}).items():
+            lines.append(
+                f"| {action} | {row.get('attempts', 0)} | {row.get('paused', 0)} | "
+                f"{row.get('resumed', 0)} | {row.get('finished', 0)} |"
+            )
+        for failure in resume.get("failures") or []:
+            lines.append(
+                f"\n**Did not finish:** `{failure['account_id']}` on "
+                f"{failure['action']} -- {failure['detail']}"
+            )
+    else:
+        lines.append(str(resume.get("reason", "not measured in this pass")))
 
     frozen = study.get("frozen", {})
     permissive = study.get("most_permissive_measured")

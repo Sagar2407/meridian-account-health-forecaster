@@ -160,8 +160,34 @@ def grounded_explanation(runs: Sequence[SystemRun]) -> dict[str, Any]:
     overlaps = [run.driver_overlap for run in released if run.driver_overlap is not None]
     conflicting = [run for run in released if run.conflict_triggered]
 
+    # ER-005 asks for downstream correctness, not just passage quality. The
+    # retrieval benchmark grades whether the right document came back; this
+    # grades what the answer did with it. Both conditions are read off runs
+    # that already happened, so it costs nothing and cannot drift from them.
+    graded = [run for run in released if run.correct is not None]
+    clean = [run for run in graded if not run.retrieval_retried]
+    retried = [run for run in graded if run.retrieval_retried]
+    thin = [run for run in graded if len(run.cited_doc_ids) < 3]
+    downstream = {
+        "graded": len(graded),
+        "accuracy_all": _rate(sum(1 for run in graded if run.correct), len(graded)),
+        "first_round_retrieval": {
+            "runs": len(clean),
+            "accuracy": _rate(sum(1 for run in clean if run.correct), len(clean)),
+        },
+        "retrieval_retried": {
+            "runs": len(retried),
+            "accuracy": _rate(sum(1 for run in retried if run.correct), len(retried)),
+        },
+        "fewer_than_three_citations": {
+            "runs": len(thin),
+            "accuracy": _rate(sum(1 for run in thin if run.correct), len(thin)),
+        },
+    }
+
     return {
         "released": len(released),
+        "downstream_correctness": downstream,
         "supported_claim_rate": _rate(
             sum(1 for run in released if run.verification_passed), len(released)
         ),

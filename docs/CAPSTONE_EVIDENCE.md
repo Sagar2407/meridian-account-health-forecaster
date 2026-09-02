@@ -92,6 +92,9 @@ directory it names for the full report, per-account rows, and plots.
 | ToT vs linear adjudication | see file | `artifacts/tot/tot_ablation.json` | `make evaluate-tot` |
 | Guardrail stack: removing intake | 0.0000 → 0.7333 hard false pass | `artifacts/safety/guardrail_stack.json` | `make evaluate-guardrail-stack` |
 | Bounded portfolio scan, 12 accounts | see file | `artifacts/portfolio/portfolio_scan.json` | `make scan LIMIT=12` |
+| Resume behaviour: paused runs that finish (ER-006) | 1.0000 over 4 actions | `results.json` → `operational_reliability.resume` | `make evaluate-system` |
+| Downstream correctness by retrieval health (ER-005) | 0.8438 clean vs 0.8000 retried, held out | `results.json` → `grounded_explanation.downstream_correctness` | same |
+| Prompt versions tied to every result (ER-007) | digest per prompt, 4 registered | `results.json` → `manifest.prompts` | same |
 
 Two properties of the evaluation are worth claiming explicitly, because they are
 unusual and both are enforced by code:
