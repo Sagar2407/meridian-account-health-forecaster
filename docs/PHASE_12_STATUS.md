@@ -139,6 +139,15 @@ measured at all:
 - **ER-007** requires each result tied to an artifact naming the commit, data,
   model, **prompt**, and environment versions. Four of five were recorded. The
   manifest now carries a digest per prompt and one version across them.
+- **ER-006 again**, on a second reading: it also lists **cost**. `estimate_cost`
+  existed and the run metrics used it; the evaluation artifact did not record
+  it. It does now, and reports 0.0000 USD because every published run is
+  offline. `None` is carried through for an unpriced model rather than softened
+  to zero -- an unpriced run is unknown, not free.
+
+ER-006's last clause, portfolio concurrency, was already measured, in
+`artifacts/portfolio/portfolio_scan.json` rather than in the system evaluation.
+The evidence map points at it there rather than measuring it twice.
 
 Registering the prompts found a fourth instruction nobody had counted: the MCP
 server's own `instructions` field. This system never puts it in a prompt -- its

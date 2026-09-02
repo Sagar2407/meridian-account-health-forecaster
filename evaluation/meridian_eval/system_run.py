@@ -175,6 +175,9 @@ class RunCollection:
 
     runs: list[SystemRun] = field(default_factory=list)
     split: str = "development"
+    #: The provider model these runs used, for the cost estimate ER-006 asks
+    #: for. Empty when none was configured, which is the offline default.
+    model_name: str = ""
 
     def frame(self) -> pd.DataFrame:
         """Return every run as a row."""
@@ -265,7 +268,10 @@ def collect_runs(
     graph = build_graph(runtime)
     labels = evaluation.labels()
     truth_drivers = truth_driver_names(evaluation)
-    collection = RunCollection(split=split)
+    collection = RunCollection(
+        split=split,
+        model_name=runtime.generator.model_name if runtime.generator is not None else "",
+    )
     total = len(account_ids)
 
     for index, account_id in enumerate(account_ids, start=1):

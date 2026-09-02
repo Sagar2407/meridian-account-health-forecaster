@@ -95,6 +95,8 @@ directory it names for the full report, per-account rows, and plots.
 | Resume behaviour: paused runs that finish (ER-006) | 1.0000 over 4 actions | `results.json` → `operational_reliability.resume` | `make evaluate-system` |
 | Downstream correctness by retrieval health (ER-005) | 0.8438 clean vs 0.8000 retried, held out | `results.json` → `grounded_explanation.downstream_correctness` | same |
 | Prompt versions tied to every result (ER-007) | digest per prompt, 4 registered | `results.json` → `manifest.prompts` | same |
+| Estimated cost (ER-006) | 0.0000 USD — every run is offline | `results.json` → `operational_reliability.tokens` | same |
+| Portfolio concurrency (ER-006) | peak 3 of 3, counted by the runs themselves | `artifacts/portfolio/portfolio_scan.json` | `make scan LIMIT=6 CONCURRENCY=3` |
 
 Two properties of the evaluation are worth claiming explicitly, because they are
 unusual and both are enforced by code:

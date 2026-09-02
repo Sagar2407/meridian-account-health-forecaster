@@ -24,6 +24,7 @@ import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 
 from meridian.contracts import OUTCOME_CLASSES
+from meridian.graph.observability import estimate_cost
 from meridian_eval.metrics import (
     confidence_band_errors,
     evaluate,
@@ -254,11 +255,24 @@ def calibration(runs: Sequence[SystemRun]) -> dict[str, Any]:
     }
 
 
-def operational_reliability(runs: Sequence[SystemRun]) -> dict[str, Any]:
-    """Section 22.5: completion, latency by path, retries, tokens, and cost."""
+def operational_reliability(
+    runs: Sequence[SystemRun],
+    model_name: str = "",
+) -> dict[str, Any]:
+    """Section 22.5: completion, latency by path, retries, tokens, and cost.
+
+    Args:
+        runs: One pass over a split.
+        model_name: The configured model, for the cost estimate. Empty when no
+            provider was configured, which is why an offline run reports 0.0
+            rather than an estimate against a model it never called.
+    """
 
     if not runs:
         return {"runs": 0, "reason": "no run to measure"}
+
+    prompt_tokens = sum(run.prompt_tokens for run in runs)
+    completion_tokens = sum(run.completion_tokens for run in runs)
 
     def percentiles(values: list[float]) -> dict[str, float | None]:
         """Return p50 and p95, or None when the sample is empty."""
@@ -295,10 +309,17 @@ def operational_reliability(runs: Sequence[SystemRun]) -> dict[str, Any]:
         },
         "path_counts": {name: len(values) for name, values in paths.items()},
         "tokens": {
-            "prompt": sum(run.prompt_tokens for run in runs),
-            "completion": sum(run.completion_tokens for run in runs),
+            "prompt": prompt_tokens,
+            "completion": completion_tokens,
             "total": sum(run.total_tokens for run in runs),
             "model_calls": sum(run.model_calls for run in runs),
+            # ER-006 lists cost. `estimate_cost` returns None for a model it has
+            # no price for, and that None is carried through rather than
+            # softened to 0.00 -- an unpriced run is unknown, not free. An
+            # offline run really is free, and reports 0.0 because it spent no
+            # tokens at all.
+            "estimated_cost_usd": estimate_cost(model_name, prompt_tokens, completion_tokens),
+            "cost_note": "an estimate from a static price table, not a provider bill",
         },
         "exhausted_retrieval_fallback": {
             "runs": len(exhausted),

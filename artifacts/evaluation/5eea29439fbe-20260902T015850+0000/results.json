@@ -266,13 +266,13 @@
     "wrong_account_citation_count": 0
   },
   "manifest": {
-    "commit": "754a05016dcaa034857882d971c5e4665a33d397",
+    "commit": "5eea29439fbe16c429f383f12e6a61fd3c3bf3d1",
     "dataset_digest": "absent",
     "environment": {
       "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
       "python": "3.12.14"
     },
-    "generated_at": "2026-09-02T01:49:53+00:00",
+    "generated_at": "2026-09-02T01:58:50+00:00",
     "model": {
       "calibration": "isotonic",
       "name": "logistic_regression",
@@ -318,24 +318,24 @@
     },
     "latency": {
       "abstained": {
-        "p50_ms": 148.6,
-        "p95_ms": 214.7
+        "p50_ms": 148.7,
+        "p95_ms": 226.3
       },
       "blocked": {
         "p50_ms": null,
         "p95_ms": null
       },
       "fast": {
-        "p50_ms": 142.7,
-        "p95_ms": 222.8
+        "p50_ms": 146.5,
+        "p95_ms": 240.0
       },
       "overall": {
-        "p50_ms": 145.8,
-        "p95_ms": 220.7
+        "p50_ms": 146.9,
+        "p95_ms": 235.8
       },
       "tree_of_thought": {
-        "p50_ms": 150.1,
-        "p95_ms": 204.5
+        "p50_ms": 146.1,
+        "p95_ms": 202.7
       }
     },
     "node_error_count": 0,
@@ -386,6 +386,8 @@
     "runs": 207,
     "tokens": {
       "completion": 0,
+      "cost_note": "an estimate from a static price table, not a provider bill",
+      "estimated_cost_usd": 0.0,
       "model_calls": 0,
       "prompt": 0,
       "total": 0

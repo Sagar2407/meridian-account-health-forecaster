@@ -257,7 +257,10 @@ def assemble(
     correctness = forecast_correctness(runs)
     grounding = grounded_explanation(runs)
     calibrated = calibration(runs)
-    reliability = operational_reliability(runs)
+    # The configured model, for the cost estimate. Offline runs have none, which
+    # is why their estimate is 0.0 rather than a price against a model nobody
+    # called.
+    reliability = operational_reliability(runs, model_name=collection.model_name)
 
     measured: dict[str, float | None] = {
         "macro_f1": correctness.get("macro_f1"),
@@ -495,6 +498,8 @@ def render(result: dict[str, Any]) -> str:
         f"| Node errors | {reliability.get('node_error_count', 0)} |",
         f"| Total tokens | {reliability.get('tokens', {}).get('total', 0)} |",
         f"| Model calls | {reliability.get('tokens', {}).get('model_calls', 0)} |",
+        f"| Estimated cost (USD) | "
+        f"{_format(reliability.get('tokens', {}).get('estimated_cost_usd'))} |",
         "",
         "| Path | Runs | p50 | p95 |",
         "| --- | ---: | ---: | ---: |",
