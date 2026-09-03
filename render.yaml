@@ -19,7 +19,12 @@ services:
     region: oregon
     branch: main
     healthCheckPath: /api/health
-    autoDeploy: false
+    # True, matching the service. It was false while the deployment was being
+    # brought up and a bad push would have replaced a working demo; now that
+    # the gate runs on every push, a green main is the thing worth serving.
+    # This file and the dashboard must agree -- a blueprint that describes a
+    # service the dashboard does not run is worse than no blueprint.
+    autoDeploy: true
 
     envVars:
       - key: MERIDIAN_ENVIRONMENT

@@ -103,7 +103,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | Item | Consequence | Next action |
 | --- | --- | --- |
 | The production image is self-contained | `make prod-up` runs it with zero mounts: `/api/health` reports `ok` with all four data subsystems ready, 15 endpoint checks pass, and assessments complete and open review cases | Verified locally; see `docs/DEPLOYMENT.md` |
-| A deploy was attempted and the service does not answer | Phase 11's exit gate cannot be evaluated, and cold-start behaviour on the target stays unmeasured; local timings are in `docs/DEPLOYMENT.md` | Seven probes of `meridian-125g.onrender.com/api/health` returned `HTTP 000` with TLS completing. Memory is ruled out: the production container peaks at 226 MB against a 512 MB cap. Read the Render build log; see `docs/PHASE_11_STATUS.md` |
+| The public deployment serves forecasts | 14 live paths, one model-backed assessment, and the demo-mode refusals | Live at `meridian-125g.onrender.com`: ACC-1001 amber/Churned at 0.7700, 7 citations, 3 model calls, 4,879 tokens. Cold start 42.4 s, assessment about 25 s. It routes amber where the offline run is green, because confidence carries an adjudicator-agreement term and every published metric here is the deterministic path |
 | The serving image is 1.55 GB | Cold-start and disk pressure on the deployment target | 2.2 GB before discarding uv's build cache in the layer that creates it, then +80 MB to carry the runtime data and the embedding model so the image needs no mounts. The development image is still 2.75 GB because it installs the dev extra. Re-measure on Render once deployed |
 | The model-backed path has run against a real provider | One complete assessment on `liquid/lfm-2.5-2.6b:free`, planner and adjudicator both `source: model`, output verification passed first attempt, 7,382 tokens, 0.00 USD | Verified by `artifacts/provider/open_weight_run.json` |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
@@ -116,9 +116,10 @@ This matrix separates verified facts from provisional design choices and open qu
 
 ## Readiness
 
-Eleven of the twelve phases are complete. Phase 11 is not: its exit gate needs a
-public link that completes the curated demo paths, and no deployment answers, so
-the phase is open and `docs/PHASE_11_STATUS.md` records where it stands.
+All twelve phases are complete. Phase 11's gate closed on 2026-09-03, when the
+deployment served a model-backed forecast with 7 citations and refused scans and
+evaluations with a reason; its remaining deliverable, a recorded demo, is a
+deliverable rather than a gate, and `docs/PHASE_11_STATUS.md` keeps it open.
 
 The latest `make phase0-verify` rebuilt both locked images and passed formatting
 over 152 files, lint, strict typing over 151 source files, 660 backend tests with

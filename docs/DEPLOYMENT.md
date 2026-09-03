@@ -1,11 +1,10 @@
 # Deployment runbook
 
 Everything here has been verified against the production image on this machine.
-The repository is public, and a Render free-plan service is deployed at
-`https://meridian-125g.onrender.com`. It is **not** finished: the build it is
-serving predates the knowledge-base fix in blocker 1, so it answers without
-forecasts until it is redeployed, and `autoDeploy: false` means that redeploy is
-a deliberate act. `docs/PHASE_11_STATUS.md` tracks what is left.
+The repository is public and the service is live at
+`https://meridian-125g.onrender.com`, serving forecasts with model-written
+narratives. `autoDeploy: true`, so a push to `main` deploys. `docs/PHASE_11_STATUS.md`
+tracks what is left.
 
 Read the two blockers at the bottom before you start.
 
@@ -86,8 +85,8 @@ every fresh container starts with an empty assessment history.
    completes without a provider and says so in its own limitations, and the
    four curated runs need no key at all.
 4. First deploy takes a while — the image is 1.55 GB and the free plan builds
-   slowly. `autoDeploy: false` is set deliberately, so a push does not
-   redeploy without you.
+   slowly. `autoDeploy: true`, so a push to `main` deploys; the gate runs on
+   every push, which is what makes that safe.
 5. Check `/api/health` on the live URL. `status: "degraded"` with
    `dataset: absent` means the data volume is missing, which is the failure
    discussed under blockers.
@@ -102,10 +101,16 @@ nobody else can see.
 
 ## Cold starts
 
-A Render free instance sleeps after inactivity and takes roughly **50 seconds**
-to wake. That is a property of the plan, not of this application. The README
-says so, and the app's health pill shows what is and is not ready while it
-comes up.
+A Render free instance sleeps after inactivity and takes roughly 50 seconds to
+wake. **Measured on this deployment: 42.4 seconds** from a cold request to
+`/api/health` answering `ok` with all five subsystems ready. That is a property
+of the plan, not of this application. The README says so, and the app's health
+pill shows what is and is not ready while it comes up.
+
+A model-backed assessment on the free instance takes **about 25 seconds** end to
+end -- ACC-1001 completed in 17 events with 3 model calls and 4,879 tokens. The
+same account offline on a laptop takes about half a second. Almost all of the
+difference is the provider, not the plan.
 
 ## Blockers: two closed, one mitigated
 

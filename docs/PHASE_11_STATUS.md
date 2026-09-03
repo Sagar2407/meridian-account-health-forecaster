@@ -1,27 +1,27 @@
 # Phase 11 status: public deployment and repository polish
 
-Status: **Incomplete; exit gate not passed.** The service is deployed and
-answering at `https://meridian-125g.onrender.com`, and the build it is serving
-is broken: it cannot retrieve, so every assessment degrades to verified
-telemetry with no forecast. The fix is committed and needs a redeploy. Until a
-deployment answers *correctly*, the second exit criterion is not met.
+Status: **Exit gate passed on 2026-09-03.** The service is live at
+`https://meridian-125g.onrender.com`, serving evidence-grounded forecasts with
+model-written narratives. One deliverable remains open — a recorded demo video
+or GIF — so the phase clears its gate while falling short of its full
+deliverable list.
 
-This document records what is finished, what the deployment attempt actually
-produced, and which causes have been ruled out, so the next attempt starts from
-measurements rather than from guesses.
+This document records what is finished, what the deployment actually produced,
+and what was wrong with it on the way, because the interesting part of this
+phase was a defect that only a deployment could reveal.
 
 ## Deliverables
 
 | Plan task | Status | Evidence |
 | --- | --- | --- |
 | Build the single-container production image | PASS | 1.55 GB, runs with zero mounts; D-059 and `docs/DEPLOYMENT.md` |
-| Add `render.yaml` | PASS | `render.yaml`, free plan, `autoDeploy: false`, no disk |
+| Add `render.yaml` | PASS | `render.yaml`, free plan, `autoDeploy: true`, no disk |
 | Configure secrets and demo-mode budgets | PASS | `MERIDIAN_LLM_API_KEY` is `sync: false`; demo mode, rate limits, and refusals in `docs/DEPLOYMENT.md` |
 | Add curated cached fallbacks | PASS | Four recorded runs served by `GET /api/demo-runs`; `scripts/build_demo_cache.py` |
 | Finish README, architecture, setup, usage, evaluation, safety, limitations, licence | PASS | `README.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `LICENSE` |
-| Deploy to Render and verify cold and warm starts | **FAIL** | The URL answers, but the deployed build cannot retrieve; cold and warm starts still unmeasured |
-| Public GitHub repository | PASS | Public since 2026-08-31 |
-| Public application URL | **PARTIAL** | `https://meridian-125g.onrender.com` answers, serving a build that returns no forecasts. Redeploy pending |
+| Deploy to Render and verify cold and warm starts | PASS | Cold start measured at 42.4 s to a healthy `/api/health`; a model-backed assessment takes about 25 s on the free instance |
+| Public GitHub repository | PASS | Public since 2026-08-31, with a description and `autoDeploy: true` |
+| Public application URL | PASS | `https://meridian-125g.onrender.com`: ACC-1001 returned amber/Churned at 0.7700 with 7 citations, 3 model calls and 4,879 tokens |
 | Recorded backup demo video or GIF | **NOT DONE** | Screenshots only, in `docs/screenshots/` |
 
 ## Exit gate
@@ -29,7 +29,7 @@ measurements rather than from guesses.
 | Criterion | Result | How it was checked |
 | --- | --- | --- |
 | A fresh reviewer can follow the README and run the app locally | PASS | `make phase0-verify` from a clone; `make prod-build && make prod-up` serves on 8080 with no mounts |
-| The public link completes all curated demo paths without exposing a key | **FAIL** | The link is reachable and one real run was exercised on it: `RUN-e6fb1cbe125e` on ACC-1077 returned no forecast, naming a missing knowledge base as the gap. No key was exposed. Re-check after the redeploy |
+| The public link completes all curated demo paths without exposing a key | PASS | 14 live paths checked: three client routes, all four curated runs, the portfolio, an account, the review queue and regressions, health, and a 404 for an unknown route. A live model-backed assessment completed. Scans and evaluations are refused with `REQUEST_BLOCKED` and a reason, for well-formed requests as well as malformed ones. No response carried anything key-shaped |
 
 ## What the deployment attempt produced
 
@@ -37,7 +37,7 @@ A web service named `meridian` was created on Render's free plan from this
 repository's Dockerfile, deploying commit `fbac4f3`, at
 `https://meridian-125g.onrender.com`.
 
-**It went from not answering to answering broken.** For most of 2026-09-03,
+**It went from not answering, to answering broken, to working.** For most of 2026-09-03,
 seven probes of `/api/health` at timeouts from 30 to 150 seconds all returned
 `HTTP 000`: TLS completing against Render's edge, no response behind it. A
 control probe of a service that does not exist returned `404` in 0.59s with
@@ -56,8 +56,23 @@ file.
 Both halves are fixed: the Dockerfile ships the 47 KB file, and the health check
 reports `absent` when an index has no knowledge base beside it. Verified against
 the rebuilt image — five accounts, 10 to 12 citations each, outcomes matching
-the committed traces to four decimals. **The deployment needs a redeploy to pick
-this up.**
+the committed traces to four decimals — and then on the deployment itself once
+`autoDeploy` was turned on.
+
+**The live run and the local one differ for two reasons, and only one of them
+is by design.** ACC-1001 is green at 0.8363 offline and amber at 0.7700 live.
+The confidence differs by design: it carries an adjudicator-agreement term, the
+deployment has a provider, and every published metric in this repository is the
+deterministic path.
+
+The rest is a lag. `autoDeploy` was switched on *after* the thresholds-v2 commit
+was pushed, so that push never triggered a build and the service is still
+serving the commit before it. Confirmed from the service itself:
+`GET /api/evaluations/system` returns `auto_release_rate` 0.0000 held out and
+0.0290 on development, from result directory `5eea29439fbe` -- the v1 numbers
+and the v1 directory. **The live evaluation page therefore disagrees with this
+repository until the next deploy**, which is exactly the kind of thing a
+demonstration would surface at the worst moment.
 
 ### Memory was ruled out while the service was silent
 

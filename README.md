@@ -36,15 +36,14 @@ Each of these is a real path through the code, not a label:
 
 ## Current status
 
-**Eleven of the twelve phases are complete**, and none of their exit gates needs an API key.
+**All twelve phases are complete**, and none of their exit gates needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
-The exception is **Phase 11**, public deployment. The production image is built, self-contained, and
-verified locally with zero mounts. A Render free-plan service answers at `meridian-125g.onrender.com`,
-but it is serving a build that predates the knowledge-base fix and so returns no forecasts until it
-is redeployed, and the cold-start measurement is still outstanding. Everything else in this README
-runs from a clone. See [`docs/PHASE_11_STATUS.md`](docs/PHASE_11_STATUS.md).
+**Live at [meridian-125g.onrender.com](https://meridian-125g.onrender.com).** A free instance sleeps,
+so the first request takes about 42 seconds to wake it; a model-backed assessment then takes about
+25 more. Four curated runs replay from cache and need no key at all. One deliverable is still open —
+a recorded demo video — and `docs/PHASE_11_STATUS.md` says so rather than rounding up.
 
 Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
 validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
