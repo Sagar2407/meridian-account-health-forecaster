@@ -96,16 +96,27 @@ default.
 ### Calibration misses its target
 
 ECE is 0.1712 held out against a target of at most 0.10. Section 22.6 allows
-"or clear improvement over uncalibrated model" as an alternative; Phase 2
-measured 0.1481 uncalibrated against 0.1346 calibrated, an improvement of
-0.0135. That is an improvement, but calling it *clear* would be generous, so
-**this target is reported as not met on either reading.**
+"or clear improvement over uncalibrated model" as an alternative. It is not met
+on that reading either, and the original text of this section had the comparison
+backwards: `artifacts/model/calibration_study.csv` records **0.1346
+uncalibrated and 0.1481 for the selected isotonic fit**, so calibration made ECE
+*worse* by 0.0135. Isotonic was selected on macro F1 (0.7423 against 0.7244) and
+log loss, not on ECE. **This target is not met on either reading.**
 
-The Brier score (0.0671) and the band table above say the ranking is sound; ECE
-says the absolute probabilities are over-confident. That is the specific,
-useful version of the finding, and it is the one that matters for the release
-bands: a threshold on a mis-scaled probability is a threshold on the wrong
-quantity.
+The Brier score (0.0671) and the band table above say the ranking is sound. The
+direction of the scale error was also stated backwards here, and it is the part
+that matters for the release bands: the system is **under-confident, not
+over-confident.** Recomputed from `runs.csv`, mean confidence is 0.7398 against
+0.9270 accuracy on development, and 0.7157 against 0.8378 held out. Every
+reliability bin on both splits sits below the diagonal, one bin of n=1 aside.
+
+That inverts what the finding implies. An under-confident score does not release
+answers it should have reviewed; it reviews answers it should have released.
+Thirty-eight development runs scored between 0.80 and 0.90 and **every one of
+them was correct**, while the green band starts at 0.85. Two of the hard caps
+compound it: `cap_exhausted_retrieval_gap` and `cap_repaired_verification` both
+pin confidence at 0.84, one hundredth below the auto-release threshold, so a run
+that touches either can never release no matter how strong its evidence is.
 
 ## Verification
 

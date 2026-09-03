@@ -52,14 +52,20 @@ two of them new:
 4. External events run to 2026-07-02, past the 2026-06-28 horizon; 114 rows are
    removed by cutoff filtering.
 
-## Known limitation
+## Known limitation -- closed
 
-GitHub Actions cannot exercise the data layer. The synthetic archive is
-git-ignored by policy, so the 34 dataset-dependent tests skip in CI and its
-coverage threshold is disabled there. The authoritative data gate is
-`make validate-data`, which sets `MERIDIAN_REQUIRE_DATASET=1` so a missing
-dataset is an error rather than a silent skip. `make phase0-verify` mounts the
-archive read-only into the backend container and applies the same flag.
+This section recorded that GitHub Actions could not exercise the data layer,
+because the synthetic archive was git-ignored, so the dataset-dependent tests
+skipped in CI and its coverage threshold was disabled there.
+
+**That premise ended when the archive was committed** (`7619cd1`), though the
+workflow kept skipping for some time afterwards on the strength of a comment
+nobody had rechecked. CI now extracts the committed archive, builds the data,
+model, and index, and runs with `MERIDIAN_REQUIRE_DATASET=1` and the coverage
+threshold in force, so a missing dataset is an error there rather than a silent
+skip. `make validate-data` runs the identical command locally, and
+`make phase0-verify` mounts the archive read-only into the backend container and
+applies the same flag.
 
 ## Carried into Phase 2
 

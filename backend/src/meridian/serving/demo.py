@@ -41,7 +41,15 @@ CURATED_KINDS: tuple[str, ...] = (
 
 #: What each curated run is meant to show, in the words the page uses.
 KIND_LABELS: dict[str, str] = {
-    "fast_path": "A straightforward account: the evidence agrees and the run takes the fast path.",
+    # Says what the slot selects for -- a forecast reached without the conflict
+    # search -- and nothing about the route. The previous wording called it
+    # "a straightforward account" while the recorded run was red at 0.64
+    # confidence, which is the first thing a visitor to the public demo read.
+    "fast_path": (
+        "An account whose evidence agrees, so the run takes the fast path without "
+        "the Tree-of-Thought search. What it routes to still depends on the "
+        "confidence it earns."
+    ),
     "conflict": (
         "An account whose evidence disagrees with itself, so the bounded "
         "Tree-of-Thought search runs."

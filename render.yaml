@@ -102,8 +102,11 @@ services:
         value: "false"
 
     # A free instance has an ephemeral filesystem: assessment history and
-    # review cases do not survive a restart. Section 24.3 permits exactly that
-    # -- "keep review and assessment storage ephemeral in the free public
-    # demo" -- and the README says so rather than letting a visitor assume
-    # their override was kept.
+    # review cases live in the container layer. Measured, because the loose
+    # version of this claim was wrong -- they survive a restart of the same
+    # container and are gone whenever the container is *replaced*, which a
+    # deploy and a spin-down both do. Section 24.3 permits exactly that --
+    # "keep review and assessment storage ephemeral in the free public demo"
+    # -- and the README says so rather than letting a visitor assume their
+    # override was kept.
     disk: null

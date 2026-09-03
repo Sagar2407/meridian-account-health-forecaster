@@ -10,10 +10,15 @@ The full served surface is covered in `test_api_service.py`, which needs the
 dataset; the OpenAPI assertion here is the one that must hold everywhere.
 """
 
+from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
 from meridian.api.main import app
+from meridian.api.routes import health
 from meridian.api.routes.health import HealthResponse
+from meridian.retrieval.index import INDEX_FILENAME
 
 client = TestClient(app)
 
@@ -84,3 +89,56 @@ def test_openapi_is_section_19s_endpoint_table() -> None:
         "/api/demo-runs",
         "/api/demo-runs/{kind}",
     }
+
+
+def test_an_index_without_its_knowledge_base_is_not_ready(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Shipping the index without the corpus it verifies against is not readiness.
+
+    This is the production failure this assertion exists for. The serving image
+    copied the index and the account tables but not `rag_corpus/`, so every
+    search raised `FileNotFoundError` inside `load_verified_index`, every
+    assessment degraded to telemetry with no forecast -- and `/api/health` went
+    on reporting the index ready, because it only looked for the `.faiss` file.
+    A health check that cannot see the difference is what let it deploy.
+    """
+
+    indexes = tmp_path / "indexes"
+    indexes.mkdir()
+    (indexes / INDEX_FILENAME).write_bytes(b"")
+    monkeypatch.setattr(health, "indexes_directory", lambda: indexes)
+    monkeypatch.setattr(health, "knowledge_base_path", lambda: tmp_path / "absent.jsonl")
+
+    absent = health._index()
+    assert absent.status == "absent"
+    assert "knowledge base" in absent.detail
+
+    present = tmp_path / "knowledge_base.jsonl"
+    present.write_text("", encoding="utf-8")
+    monkeypatch.setattr(health, "knowledge_base_path", lambda: present)
+
+    assert health._index().status == "ready"
+
+
+DOCKERFILE = Path(__file__).resolve().parents[2] / "Dockerfile"
+
+
+@pytest.mark.skipif(
+    not DOCKERFILE.is_file(),
+    reason=(
+        "the Dockerfile is absent, so this is not a source checkout. The backend "
+        "image does not copy it; this check runs on a developer checkout and in CI."
+    ),
+)
+def test_the_serving_image_ships_what_the_serving_code_reads() -> None:
+    """The runtime stage must copy the knowledge base, not only the index.
+
+    A unit test cannot catch a file missing from an image, and building one to
+    find out costs minutes. Reading the Dockerfile is the cheap half: it pins
+    the copy that was absent, so removing it fails here rather than in a
+    deployment.
+    """
+
+    runtime = DOCKERFILE.read_text(encoding="utf-8").split("AS runtime", 1)[1]
+    assert "rag_corpus/knowledge_base.jsonl" in runtime

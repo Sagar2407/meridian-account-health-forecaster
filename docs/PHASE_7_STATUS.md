@@ -21,7 +21,7 @@ with one of four validated reviewer actions. No API key is needed for any of it.
 | Review queue API | PASS | `GET /api/review-cases`, `GET /api/review-cases/{case_id}`, `POST /api/review-cases/{case_id}/decision`, and `GET /api/review-regressions` |
 | Review persistence | PASS | Approve, override, request-data, and escalate actions are stored; requested sources survive a database round trip |
 | Regression export | PASS | Reviewer corrections and recoverable run failures become versioned records exportable as JSON Lines or through the API |
-| Safety report | PASS | `make evaluate-guardrails` writes JSON, CSV, and Markdown under ignored `artifacts/safety/` |
+| Safety report | PASS | `make evaluate-guardrails` writes JSON, CSV, and Markdown under `artifacts/safety/`, which is committed |
 
 ## Exit gate
 

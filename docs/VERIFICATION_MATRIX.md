@@ -33,7 +33,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | The archive reproduces byte for byte from the generator at seed `20260721` | `test_every_table_reproduces_the_shipped_archive` | Verified in Phase 1 |
 | Byte-exact reproduction requires `numpy < 2.5`; numpy 2.5.2 alters one note body (`NOTE-204709`) | Controlled comparison holding Python, pandas, and seed constant | Verified in Phase 1 |
 | Permitted missing values are 575 CSAT, 575 resolution hours, 135 outcome reasons, 231 usage-cliff dates | `test_permitted_missing_values_are_explicit` | Verified in Phase 1 |
-| All 36 packaged guardrail cases pass their named checks | `make evaluate-guardrails`; ignored JSON, CSV, and Markdown artifacts under `artifacts/safety/` | Verified in Phase 7 |
+| All 36 packaged guardrail cases pass their named checks | `make evaluate-guardrails`; the JSON, CSV, and Markdown artifacts committed under `artifacts/safety/` | Verified in Phase 7 |
 | Hard-category false-pass and answerable false-block rates are both 0.0000 | 15 hard and 21 answerable cases in the Phase 7 safety report | Verified in Phase 7 |
 | Released evaluation results contain no target, wrong-account, or post-cutoff leakage findings | Whole-result leakage audit across the 36-case run | Verified in Phase 7 |
 | Reviewer overrides resolve the case and create a linked regression on one transaction | Store rollback test and FastAPI end-to-end test | Verified in Phase 7 |
@@ -96,7 +96,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | Tool timeout of 20 seconds, and the fast-path latency target | Measured across every assessed account on both splits | Offline, p50 is 160 ms (held out) and 165 ms (development); p95 is 261 ms and 313 ms -- roughly two orders below the 20 s timeout. Reported per path in each `results.json` |
 | Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts, repeated over 12 in Phase 12 | **No.** 0 auto-released at either size; 6 of 6 and then 12 of 12 queued for review. The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
 | What loosening the review bands would buy | 29 candidate band pairs replayed over 207 development runs | Twelve times the release rate (6 to 70 of 207) at a 5.7% unreviewed error rate. No threshold was changed: the trade is a business decision; see `docs/PHASE_10_STATUS.md` |
-| Whether the confidence score ranks correctly | Error rate inside each review band, 207 development runs | Yes: 0.000 green, 0.029 amber, 0.127 red, and all 8 errors landed in red. ECE says the absolute scale is over-confident even though the ranking is sound |
+| Whether the confidence score ranks correctly | Error rate inside each review band, 207 development runs | Yes: 0.000 green, 0.029 amber, 0.127 red, and all 8 errors landed in red. The ranking is sound; the absolute scale is **under**-confident, by 0.187 on development and 0.122 held out (mean confidence against observed accuracy, recomputed from `runs.csv`) |
 
 ## Unresolved inputs
 
@@ -107,7 +107,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | The serving image is 1.55 GB | Cold-start and disk pressure on the deployment target | 2.2 GB before discarding uv's build cache in the layer that creates it, then +80 MB to carry the runtime data and the embedding model so the image needs no mounts. The development image is still 2.75 GB because it installs the dev extra. Re-measure on Render once deployed |
 | The model-backed path has run against a real provider | One complete assessment on `liquid/lfm-2.5-2.6b:free`, planner and adjudicator both `source: model`, output verification passed first attempt, 7,382 tokens, 0.00 USD | Verified by `artifacts/provider/open_weight_run.json` |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
-| Expected calibration error is 0.1712 held out, against a 0.10 target | The release bands sit on an over-confident probability scale | Refit calibration on development data and re-freeze; section 22.7 forbids recalibrating on the held-out result now measured |
+| Expected calibration error is 0.1712 held out, against a 0.10 target | The release bands sit on an **under**-confident scale, so the cost is review load rather than unreviewed error: 38 development runs scored 0.80-0.90 and all 38 were correct, below a green band starting at 0.85 | Fix the scale on development data and re-freeze as v2; section 22.7 forbids recalibrating against the held-out result now measured. Note that isotonic made ECE worse than no calibration (0.1481 against 0.1346), so refitting the model's calibrator is not on its own the fix -- the gap is in the composed score and its caps |
 | Auto-release rate is 0.0000 on the held-out split | The system produces only review load | The measured trade-off is recorded; choosing a band is the owner's decision |
 | `Contracted` has two held-out examples | Its per-class F1 of 0.2857 is not a measurement | Report it, do not read it |
 | The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
@@ -121,16 +121,16 @@ public link that completes the curated demo paths, and no deployment answers, so
 the phase is open and `docs/PHASE_11_STATUS.md` records where it stands.
 
 The latest `make phase0-verify` rebuilt both locked images and passed formatting
-over 152 files, lint, strict typing over 151 source files, 658 backend tests with
-40 expected skips at 94.86% coverage, 98 frontend tests, the production frontend
+over 152 files, lint, strict typing over 151 source files, 659 backend tests with
+41 expected skips at 94.87% coverage, 98 frontend tests, the production frontend
 build, the repository policy scan over 343 files, and both live container health
 checks.
 
-The gate mounts the extracted archive, so those 40 skips are not data-layer
-tests. Run with the archive absent -- the backend image excludes it -- 377 pass
-and 321 skip; `MERIDIAN_REQUIRE_DATASET=1` turns that absence into an error so
+The gate mounts the extracted archive, so those 41 skips are not data-layer
+tests. Run with the archive absent -- the backend image excludes it -- 378 pass
+and 322 skip; `MERIDIAN_REQUIRE_DATASET=1` turns that absence into an error so
 neither configuration can go green vacuously. `make validate-data` is the
-with-archive run: 697 pass, 1 skips, 94.85% coverage.
+with-archive run: 699 pass, 1 skips, 94.85% coverage.
 
 The safety suite passes all 36 cases without a provider, the portfolio scan holds
 its concurrency and budget bounds, the browser suite passes 42 tests with none

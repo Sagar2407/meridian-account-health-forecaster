@@ -217,11 +217,24 @@ def _account_documents(repository: RuntimeRepository, account_id: str) -> list[P
     return documents
 
 
+def knowledge_base_path(archive: Path | None = None) -> Path:
+    """Return where the knowledge-base articles are read from.
+
+    One source of truth for the location, because two callers need it: this
+    module loads it, and the health endpoint checks it is present. A serving
+    container that ships the index but not this file answers every search with
+    `FileNotFoundError`, so a health check that does not look here reports a
+    readiness the service does not have.
+    """
+
+    source = archive if archive is not None else raw_dataset_directory()
+    return source / "rag_corpus" / "knowledge_base.jsonl"
+
+
 def load_knowledge_base(archive: Path | None = None) -> list[ParentDocument]:
     """Return the knowledge-base articles, which are not account scoped."""
 
-    source = archive if archive is not None else raw_dataset_directory()
-    path = source / "rag_corpus" / "knowledge_base.jsonl"
+    path = knowledge_base_path(archive)
     documents: list[ParentDocument] = []
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():

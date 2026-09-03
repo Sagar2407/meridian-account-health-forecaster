@@ -1,8 +1,11 @@
 # Deployment runbook
 
 Everything here has been verified against the production image on this machine.
-What has **not** happened is the deploy itself: that needs your Render account,
-and the repository is still private, so Render cannot see it yet.
+The repository is public, and a Render free-plan service is deployed at
+`https://meridian-125g.onrender.com`. It is **not** finished: the build it is
+serving predates the knowledge-base fix in blocker 1, so it answers without
+forecasts until it is redeployed, and `autoDeploy: false` means that redeploy is
+a deliberate act. `docs/PHASE_11_STATUS.md` tracks what is left.
 
 Read the two blockers at the bottom before you start.
 
@@ -111,7 +114,25 @@ comes up.
 The image now builds everything the served application reads, so a deployment
 starts `ok` rather than `degraded`. Verified by running it with no mounts and
 `HF_HUB_OFFLINE=1`: all four data subsystems ready, 15 endpoint checks green,
-assessments completing in about a second and opening review cases.
+and assessments returning forecasts with 10 to 12 citations each -- ACC-1042
+amber/Churned at 0.7991, ACC-1001 amber/Churned at 0.8363, ACC-1002
+amber/Renewed at 0.9207, matching the committed traces to four decimals.
+
+**That last clause is the one that matters, and it is worded that way because
+the first version of this claim was "assessments completing and opening review
+cases" -- which was true, and hid a broken deployment.** They completed by
+degrading: every run returned verified telemetry with no forecast and zero
+citations, because the runtime stage copied the account tables but not
+`rag_corpus/knowledge_base.jsonl`. Every search calls `load_verified_index`,
+which rebuilds the parent documents to check the index digest against the
+corpus this code produces today, and building parents reads the knowledge base.
+The file is 47 KB; without it the product does not work at all.
+
+`/api/health` reported the index ready throughout, because it looked only for
+the `.faiss` file. It now checks the knowledge base beside it, and
+`backend/tests/test_health.py` pins both halves: the readiness check, and a
+reading of this Dockerfile asserting the runtime stage still copies the file.
+An assertion that a run *completed* is not an assertion that it answered.
 
 **It builds the data rather than copying it, and that distinction is the whole
 answer.** The obvious implementation -- add `COPY data/indexes` and friends --
@@ -234,8 +255,8 @@ the repository.
 ## Verified
 
 `make phase0-verify` on the locked images: formatting over 152 files, ruff,
-strict mypy over 151 source files, 658 backend container tests with 40 expected
-skips at 94.86% coverage, 98 frontend tests, the production frontend build, the
+strict mypy over 151 source files, 659 backend container tests with 41 expected
+skips at 94.87% coverage, 98 frontend tests, the production frontend build, the
 repository policy scan over 343 files, and both application health checks.
 
 Separately, against the production image itself (`make prod-build`,

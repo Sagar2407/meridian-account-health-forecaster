@@ -148,6 +148,17 @@ COPY artifacts ./artifacts
 # docs/DEPLOYMENT.md back on the table.
 COPY --from=databuild /app/data/raw/meridian-account-health/data \
                      ./data/raw/meridian-account-health/data
+# The knowledge base is read at *serve* time, not only at build time, so it has
+# to ship. `load_verified_index` rebuilds the parent documents on every search
+# to check the index digest against the corpus this code produces today, and
+# building parents calls `load_knowledge_base`. Without this file every search
+# raises FileNotFoundError, every assessment degrades to telemetry with no
+# forecast, and `/api/health` still says the index is ready -- which is how it
+# reached a deployment unnoticed. Only this one 47 KB file is served: the rest
+# of rag_corpus (28 MB of ticket, note, and combined corpora) is consumed by
+# `build_index.py` in the databuild stage and never read again.
+COPY --from=databuild /app/data/raw/meridian-account-health/rag_corpus/knowledge_base.jsonl \
+                     ./data/raw/meridian-account-health/rag_corpus/knowledge_base.jsonl
 COPY --from=databuild /app/data/indexes ./data/indexes
 COPY --from=databuild /app/data/processed ./data/processed
 COPY --from=databuild /app/data/splits ./data/splits

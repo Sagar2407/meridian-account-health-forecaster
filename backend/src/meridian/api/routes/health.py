@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from meridian.data.paths import application_directory, raw_tables_directory
 from meridian.memory.store import STORE_FILENAME
 from meridian.model.artifacts import models_directory
+from meridian.retrieval.documents import knowledge_base_path
 from meridian.retrieval.index import INDEX_FILENAME, indexes_directory
 from meridian.settings import get_settings
 
@@ -72,11 +73,26 @@ def _forecaster() -> SubsystemHealth:
 
 
 def _index() -> SubsystemHealth:
-    """Report whether a retrieval index has been built."""
+    """Report whether retrieval can actually run.
 
-    if (indexes_directory() / INDEX_FILENAME).is_file():
-        return SubsystemHealth(status="ready", detail="a retrieval index is present")
-    return SubsystemHealth(status="absent", detail="no retrieval index; build it with `make index`")
+    Two files, not one. Every search calls `load_verified_index`, which rebuilds
+    the parent documents to check the index against the corpus this code
+    produces today, and that reads the knowledge base. An index file with no
+    knowledge base beside it is a container where retrieval raises on the first
+    request while this endpoint says it is ready -- which is exactly how it
+    reached a deployment.
+    """
+
+    if not (indexes_directory() / INDEX_FILENAME).is_file():
+        return SubsystemHealth(
+            status="absent", detail="no retrieval index; build it with `make index`"
+        )
+    if not knowledge_base_path().is_file():
+        return SubsystemHealth(
+            status="absent",
+            detail="an index is present but the knowledge base it is verified against is missing",
+        )
+    return SubsystemHealth(status="ready", detail="a retrieval index is present")
 
 
 def _database() -> SubsystemHealth:

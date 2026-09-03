@@ -653,7 +653,7 @@
     "fast_path": {
       "account_id": "ACC-1000",
       "commit": "a4563f45de05d6a75016cf9eefcd4316b387485e",
-      "label": "A straightforward account: the evidence agrees and the run takes the fast path.",
+      "label": "An account whose evidence agrees, so the run takes the fast path without the Tree-of-Thought search. What it routes to still depends on the confidence it earns.",
       "question": "What is the renewal outlook for this account, and what drives it?",
       "recorded_at": "2026-09-01T18:33:09+00:00",
       "route": "red",
