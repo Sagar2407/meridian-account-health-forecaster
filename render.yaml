@@ -65,10 +65,36 @@ services:
         sync: false
       - key: MERIDIAN_LLM_PROVIDER
         value: openai_compatible
+
+      # A 2.6B open-weight model on OpenRouter's free tier, so a public demo
+      # can exercise the model-backed path without a bill. It is deliberately
+      # not a frontier model: this deployment exists to show that the planner,
+      # the adjudicator and output verification work end to end, and the
+      # narrative's wording is the only thing a larger model would improve.
+      # Every published metric in this repository is the deterministic run, not
+      # this one. Swap the slug for `anthropic/claude-sonnet-4.5` -- or any
+      # OpenRouter model -- to change nothing but the prose.
+      #
+      # Verified on this model: planner and adjudicator both model-written,
+      # output verification passed first attempt, 7,382 tokens, 0.00 USD
+      # (`artifacts/provider/`).
+      #
+      # Free slugs are rate-limited per day, and the limits below allow more
+      # runs than a free-tier account will be served. Past that point the
+      # provider fails and the adjudicator falls back to the deterministic
+      # narrative, saying so in the decision's own limitations -- the run still
+      # completes, still routes, still cites real evidence.
       - key: MERIDIAN_LLM_MODEL
-        value: anthropic/claude-sonnet-4.5
+        value: liquid/lfm-2.5-2.6b:free
       - key: MERIDIAN_LLM_BASE_URL
         value: https://openrouter.ai/api/v1
+
+      # `auto` asks for a server-enforced JSON Schema and steps down if the
+      # server refuses. This model supports the strict form, so no step-down
+      # happens; the setting is explicit because it is what makes swapping in a
+      # smaller or locally-hosted model a one-line change.
+      - key: MERIDIAN_LLM_STRUCTURED_OUTPUT
+        value: auto
 
       # LangSmith mirroring is optional and off. The application is fully
       # functional without it (plan section 21.2).
