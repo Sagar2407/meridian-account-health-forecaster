@@ -51,6 +51,11 @@ This matrix separates verified facts from provisional design choices and open qu
 | Every claim in the evaluation report comes from its result file | `render()` formats the result and holds no literal; a test asserts every named artifact exists | Verified in Phase 10 |
 | The browser's types match the models the API sends | `test_browser_contract.py` compares field names and literal unions against the Pydantic models | Verified in Phase 10 |
 | An abstention carries rule codes like any other route | Section 22.6's safe-fallback target now measures 1.0000 over the development run that reaches it | Verified in Phase 10 |
+| Every page passes an automated WCAG 2.0/2.1 A and AA audit | axe-core over six routes on two viewports; it found `--ink-faint` at 4.09:1 and the green status pill at 4.43:1 against a 4.5:1 requirement, and both were darkened | Verified by `frontend/e2e/accessibility.spec.ts` |
+| The layout does not change without someone deciding it should | Committed pixel baselines for the portfolio, a curated demo run, and the not-found page, on both viewports | Verified by `frontend/e2e/layout.spec.ts` |
+| Corpus size does not change retrieval results, because account filtering precedes ranking | The chunking ablation over 10,459 documents from 260 accounts returns metrics identical to four decimals to the 853-document run | Verified by `artifacts/retrieval/full_corpus/` |
+| The review queue is ordered by all four of section 20.5's keys | Route, then ACV, then renewal proximity, then age, applied before `limit` rather than after | Verified by `backend/tests/test_review_queue_priority.py` |
+| Numeric replay reads number words as well as numerals | "five of six" and "5 of 6" replay identically; `one` and `zero` count only inside a ratio | Verified by `backend/tests/test_numeric_replay_words.py` |
 | The production image serves the API and the browser bundle from one process | `make prod-up`, then the shell at `/`, a client route at `/review`, a hashed asset, and `/api/health` all answered correctly | Verified in Phase 11 |
 | Demo mode replaces free text and refuses scans in the production image | A poem request came back as the curated question; a scan returned `REQUEST_BLOCKED` | Verified in Phase 11 |
 | Every curated demo run is marked as a recording | Four cached runs, each carrying `is_cached` and a note naming the commit and moment | Verified in Phase 11 |
@@ -97,26 +102,28 @@ This matrix separates verified facts from provisional design choices and open qu
 
 | Item | Consequence | Next action |
 | --- | --- | --- |
-| The dataset, model, and index are not in the production image | A Render deployment starts degraded, with three subsystems absent | Bake them in, build them in the image, or attach a disk; the trade is cost against build time (`docs/DEPLOYMENT.md`) |
-| No deploy has happened and no live URL exists | Cold-start and warm-start behaviour are unmeasured | Follow `docs/DEPLOYMENT.md` |
-| Backend image is 2.64 GB | Cold-start and disk pressure on the Phase 11 deployment target | Measure on Render; consider a serving image without training and evaluation dependencies |
+| The production image is self-contained | `make prod-up` runs it with zero mounts: `/api/health` reports `ok` with all four data subsystems ready, 15 endpoint checks pass, and assessments complete and open review cases | Verified locally; see `docs/DEPLOYMENT.md` |
+| No deploy has happened and no live URL exists | Cold-start behaviour on the target is unmeasured; local timings are recorded in `docs/DEPLOYMENT.md` | Follow `docs/DEPLOYMENT.md` |
+| The serving image is 1.55 GB | Cold-start and disk pressure on the deployment target | 2.2 GB before discarding uv's build cache in the layer that creates it, then +80 MB to carry the runtime data and the embedding model so the image needs no mounts. The development image is still 2.75 GB because it installs the dev extra. Re-measure on Render once deployed |
+| The model-backed path has run against a real provider | One complete assessment on `liquid/lfm-2.5-2.6b:free`, planner and adjudicator both `source: model`, output verification passed first attempt, 7,382 tokens, 0.00 USD | Verified by `artifacts/provider/open_weight_run.json` |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
 | Expected calibration error is 0.1712 held out, against a 0.10 target | The release bands sit on an over-confident probability scale | Refit calibration on development data and re-freeze; section 22.7 forbids recalibrating on the held-out result now measured |
 | Auto-release rate is 0.0000 on the held-out split | The system produces only review load | The measured trade-off is recorded; choosing a band is the owner's decision |
 | `Contracted` has two held-out examples | Its per-class F1 of 0.2857 is not a measurement | Report it, do not read it |
 | The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
 | Serving state is per process and in memory | Live runs, scans, and rate-limit windows do not survive a restart or a second replica | Correct for the single-container target; a scaled deployment needs a shared store |
-| Accessibility is checked structurally, not audited | Landmarks, heading counts, accessible names, and overflow are asserted; no axe or WCAG audit has been run | Run an automated audit before the public release |
-| Numeric replay reads numerals, not number words | "Five of six drivers" is unverified where "5 of 6" would be | Normalize a bounded number-word vocabulary before public evaluation |
+| The review-decision endpoint is unauthenticated and demo mode does not cover it | Anyone who can reach a public deployment can resolve review cases, and other visitors see them resolved until the container is replaced | Mitigated, not fixed: `data/app` lives in the container layer, so state resets whenever the container is replaced — measured as surviving a restart and gone in a fresh container. Add authentication before attaching any persistent disk (`docs/DEPLOYMENT.md` blocker 2) |
 
 ## Readiness
 
 All twelve phases are complete. The latest `make phase0-verify` rebuilt both
-locked images and passed formatting, lint, strict typing, 614 backend tests at
-94.8% coverage, 95 frontend tests, the production frontend build, the repository
-policy scan over 335 files, and both live container health checks.
+locked images and passed formatting over 151 files, lint, strict typing over 150
+source files, 646 backend tests at 94.83% coverage, 98 frontend tests, the
+production frontend build, the repository policy scan over 339 files, and both
+live container health checks.
 
 The safety suite passes all 36 cases without a provider, the portfolio scan holds
-its concurrency and budget bounds, the browser suite passes 24 journeys with none
-skipped, and the held-out evaluation ran against frozen thresholds. What remains
-open is listed above; none of it blocks the system from running.
+its concurrency and budget bounds, the browser suite passes 42 tests with none
+skipped -- 24 journeys, 12 WCAG audits, and 6 visual-regression comparisons --
+and the held-out evaluation ran against frozen thresholds. What remains open is
+listed above; none of it blocks the system from running.

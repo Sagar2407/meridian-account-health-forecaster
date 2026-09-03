@@ -64,6 +64,8 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | D-056 | Ship one production image that omits `meridian_eval` entirely | Accepted | The evaluation package reads outcome labels; a served process should not be able to import it even by mistake ([Phase 11](DEPLOYMENT.md)) |
 | D-057 | Make every cached demo run carry an unremovable `is_cached` marker | Accepted | Section 24.3 forbids showing a cached run as live; a label that a flag can turn off is a label that will eventually be off ([Phase 11](DEPLOYMENT.md)) |
 | D-058 | Render FastAPI's own 404s and 405s in the documented error shape | Accepted | Section 19.3 promises a stable code on every failure, and an unmatched route returned `{"detail": ...}` — the shape a client hits most while being written ([Phase 11](DEPLOYMENT.md)) |
+| D-059 | Bake the runtime data slice into the production image rather than mounting it or building it | Accepted | Measurement changed the answer: what the served application reads is 51 MB, not the whole archive, because `metadata.sqlite` already stores every document's text and the 28 MB `rag_corpus` is only needed to build the index. The image grew 1.47 → 1.55 GB, the free plan needs no disk, and `data/app` landing in the container layer closes O-006 as a side effect ([`docs/DEPLOYMENT.md`](DEPLOYMENT.md)) |
+| D-060 | Negotiate the structured-output mode instead of always demanding a strict JSON Schema | Accepted | `response_format: json_schema` with `strict: true` was hardcoded, so any server that refuses the parameter — most small-model hosts — failed the whole call. `auto` steps down to `json_object` and then to prompt-only, carrying the schema in the system message once the API can no longer carry it. Correctness never depended on the mode: every reply is validated against the Pydantic model regardless ([`artifacts/provider/README.md`](../artifacts/provider/README.md)) |
 
 ## Decisions settled by measurement
 
@@ -87,8 +89,9 @@ This file summarizes accepted architectural decisions and unresolved choices. De
 | ID | Decision needed | Blocking point |
 | --- | --- | --- |
 | ~~O-003~~ | ~~Select repository license~~ | **Closed: Apache-2.0, see D-055** |
-| O-004 | How the dataset, model, and retrieval index reach the production image | Before any public deployment; see `docs/DEPLOYMENT.md` |
+| ~~O-004~~ | ~~How the dataset, model, and retrieval index reach the production image~~ | **Closed: baked into the image, see D-059** |
 | O-005 | Whether to loosen the release bands, given that auto-release is near zero | The measured trade-off is recorded; the choice is a business one |
+| ~~O-006~~ | ~~Whether a public demo lets visitors resolve review cases~~ | **Closed by D-059: writes land in the container layer, so they reset whenever the container is replaced. Revisit if a persistent disk is ever attached** |
 
 ## Decision-recording rule
 

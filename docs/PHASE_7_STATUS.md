@@ -199,5 +199,14 @@ optional `nodes` argument; nothing reachable from the API or the CLI passes it.
   as “five of six drivers” does not receive the same exact numeric replay as
   “5 of 6”; model prompts avoid that form, but the verifier should eventually
   normalize a small number-word vocabulary.
+
+  **Resolved.** `written_numbers` now reads a bounded vocabulary -- units,
+  teens, tens, and hyphenated compounds up to ninety-nine -- so both forms
+  replay identically. `one` and `zero` are read only inside an explicit `N of M`
+  ratio: every occurrence of those two words in this project's own generated
+  text is idiomatic (“quick one for the support team”, “roughly one quarter
+  out”, “stuck near zero”), so counting them everywhere would fail sound
+  narratives on English usage rather than on arithmetic. The guardrail suite is
+  byte-identical after the change apart from its timestamp.
 - The FastAPI review surface has no authentication yet. It is a local Phase 7
   workflow; deployment security belongs to the later API/deployment phases.

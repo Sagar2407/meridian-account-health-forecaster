@@ -123,6 +123,16 @@ and no served module may import them.
   not the account's commercial terms, so the other two would need either a join
   in the API or a request per row. It is a small API change and is deliberately
   not smuggled in here.
+
+  **Resolved.** `GET /api/review-cases` now joins each case to its account
+  profile and orders by all four keys, and the rows carry `acv_usd`,
+  `renewal_date`, and `days_to_renewal` so a reviewer can see why a case sits
+  where it does. Two things were wrong beyond the missing keys. The ordering ran
+  in the browser, so it only ever reordered the `limit` rows the server had
+  already chosen by recency -- the oldest untouched red case on the largest
+  account could not appear at all; `limit` is now applied after ordering. And
+  the client sort would have silently discarded the two new keys, so it is gone
+  and the page renders the order it is given.
 - **The E2E suite shares one database with the developer's own runs.** The
   compose override bind-mounts `data/` read-write, because the review journey
   has to record an assessment and open a case. A run therefore adds rows to
@@ -130,6 +140,28 @@ and no served module may import them.
   the same file `make assess` writes to.
 - **No visual-regression testing.** The screenshots are a deliverable, not a
   gate; nothing fails if the layout shifts.
+
+  **Resolved.** `frontend/e2e/layout.spec.ts` compares rendered pixels against
+  committed baselines on both viewports, so an accidental change to a shared
+  token, grid, or spacing scale fails the suite. It covers only pages whose
+  content is fixed -- the portfolio, a curated demo run, and the not-found page
+  -- because the review queue grows with every assessment and the evaluation
+  page renders whatever the last evaluation wrote, and a baseline that fails on
+  correct changes gets ignored. The captures are the viewport rather than the
+  full page: a full-page capture of a 260-row table was a megabyte of PNG that
+  moves with the data, which buys length rather than coverage. Accept an
+  intended change with `./scripts/run_e2e.sh --update-snapshots`, which now
+  forwards its arguments to Playwright.
 - **Accessibility is checked structurally, not audited.** Skip link, landmarks,
   heading counts, accessible names, and horizontal overflow are asserted. That
   is not the same as an axe or WCAG audit, and no such audit has been run.
+
+  **Resolved.** `frontend/e2e/accessibility.spec.ts` runs axe-core against every
+  route at WCAG 2.0/2.1 A and AA, on both viewports, and fails on any violation.
+  It found one rule broken on every page, which is exactly the class of defect
+  the hand-written checks could not see: nothing about the markup was wrong.
+  `--ink-faint`, the colour of every timestamp, latency, eyebrow, and citation
+  source, was 4.09:1 on white and 3.82:1 on the sunken surface against a 4.5:1
+  requirement, and the green status pill was 4.43:1 against its own background.
+  Both were darkened until they clear AA on every surface they are used on. The
+  suite is now 36 tests: 24 journeys and 12 audits.

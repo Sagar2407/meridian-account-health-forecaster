@@ -158,6 +158,18 @@ This is a judgement call on a small difference, not a result. Stating it as a re
 - **The ablation corpus is 853 documents from the 18 golden accounts, not all 260.** Embedding the
   full corpus twice would add roughly twenty minutes without changing what the comparison controls
   for. The consequence is that the small gap between the arms rests on a small corpus.
+
+  **Resolved.** `scripts/evaluate_retrieval.py --full-corpus` runs it over all
+  260 accounts -- 10,459 documents and 17,140 chunks, twelve times the corpus --
+  and **every metric is identical to four decimal places**. The reason is the
+  more useful result: every graded query is issued against a named account and
+  the account lane filters on `account_id` before ranking, so the 242 added
+  accounts contribute candidates that are excluded before they can compete, and
+  the knowledge-base lane sees the same 32 articles either way. The corpus grew
+  twelvefold and the set of documents reachable by any graded query did not
+  change, which is a direct measurement that cross-account documents cannot
+  pollute a result. Numbers and the full explanation are in
+  `artifacts/retrieval/full_corpus/README.md`.
 - **Downstream answer correctness is not measured.** Plan section 11.6 asks for it; it needs a
   language model to produce an answer to grade, so it is deferred to the phases that have one.
 - **Ungraded queries still count.** 104 of 243 carry no gold set: 54 from the three subjective

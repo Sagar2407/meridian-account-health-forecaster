@@ -153,7 +153,9 @@ the variable name, decides which service is called.
   operations rather than free-choice model tools, so they exist on
   `AssessmentStore` and will be called by the graph in Phase 7 rather than
   advertised over MCP.
-- **The backend image is now 2.64 GB.** Most of that arrived with Phase 3
+- **The backend image is now 2.64 GB.** (It is 2.75 GB as of the latest
+  measurement, and the separate serving image built by the root `Dockerfile` is
+  1.47 GB; see `docs/DEPLOYMENT.md`.) Most of that arrived with Phase 3
   (faiss, onnxruntime, fastembed, scikit-learn, pandas); `mcp` and `openai` add
   little. It is not a problem locally, but ADR 0005 targets Render, where image
   size affects cold start and the free tier's disk. Phase 11 should measure it
