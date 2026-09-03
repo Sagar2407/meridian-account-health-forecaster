@@ -1,6 +1,6 @@
 # Data lineage
 
-How the Meridian dataset travels from the supplied archive to the sanitized
+How the Meridian dataset travels from the generated archive to the sanitized
 tables the application is allowed to read, and what was found along the way.
 
 All records are synthetic. See `docs/DATA_SAFETY.md` for the policy this
@@ -63,7 +63,7 @@ the fact data. This is not a formality:
 | `csm_notes` | 6,420 | 5,044 | 1,376 |
 | `external_events` | 595 | 481 | 114 |
 
-## Findings in the supplied archive
+## Findings in the generated archive
 
 Four issues were found while building this pipeline. Each is handled
 deliberately rather than worked around.

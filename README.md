@@ -2,7 +2,7 @@
 
 Meridian is a read-only autonomous decision-support system for renewal forecasting. Given a B2B SaaS customer account, it forecasts `Churned`, `Contracted`, `Renewed`, or `Expanded`; explains the result with exact metrics and point-in-time evidence; recommends a next step; and decides whether the advisory result can be released or needs human review.
 
-> All account, company, person, usage, ticket, note, event, and outcome data in this repository is synthetic. The system is decision support and must not make customer-facing or commercial commitments.
+> All account, company, person, usage, ticket, note, event, and outcome data in this repository is synthetic, generated for this project by the code in [`dataset/`](dataset/) from a documented causal model. The system is decision support and must not make customer-facing or commercial commitments.
 
 ## Who it is for, and what it is for
 
@@ -403,7 +403,15 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 ## The dataset
 
 Every account, company, person, usage record, ticket, note, event, and outcome in this project is
-synthetic and was written for it. Nothing here describes a real company or a real person.
+synthetic. I designed and generated the dataset for this system — it is not a public corpus and was
+not supplied by anyone. Nothing here describes a real company or a real person.
+
+That matters for more than compliance. The data comes from an explicit causal model, so the true
+drivers of each outcome are **known** rather than inferred, and `ground_truth_drivers.json` is what
+makes driver attribution measurable at all: the reported driver overlap of 0.4279 on the held-out
+split is scored against the generator's own causal record. The 23 golden retrieval questions and the
+36 guardrail cases were written the same way, which is why the safety and retrieval suites have a
+correct answer to grade against rather than a plausible one.
 
 `meridian-account-health.zip` (4.2 MB) is committed, so a fresh clone can run every gate after one
 command:
@@ -471,9 +479,10 @@ completes without a provider, writes a deterministic narrative, and says so in i
 Licensed under the [Apache License 2.0](LICENSE). See [`NOTICE`](NOTICE) for the synthetic-data and
 decision-support statements that travel with it.
 
-The dataset, its generator, and the packaged evaluation sets are synthetic and reproduce
-byte for byte from a fixed seed. `dataset/` is a browsable copy of the committed archive, and a test
-fails the build if the two diverge.
+The dataset, its generator, the knowledge base, and the evaluation sets are my own work, released
+under the same licence as the code. They are fully synthetic and reproduce byte for byte from seed
+`20260721`. `dataset/` is a browsable copy of the committed archive, and a test fails the build if
+the two diverge.
 
 Built with LangGraph, FastAPI, scikit-learn, FAISS, fastembed, React, and the Model Context Protocol
 SDK.
