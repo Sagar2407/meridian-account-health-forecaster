@@ -228,15 +228,15 @@ make security                                  # scans the working tree
 ```
 
 Publishing does not by itself expose anything served: `make prod-up` binds to
-localhost, and nothing is deployed yet. Blocker 2 is about a deployment, not
-about the repository.
+localhost, and no deployment answers. Blocker 2 is about a deployment, not about
+the repository.
 
 ## Verified
 
-`make phase0-verify` on the locked images: formatting over 151 files, ruff,
-strict mypy over 150 source files, 646 backend container tests with 40 expected
-skips at 94.83% coverage, 98 frontend tests, the production frontend build, the
-repository policy scan over 339 files, and both application health checks.
+`make phase0-verify` on the locked images: formatting over 152 files, ruff,
+strict mypy over 151 source files, 658 backend container tests with 40 expected
+skips at 94.86% coverage, 98 frontend tests, the production frontend build, the
+repository policy scan over 343 files, and both application health checks.
 
 Separately, against the production image itself (`make prod-build`,
 `make prod-up`):
@@ -270,8 +270,16 @@ the 65 MB download on the first request after every idle spin-down.
 
 ## What is not done
 
-- **No deploy has happened.** No live URL exists, so the plan's "public
-  application URL" deliverable is open.
+- **A deploy has been attempted and does not answer.** A Render free-plan
+  service was created from this Dockerfile at `meridian-125g.onrender.com` on
+  commit `fbac4f3`. Seven probes of `/api/health` on 2026-09-03, at timeouts
+  from 30 to 150 seconds, all returned `HTTP 000`: the TLS handshake completes
+  against Render's edge and no response follows. That is not spin-down, which
+  answers slowly rather than never. Memory is ruled out — the local production
+  container peaks at 226 MB against the plan's 512 MB cap — and the remaining
+  candidates are a failed or timed-out build, a container not binding `$PORT`,
+  and a deploy stuck mid-roll. The plan's "public application URL" deliverable
+  stays open; `docs/PHASE_11_STATUS.md` records the detail.
 - **No demo video or GIF.** The plan asks for a recorded backup; screenshots
   are in `docs/screenshots/`.
 - **Cold and warm start timings are measured locally but not on a deployment.**

@@ -27,6 +27,12 @@ frontend/coverage/
 # Phase 0 verification helper cache
 .phase0-cache/
 
+# Embedding weights fastembed downloads when FASTEMBED_CACHE_PATH points here,
+# as continuous integration sets it so the download can be cached between runs.
+# Downloaded tool state, never source: 65 MB of ONNX that the repository scan
+# would otherwise try to read as text.
+.model-cache/
+
 # IDE and operating system
 .DS_Store
 .idea/

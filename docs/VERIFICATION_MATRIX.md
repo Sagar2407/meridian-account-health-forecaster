@@ -103,7 +103,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | Item | Consequence | Next action |
 | --- | --- | --- |
 | The production image is self-contained | `make prod-up` runs it with zero mounts: `/api/health` reports `ok` with all four data subsystems ready, 15 endpoint checks pass, and assessments complete and open review cases | Verified locally; see `docs/DEPLOYMENT.md` |
-| No deploy has happened and no live URL exists | Cold-start behaviour on the target is unmeasured; local timings are recorded in `docs/DEPLOYMENT.md` | Follow `docs/DEPLOYMENT.md` |
+| A deploy was attempted and the service does not answer | Phase 11's exit gate cannot be evaluated, and cold-start behaviour on the target stays unmeasured; local timings are in `docs/DEPLOYMENT.md` | Seven probes of `meridian-125g.onrender.com/api/health` returned `HTTP 000` with TLS completing. Memory is ruled out: the production container peaks at 226 MB against a 512 MB cap. Read the Render build log; see `docs/PHASE_11_STATUS.md` |
 | The serving image is 1.55 GB | Cold-start and disk pressure on the deployment target | 2.2 GB before discarding uv's build cache in the layer that creates it, then +80 MB to carry the runtime data and the embedding model so the image needs no mounts. The development image is still 2.75 GB because it installs the dev extra. Re-measure on Render once deployed |
 | The model-backed path has run against a real provider | One complete assessment on `liquid/lfm-2.5-2.6b:free`, planner and adjudicator both `source: model`, output verification passed first attempt, 7,382 tokens, 0.00 USD | Verified by `artifacts/provider/open_weight_run.json` |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
@@ -116,11 +116,21 @@ This matrix separates verified facts from provisional design choices and open qu
 
 ## Readiness
 
-All twelve phases are complete. The latest `make phase0-verify` rebuilt both
-locked images and passed formatting over 151 files, lint, strict typing over 150
-source files, 646 backend tests at 94.83% coverage, 98 frontend tests, the
-production frontend build, the repository policy scan over 339 files, and both
-live container health checks.
+Eleven of the twelve phases are complete. Phase 11 is not: its exit gate needs a
+public link that completes the curated demo paths, and no deployment answers, so
+the phase is open and `docs/PHASE_11_STATUS.md` records where it stands.
+
+The latest `make phase0-verify` rebuilt both locked images and passed formatting
+over 152 files, lint, strict typing over 151 source files, 658 backend tests with
+40 expected skips at 94.86% coverage, 98 frontend tests, the production frontend
+build, the repository policy scan over 343 files, and both live container health
+checks.
+
+The gate mounts the extracted archive, so those 40 skips are not data-layer
+tests. Run with the archive absent -- the backend image excludes it -- 377 pass
+and 321 skip; `MERIDIAN_REQUIRE_DATASET=1` turns that absence into an error so
+neither configuration can go green vacuously. `make validate-data` is the
+with-archive run: 697 pass, 1 skips, 94.85% coverage.
 
 The safety suite passes all 36 cases without a provider, the portfolio scan holds
 its concurrency and budget bounds, the browser suite passes 42 tests with none

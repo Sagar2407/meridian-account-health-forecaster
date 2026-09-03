@@ -36,9 +36,14 @@ Each of these is a real path through the code, not a label:
 
 ## Current status
 
-**All twelve phases are complete.** Every exit gate passes, and none of them needs an API key.
+**Eleven of the twelve phases are complete**, and none of their exit gates needs an API key.
 The first four involve no language model at all; Phase 4 adds the interface to one, and Phase 5
 completes without one, producing a deterministic explanation and saying so in its own limitations.
+
+The exception is **Phase 11**, public deployment. The production image is built, self-contained, and
+verified locally with zero mounts, but no deployment answers yet, so the public URL and the
+cold-start measurement that depends on it are open. Everything else in this README runs from a
+clone. See [`docs/PHASE_11_STATUS.md`](docs/PHASE_11_STATUS.md).
 
 Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
 validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
@@ -397,6 +402,7 @@ MCP-compatible interfaces expose typed, read-only tools and resources. A safety 
 - `docs/PHASE_8_STATUS.md` — served API, portfolio scan, and its bounds
 - `docs/PHASE_9_STATUS.md` — the React application, its journeys, and what they found
 - `docs/PHASE_10_STATUS.md` — frozen thresholds, the held-out evaluation, and its limitations
+- `docs/PHASE_11_STATUS.md` — the production image, the deployment attempt, and why it is not finished
 - `docs/PHASE_12_STATUS.md` — the evidence package and its exit gate
 - `docs/DATA_LINEAGE.md` — archive provenance and byte-exact reproduction
 - `docs/MODEL_CARD.md` — generated card for the served forecaster

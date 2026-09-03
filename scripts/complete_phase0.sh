@@ -62,9 +62,11 @@ echo "[4/6] Building the locked application images"
 docker compose build
 
 echo "[5/6] Running backend and frontend quality gates"
-# The raw archive is git-ignored and excluded from the image, so it is mounted
-# read-only for the test run. MERIDIAN_REQUIRE_DATASET=1 turns a missing archive
-# into an error instead of silently skipping the data-safety tests.
+# The archive is committed, but the tables it expands into are not, and
+# .dockerignore keeps data/ out of the build context -- so the extracted data is
+# absent from the image and is mounted read-only for the test run.
+# MERIDIAN_REQUIRE_DATASET=1 turns a missing archive into an error instead of
+# silently skipping the data-safety tests.
 docker compose run --rm --no-deps \
   --volume "$project_directory/data:/app/data:ro" \
   --env MERIDIAN_REQUIRE_DATASET=1 \

@@ -1,11 +1,17 @@
 """Shared fixtures and dataset availability handling.
 
-The raw archive is git-ignored and excluded from Docker images, so it is absent
-in some environments (the backend container in particular). Tests that need it
-are skipped there rather than failing.
+`meridian-account-health.zip` is committed, but the tables it expands into under
+`data/raw/` are not, and `.dockerignore` keeps `data/` out of the build context
+entirely -- so the extracted archive is absent in some environments, the backend
+container in particular. Tests that need it are skipped there rather than failing.
 
-To stop that from silently hollowing out the data gate, `make validate-data`
-sets `MERIDIAN_REQUIRE_DATASET=1`, which turns the skip into a hard error.
+To stop that from silently hollowing out the data gate, `make validate-data` and
+continuous integration both set `MERIDIAN_REQUIRE_DATASET=1`, which turns the
+skip into a hard error.
+
+A test qualifies through its fixtures or through `@pytest.mark.requires_dataset`.
+The marker is what covers a test that reaches the tables indirectly -- via an API
+route that resolves a runtime, say -- because nothing in its fixture list says so.
 """
 
 import os

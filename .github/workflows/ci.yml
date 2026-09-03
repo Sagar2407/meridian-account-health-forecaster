@@ -11,6 +11,8 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      FASTEMBED_CACHE_PATH: ${{ github.workspace }}/.model-cache
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -20,18 +22,58 @@ jobs:
         run: |
           python -m pip install uv==0.12.7
           uv sync --locked --extra dev
+
+      # The archive is committed, so CI can build the same derived data a
+      # developer builds and then run the data layer for real. Only the
+      # extracted tables and their outputs are absent from a clone, and
+      # rebuilding them takes minutes -- dominated by embedding 17,140 chunks
+      # -- so they are cached on everything that can change them. The key
+      # covers the retrieval and feature source too: a chunking change with a
+      # cache keyed only on the archive would grade new code against an index
+      # built by the old code.
+      - name: Restore built dataset, model, and index
+        id: derived
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/raw
+            data/processed
+            data/indexes
+            models
+            .model-cache
+          key: >-
+            derived-${{ runner.os }}-${{ hashFiles(
+              'meridian-account-health.zip',
+              'uv.lock',
+              'scripts/build_data.py',
+              'scripts/build_index.py',
+              'scripts/train_model.py',
+              'backend/src/meridian/data/**',
+              'backend/src/meridian/features/**',
+              'backend/src/meridian/retrieval/**',
+              'evaluation/**'
+            ) }}
+      - name: Build the dataset, model, and index
+        if: steps.derived.outputs.cache-hit != 'true'
+        run: |
+          uv run python -c "import zipfile; zipfile.ZipFile('meridian-account-health.zip').extractall('data/raw')"
+          uv run python scripts/build_data.py
+          uv run python scripts/train_model.py
+          uv run python scripts/build_index.py
+
       - name: Lint and format check
         run: |
           uv run ruff check backend evaluation
           uv run ruff format --check backend evaluation
       - name: Type check
         run: uv run mypy
-      # The synthetic archive is git-ignored, so CI cannot exercise the data
-      # layer: those tests skip here and the coverage threshold is not
-      # meaningful. The full data gate is `make validate-data`, which sets
-      # MERIDIAN_REQUIRE_DATASET=1 so it cannot pass without the dataset.
-      - name: Test (data-layer tests skip without the archive)
-        run: uv run pytest --cov-fail-under=0
+      # MERIDIAN_REQUIRE_DATASET=1 turns a missing archive into a hard error, so
+      # this job cannot go green by skipping the data layer, and the coverage
+      # threshold in pyproject.toml applies rather than being waived.
+      - name: Test
+        env:
+          MERIDIAN_REQUIRE_DATASET: "1"
+        run: uv run pytest
       - name: Scan repository
         run: python scripts/check_repository.py
 

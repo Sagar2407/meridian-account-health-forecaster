@@ -168,10 +168,17 @@ def test_the_queue_validates_its_filter(review_store: tuple[AssessmentStore, str
         store.review_queue("waiting")
 
 
+@pytest.mark.requires_dataset
 def test_the_review_api_serves_the_card_and_persists_an_override(
     review_store: tuple[AssessmentStore, str],
 ) -> None:
-    """A reviewer can discover and resolve the stored case over HTTP."""
+    """A reviewer can discover and resolve the stored case over HTTP.
+
+    Marked because `GET /api/review-cases` joins each row against the account
+    repository for the ACV and renewal date its ordering needs, so the endpoint
+    resolves a runtime and reads the raw tables even though this test overrides
+    the store. Overriding `get_store` alone is not enough to make it portable.
+    """
 
     store, case_id = review_store
     app = create_app()
