@@ -27,7 +27,7 @@ a deterministic sentence built only from verified numbers cannot hallucinate.
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -66,6 +66,108 @@ NUMERIC_RELATIVE_TOLERANCE = 0.01
 _NUMBER_PATTERN = re.compile(
     r"(?<![A-Za-z0-9_.,-])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(?![A-Za-z0-9_-])"
 )
+
+#: The bounded number-word vocabulary. Counts this system reports are small --
+#: drivers, citations, escalations, weeks of coverage -- so units, teens, and
+#: tens cover the claims a narrative can actually make, and anything larger is
+#: written as a numeral.
+_UNITS: Final[dict[str, int]] = {
+    "zero": 0,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+}
+_TENS: Final[dict[str, int]] = {
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90,
+}
+
+#: `one` and `zero` are the two number words that are ordinarily not counts.
+#: Every occurrence in this project's own generated text is idiomatic -- "quick
+#: one for the support team", "roughly one quarter out", "stuck near zero" --
+#: so reading them as claims would fail good narratives on English usage rather
+#: than on arithmetic. They are read only inside an explicit `N of M` pair,
+#: where the `of M` makes the quantification unambiguous.
+_ONLY_IN_A_RATIO: Final[frozenset[str]] = frozenset({"zero", "one"})
+
+_TENS_WORDS = "|".join(_TENS)
+_UNIT_WORDS = "|".join(_UNITS)
+#: A tens word, optionally with a unit ("twenty-one", "twenty one"), or a unit.
+_WORD_NUMBER = rf"(?:(?:{_TENS_WORDS})(?:[- ](?:{_UNIT_WORDS}))?|(?:{_UNIT_WORDS}))"
+_WORD_NUMBER_PATTERN = re.compile(rf"(?<![A-Za-z-])({_WORD_NUMBER})(?![A-Za-z-])", re.IGNORECASE)
+#: `five of six`, `five of 6`, `5 of six`: one written form of a ratio claim.
+_RATIO_PATTERN = re.compile(
+    rf"(?<![A-Za-z-])({_WORD_NUMBER}|\d+)\s+of\s+({_WORD_NUMBER}|\d+)(?![A-Za-z-])",
+    re.IGNORECASE,
+)
+
+
+def _word_value(text: str) -> float | None:
+    """Return the value of one number word, or None if it is not one."""
+
+    parts = text.lower().replace("-", " ").split()
+    if len(parts) == 1:
+        single = parts[0]
+        if single in _UNITS:
+            return float(_UNITS[single])
+        return float(_TENS[single]) if single in _TENS else None
+    if len(parts) == 2 and parts[0] in _TENS and parts[1] in _UNITS:
+        return float(_TENS[parts[0]] + _UNITS[parts[1]])
+    return None
+
+
+def written_number_words(text: str) -> tuple[float, ...]:
+    """Return the numbers a narrative states as words rather than numerals.
+
+    Section 16.4 replays every number in a narrative against the values the
+    system actually computed. A narrative that writes "five of six drivers"
+    instead of "5 of 6" was making the same claim and escaping the same check.
+
+    `one` and `zero` are read only inside a ratio, for the reason recorded on
+    `_ONLY_IN_A_RATIO`.
+    """
+
+    found: list[float] = []
+    spans: list[tuple[int, int]] = []
+    for match in _RATIO_PATTERN.finditer(text):
+        for group in (1, 2):
+            value = _word_value(match.group(group))
+            if value is not None:
+                found.append(value)
+                spans.append(match.span(group))
+    for match in _WORD_NUMBER_PATTERN.finditer(text):
+        if match.group(1).lower() in _ONLY_IN_A_RATIO:
+            continue
+        # A word already read as half of a ratio must not be counted twice.
+        if any(start <= match.start() < end for start, end in spans):
+            continue
+        value = _word_value(match.group(1))
+        if value is not None:
+            found.append(value)
+    return tuple(found)
+
 
 #: Forbidden field names that are also ordinary English in this domain. The
 #: knowledge-base sanitiser is right to strip `outcome` from an indexed article,
@@ -179,13 +281,18 @@ def allowed_numbers(bundle: EvidenceBundle) -> tuple[float, ...]:
 
 
 def written_numbers(text: str) -> tuple[float, ...]:
-    """Return the numerals a narrative states as claims."""
+    """Return the numbers a narrative states as claims.
+
+    Numerals and the bounded number-word vocabulary both count: "5 of 6" and
+    "five of six" are the same claim and get the same replay.
+    """
 
     found: list[float] = []
     for match in _NUMBER_PATTERN.finditer(text):
         whole = match.group(1).replace(",", "")
         fraction = match.group(2) or ""
         found.append(float(f"{whole}{fraction}"))
+    found.extend(written_number_words(text))
     return tuple(found)
 
 
