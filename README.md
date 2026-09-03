@@ -41,9 +41,10 @@ The first four involve no language model at all; Phase 4 adds the interface to o
 completes without one, producing a deterministic explanation and saying so in its own limitations.
 
 The exception is **Phase 11**, public deployment. The production image is built, self-contained, and
-verified locally with zero mounts, but no deployment answers yet, so the public URL and the
-cold-start measurement that depends on it are open. Everything else in this README runs from a
-clone. See [`docs/PHASE_11_STATUS.md`](docs/PHASE_11_STATUS.md).
+verified locally with zero mounts. A Render free-plan service answers at `meridian-125g.onrender.com`,
+but it is serving a build that predates the knowledge-base fix and so returns no forecasts until it
+is redeployed, and the cold-start measurement is still outstanding. Everything else in this README
+runs from a clone. See [`docs/PHASE_11_STATUS.md`](docs/PHASE_11_STATUS.md).
 
 Phase 0 delivered the engineering foundation: a typed FastAPI service, a React/TypeScript health UI,
 validated environment settings, Docker Compose, quality commands, CI, pre-commit hooks, and
@@ -106,12 +107,12 @@ and rate-limit controls. A scan holds its configured concurrency and model-call 
 measured from inside the worker pool rather than reported from its settings -- and
 `scripts/scan_portfolio.py` exits non-zero if either bound is breached.
 
-It also produced an uncomfortable number worth stating up front: **a portfolio scan currently
-auto-releases nothing.** All six accounts in the sample scan were queued for review. The routing
-is behaving exactly as the plan's bands specify, and a review queue containing everything saves a
-CS team no work. Section 22.7 forbids tuning thresholds outside a development-split measurement,
-so Phase 10 freezes them and this is the second measurement saying that choice matters.
-Evidence is in `docs/PHASE_8_STATUS.md`.
+It also produced an uncomfortable number worth stating up front: under the original bands **a
+portfolio scan auto-released nothing** — all six accounts queued for review, which saves a CS team
+no work. Section 22.7 forbids tuning thresholds outside a development-split measurement, so that
+number stood until the measurement was done. Under thresholds v2 the same scan releases **1 of 6**
+and routes 2 amber and 3 red. One in six is still thin, and it is stated here rather than rounded
+up. Evidence is in `docs/PHASE_8_STATUS.md`.
 
 Phase 9 delivered the application: a portfolio, an account page with its 104-week trajectory and
 effective-cutoff marker, a live assessment view fed by Server-Sent Events, the decision card with a
@@ -124,18 +125,27 @@ the browser receives and fails on any latent field or prompt key. Evidence is in
 Phase 10 froze the decision thresholds, ran the held-out evaluation against them, and wired
 mandatory structured tracing with optional LangSmith mirroring.
 
-**On the held-out split (53 accounts, thresholds `5e23d7f9d9fef896`):** macro F1 **0.749** against
+**On the held-out split (53 accounts, thresholds `cbf44c84e4501881`, v2):** macro F1 **0.749** against
 a 0.460 majority baseline, supported-claim rate and exact numeric agreement both **1.000**, and
 **zero** wrong-account or post-cutoff citations. Expected calibration error is **0.171** against a
 0.10 target — not met, and not fixed here, because recalibrating after seeing a held-out number is
 the thing section 22.7 exists to prevent.
 
-**And it auto-releases nothing.** Zero of 53 held-out accounts cleared the green band. The routing
-itself is working — on the development split the error rate rises 0.000 (green) → 0.029 (amber) →
-0.127 (red), and all eight errors landed in red — but a system whose entire output is review load
-saves nobody any work. Loosening the bands to 0.60/0.50 would release twelve times more at a
-measured 5.7% unreviewed error rate. That trade is a business decision, so no threshold was
-changed and the measurement is recorded instead. Evidence is in `docs/PHASE_10_STATUS.md`.
+**It auto-releases 2 of 53, and it used to release none.** The routing was always working — on the
+development split the error rate rises 0.000 (green) → 0.029 (amber) → 0.127 (red), and all eight
+errors landed in red — but under v1's bands nothing at all cleared green, and a system whose entire
+output is review load saves nobody any work.
+
+The cause turned out not to be the bands. The composed confidence runs about **0.19 below observed
+accuracy**: on development, mean confidence 0.740 against 0.927 accuracy, with every reliability bin
+below the diagonal. Thirty-eight development runs scored 0.80–0.90 and *every one of them was
+correct*, under a green band that started at 0.85. So v2 moves green to 0.80 — and moves the two
+caps that must sit below it from 0.84 to 0.79, because leaving them would have auto-released four
+runs with an exhausted retrieval gap, which is precisely what those caps exist to stop.
+
+Development auto-release goes 6 → 15 of 207 with **zero** errors among them; held out, 0 → 2 of 53,
+both correct, neither capped. Chosen on development data only, as section 22.7 requires, then
+measured once on held out. Evidence is in `docs/DECISIONS.md` (D-061) and `docs/PHASE_10_STATUS.md`.
 
 Phase 11 delivered the deployable system: a multi-stage production image that serves the API and
 the built SPA from one container, a Render blueprint with demo mode, per-client rate limits and a

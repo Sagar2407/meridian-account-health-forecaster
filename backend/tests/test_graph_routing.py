@@ -42,6 +42,7 @@ from meridian.graph.confidence import (
     top_two_margin,
 )
 from meridian.graph.routing import (
+    GREEN_MINIMUM_CONFIDENCE,
     abstention_route,
     coverage_verdict,
     human_route,
@@ -450,7 +451,10 @@ def test_a_request_to_act_routes_red_even_on_a_confident_run() -> None:
 @pytest.mark.parametrize(
     ("overrides", "fragment"),
     [
-        ({"confidence": 0.80}, "below 0.85"),
+        (
+            {"confidence": round(GREEN_MINIMUM_CONFIDENCE - 0.01, 2)},
+            f"below {GREEN_MINIMUM_CONFIDENCE:.2f}",
+        ),
         ({"retrieval_gap": True}, "noncritical retrieval gap"),
         ({"verification": OutputVerification(passed=True, attempts=2)}, "one regeneration"),
         ({"coverage": _coverage(stale_sources=("usage_weekly",))}, "stale sources"),

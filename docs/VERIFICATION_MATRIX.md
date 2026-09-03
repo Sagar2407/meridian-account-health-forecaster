@@ -44,7 +44,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | No response the browser receives carries a latent field or a prompt key | A Playwright response listener over the portfolio, an assessment, the review queue, a decision card, and the evaluation page | Verified in Phase 9 |
 | Every core user journey works end to end in a browser | 24 Playwright tests, desktop and tablet, against the real stack, 0 skipped | Verified in Phase 9 |
 | A reviewer override in the UI files a traceable regression record | The override journey reads the regression id back from the page | Verified in Phase 9 |
-| Macro F1 on the held-out split is 0.7490, against a 0.4595 majority baseline | 53 test accounts, thresholds frozen at `5e23d7f9d9fef896` | Verified in Phase 10 |
+| Macro F1 on the held-out split is 0.7490, against a 0.4595 majority baseline | 53 test accounts, thresholds frozen at `cbf44c84e4501881` (v2) | Verified in Phase 10, unchanged when the bands moved: thresholds route a forecast, they do not make it |
 | Supported-claim rate and exact numeric agreement are both 1.0000 on both splits | 137 development and 37 held-out released runs | Verified in Phase 10 |
 | No wrong-account or post-cutoff citation on either split | 260 runs across both splits | Verified in Phase 10 |
 | Error rate rises monotonically green to amber to red | 0.000 / 0.029 / 0.127 on the development split | Verified in Phase 10 |
@@ -92,10 +92,10 @@ This matrix separates verified facts from provisional design choices and open qu
 | Whether conflict-gated ToT beats linear adjudication | Both arms over the same 106 conflicting development accounts, paired on the cases both answered | Not on this evidence: 86.5% agreement, 69 declined answers for 12 caught errors against a 15.1% base rate; the provider arm is unrun; see `docs/PHASE_6_STATUS.md` |
 | Whether output verification could reject a fabricated claim | One live provider run against the real graph | Two real defects found and fixed: the citation check was self-referential, and the field-leak check rejected the English word "outcome"; see `docs/PHASE_5_STATUS.md` |
 | Whether the packaged guardrail policy passes its hard safety gate | All 36 cases through the offline graph, with per-case behavioural grading and whole-result leakage checks | 0/15 hard false passes, 0/21 false blocks, 0 leakage findings, and 36/36 behavioural checks passed; see `docs/PHASE_7_STATUS.md` |
-| Confidence weights and route thresholds | Frozen in `meridian.graph.thresholds` before the held-out split was evaluated, with a content digest a test pins | `5e23d7f9d9fef896` (v1); the sweep that informed them runs on development data only; see `docs/PHASE_10_STATUS.md` |
+| Confidence weights and route thresholds | Frozen in `meridian.graph.thresholds` before the held-out split was evaluated, with a content digest a test pins | `cbf44c84e4501881` (v2), replacing `5e23d7f9d9fef896` (v1); both sweeps that informed them run on development data only; see D-061 and `docs/PHASE_10_STATUS.md` |
 | Tool timeout of 20 seconds, and the fast-path latency target | Measured across every assessed account on both splits | Offline, p50 is 160 ms (held out) and 165 ms (development); p95 is 261 ms and 313 ms -- roughly two orders below the 20 s timeout. Reported per path in each `results.json` |
-| Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts, repeated over 12 in Phase 12 | **No.** 0 auto-released at either size; 6 of 6 and then 12 of 12 queued for review. The routing is correct per section 16.5, and a queue containing everything saves no work; see `docs/PHASE_8_STATUS.md` |
-| What loosening the review bands would buy | 29 candidate band pairs replayed over 207 development runs | Twelve times the release rate (6 to 70 of 207) at a 5.7% unreviewed error rate. No threshold was changed: the trade is a business decision; see `docs/PHASE_10_STATUS.md` |
+| Whether a portfolio scan produces usable output at current thresholds | One offline scan of 6 eligible accounts | **Barely, and only since v2.** Under v1 the answer was no: 0 auto-released of 6, and 0 of 12 at twice the sample. Under v2 the same scan releases 1 and routes 2 amber and 3 red. One in six is a thin result to call usable, but it is no longer a queue containing everything; see D-061 and `docs/PHASE_8_STATUS.md` |
+| What loosening the review bands buys | 29 candidate band pairs replayed over 207 development runs, then the chosen pair executed on both splits | v2 took green to 0.80: development auto-release 6 to 15 of 207 with 0 errors, held out 0 to 2 of 53 with 0 errors. The most permissive pair measured (0.60/0.50) would release 70 of 207 at a 5.7% unreviewed error rate and was not taken. Note the replay is a guide, not the authority: it compares recorded confidences and cannot re-apply a moved cap, so the executed run is what these numbers come from; see D-061 |
 | Whether the confidence score ranks correctly | Error rate inside each review band, 207 development runs | Yes: 0.000 green, 0.029 amber, 0.127 red, and all 8 errors landed in red. The ranking is sound; the absolute scale is **under**-confident, by 0.187 on development and 0.122 held out (mean confidence against observed accuracy, recomputed from `runs.csv`) |
 
 ## Unresolved inputs
@@ -108,7 +108,7 @@ This matrix separates verified facts from provisional design choices and open qu
 | The model-backed path has run against a real provider | One complete assessment on `liquid/lfm-2.5-2.6b:free`, planner and adjudicator both `source: model`, output verification passed first attempt, 7,382 tokens, 0.00 USD | Verified by `artifacts/provider/open_weight_run.json` |
 | The provider arm of the ToT ablation is unrun | The measured verdict covers only the deterministic configuration | Run `scripts/evaluate_tot.py --use-provider`; it costs money and about an hour |
 | Expected calibration error is 0.1712 held out, against a 0.10 target | The release bands sit on an **under**-confident scale, so the cost is review load rather than unreviewed error: 38 development runs scored 0.80-0.90 and all 38 were correct, below a green band starting at 0.85 | Fix the scale on development data and re-freeze as v2; section 22.7 forbids recalibrating against the held-out result now measured. Note that isotonic made ECE worse than no calibration (0.1481 against 0.1346), so refitting the model's calibrator is not on its own the fix -- the gap is in the composed score and its caps |
-| Auto-release rate is 0.0000 on the held-out split | The system produces only review load | The measured trade-off is recorded; choosing a band is the owner's decision |
+| Auto-release rate is 0.0377 on the held-out split, 2 of 53 | Both released answers were correct and neither carried a cap, but the rate is still low enough that a reviewer sees almost everything | The band was moved once, on development evidence (D-061). Going further trades a measured escalation rate for an unmeasured error rate, and the 0.60/0.50 pair's 5.7% is the closest thing to a price on it |
 | `Contracted` has two held-out examples | Its per-class F1 of 0.2857 is not a measurement | Report it, do not read it |
 | The portfolio scan has not been run with a provider | Scan cost and latency are measured only for the deterministic path | Run `scripts/scan_portfolio.py --use-provider`; it costs money per account |
 | Serving state is per process and in memory | Live runs, scans, and rate-limit windows do not survive a restart or a second replica | Correct for the single-container target; a scaled deployment needs a shared store |
@@ -121,16 +121,17 @@ public link that completes the curated demo paths, and no deployment answers, so
 the phase is open and `docs/PHASE_11_STATUS.md` records where it stands.
 
 The latest `make phase0-verify` rebuilt both locked images and passed formatting
-over 152 files, lint, strict typing over 151 source files, 659 backend tests with
-41 expected skips at 94.87% coverage, 98 frontend tests, the production frontend
+over 152 files, lint, strict typing over 151 source files, 660 backend tests with
+42 expected skips at 94.86% coverage, 98 frontend tests, the production frontend
 build, the repository policy scan over 343 files, and both live container health
-checks.
+checks. The browser suite passes 42 tests -- 24 journeys, 12 WCAG audits, and 6
+visual comparisons -- with none skipped.
 
-The gate mounts the extracted archive, so those 41 skips are not data-layer
-tests. Run with the archive absent -- the backend image excludes it -- 378 pass
-and 322 skip; `MERIDIAN_REQUIRE_DATASET=1` turns that absence into an error so
+The gate mounts the extracted archive, so those 42 skips are not data-layer
+tests. Run with the archive absent -- the backend image excludes it -- 379 pass
+and 323 skip; `MERIDIAN_REQUIRE_DATASET=1` turns that absence into an error so
 neither configuration can go green vacuously. `make validate-data` is the
-with-archive run: 699 pass, 1 skips, 94.85% coverage.
+with-archive run: 701 pass, 1 skips, 94.86% coverage.
 
 The safety suite passes all 36 cases without a provider, the portfolio scan holds
 its concurrency and budget bounds, the browser suite passes 42 tests with none

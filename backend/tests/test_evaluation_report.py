@@ -215,6 +215,25 @@ class TestOperationalReliability:
         assert "reason" in operational_reliability([])
 
 
+def _bands(green: float, amber: float) -> DecisionThresholds:
+    """Return a candidate band pair with its caps moved to stay valid.
+
+    Section 16.1's caps are defined one hundredth below the band each holds a
+    run under, and `DecisionThresholds` refuses a set where one is not. A test
+    that varies a band therefore has to vary its caps too -- exactly as
+    `ThresholdStudy.sweep` does.
+    """
+
+    return DecisionThresholds(
+        green_minimum_confidence=green,
+        amber_minimum_confidence=amber,
+        cap_exhausted_retrieval_gap=round(green - 0.01, 2),
+        cap_repaired_verification=round(green - 0.01, 2),
+        cap_critical_source_missing=round(amber - 0.01, 2),
+        cap_unresolved_conflict=round(amber - 0.01, 2),
+    )
+
+
 class TestThresholdStudy:
     def test_a_threshold_independent_rule_survives_every_candidate(self) -> None:
         """Only three rules read a threshold; the rest cannot change under a sweep."""
@@ -222,23 +241,20 @@ class TestThresholdStudy:
         run = _run(confidence=0.99, margin=0.9, route_codes=("verification_failed",))
 
         assert band_at(run, THRESHOLDS) == "red"
-        assert (
-            band_at(
-                run, DecisionThresholds(green_minimum_confidence=0.6, amber_minimum_confidence=0.5)
-            )
-            == "red"
-        )
+        assert band_at(run, _bands(green=0.6, amber=0.5)) == "red"
 
     def test_lowering_the_green_band_releases_more(self) -> None:
         """The trade-off the study exists to quantify."""
 
-        runs = [_run(account_id=f"A{index}", confidence=0.80) for index in range(4)]
+        # Just under the frozen green band, so the strict arm releases nothing
+        # whatever that band currently is. Writing 0.80 here made this test a
+        # restatement of v1, and it started failing the moment green moved.
+        below_green = round(THRESHOLDS.green_minimum_confidence - 0.05, 2)
+        runs = [_run(account_id=f"A{index}", confidence=below_green) for index in range(4)]
         study = ThresholdStudy(runs=runs)
 
         strict = study.outcome_at(THRESHOLDS)
-        loose = study.outcome_at(
-            DecisionThresholds(green_minimum_confidence=0.70, amber_minimum_confidence=0.60)
-        )
+        loose = study.outcome_at(_bands(green=below_green, amber=round(below_green - 0.1, 2)))
 
         assert strict.auto_released == 0
         assert loose.auto_released == 4

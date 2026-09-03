@@ -68,10 +68,18 @@ gate routed. No provider was configured, so both arms cost zero tokens.
 | Released a label | 106 | 37 |
 | Abstained | 0 | 69 |
 | Accuracy on what it released | 0.849 | 0.919 |
-| Escalation rate | 0.623 | 0.840 |
+| Escalation rate | 0.915 | 0.943 |
 | Supported-claim rate | 1.000 | 1.000 |
 | Driver fidelity | 0.467 | 0.495 |
 | Tokens | 0 | 0 |
+
+The escalation rates were 0.623 and 0.840 until the ablation's definition of
+"auto-released" was corrected: it counted **green and amber**, while
+`meridian.serving.scan` -- the running system -- counts green alone. Section
+16.5 puts amber in asynchronous review, so an amber answer is reviewed, and
+including it overstated what reaches a user unchecked. Auto-release under the
+corrected definition is 9 and 6, not 40 and 17. The two constants share a name
+and a test now asserts they are equal.
 
 **These are the numbers at the current commit, not the ones this phase first
 measured.** When Phase 6 shipped, the gated arm scored 0.892 on supported claims

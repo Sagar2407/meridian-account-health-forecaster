@@ -163,10 +163,17 @@ is one the gate actually fired on:
 
 | Path | Account | Route | Outcome | Confidence |
 | --- | --- | --- | --- | ---: |
-| fast_path | ACC-1001 | amber | Churned | 0.8363 |
+| fast_path | ACC-1001 | green | Churned | 0.8363 |
 | tot | ACC-1002 | amber | Renewed | 0.9207 |
 | degraded | ACC-1000 | red | none | — |
 | human_review | ACC-1000 | red | Renewed, overridden to Churned | 0.6395 |
+
+Recaptured under thresholds v2 (D-061). Under v1 the fast path was amber: it is
+the same run at the same confidence, released rather than reviewed because the
+green band moved to 0.80. **The Tree-of-Thought run did not follow it**, and that
+is the more interesting half — at 0.9207 it is the most confident of the four,
+and it stays amber on a stale-sources rule. Confidence is one of section 16.5's
+conditions, not a substitute for the rest of them.
 
 The degraded run is **caused, not hunted for**: the retrieval service is made
 genuinely unavailable and the graph is left to do whatever it does. Waiting for an

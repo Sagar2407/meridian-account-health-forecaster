@@ -46,9 +46,8 @@ KIND_LABELS: dict[str, str] = {
     # "a straightforward account" while the recorded run was red at 0.64
     # confidence, which is the first thing a visitor to the public demo read.
     "fast_path": (
-        "An account whose evidence agrees, so the run takes the fast path without "
-        "the Tree-of-Thought search. What it routes to still depends on the "
-        "confidence it earns."
+        "An account whose evidence agrees, so the run takes the fast path rather "
+        "than the Tree-of-Thought search."
     ),
     "conflict": (
         "An account whose evidence disagrees with itself, so the bounded "

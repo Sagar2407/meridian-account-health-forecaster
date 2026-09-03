@@ -1,7 +1,7 @@
 {
   "abstained": 16,
   "accuracy": 0.8649,
-  "auto_release_rate": 0.0,
+  "auto_release_rate": 0.0377,
   "brier": 0.0671,
   "citation_precision": 1.0,
   "completion_rate": 1.0,
@@ -20,10 +20,10 @@
     "development": {
       "abstained": 70,
       "accuracy": 0.9197,
-      "auto_release_rate": 0.029,
+      "auto_release_rate": 0.0725,
       "brier": 0.05,
       "citation_precision": 1.0,
-      "commit": "5eea29439fbe",
+      "commit": "d1f12cafc5a2",
       "completion_rate": 1.0,
       "confidence_bands": [
         {
@@ -82,12 +82,12 @@
           ]
         ]
       },
-      "directory": "5eea29439fbe-20260902T015850+0000",
+      "directory": "d1f12cafc5a2-20260903T162238+0000",
       "driver_overlap": 0.4526,
       "escalation_rate": 0.6425,
       "exact_numeric_agreement": 1.0,
       "expected_calibration_error": 0.1568,
-      "generated_at": "2026-09-02T01:58:50+00:00",
+      "generated_at": "2026-09-03T16:22:38+00:00",
       "macro_f1": 0.8468,
       "majority_baseline_accuracy": 0.4891,
       "per_class": {
@@ -173,13 +173,13 @@
       "routing_quality": {
         "amber": {
           "auto_released": false,
-          "count": 68,
-          "error_rate": 0.0294,
+          "count": 59,
+          "error_rate": 0.0339,
           "errors": 2
         },
         "green": {
           "auto_released": true,
-          "count": 6,
+          "count": 15,
           "error_rate": 0.0,
           "errors": 0
         },
@@ -198,10 +198,10 @@
     "test": {
       "abstained": 16,
       "accuracy": 0.8649,
-      "auto_release_rate": 0.0,
+      "auto_release_rate": 0.0377,
       "brier": 0.0671,
       "citation_precision": 1.0,
-      "commit": "5eea29439fbe",
+      "commit": "d1f12cafc5a2",
       "completion_rate": 1.0,
       "confidence_bands": [
         {
@@ -260,12 +260,12 @@
           ]
         ]
       },
-      "directory": "5eea29439fbe-20260902T015910+0000",
+      "directory": "d1f12cafc5a2-20260903T162336+0000",
       "driver_overlap": 0.4279,
       "escalation_rate": 0.6415,
       "exact_numeric_agreement": 1.0,
       "expected_calibration_error": 0.1712,
-      "generated_at": "2026-09-02T01:59:10+00:00",
+      "generated_at": "2026-09-03T16:23:36+00:00",
       "macro_f1": 0.749,
       "majority_baseline_accuracy": 0.4595,
       "per_class": {
@@ -352,14 +352,14 @@
       "routing_quality": {
         "amber": {
           "auto_released": false,
-          "count": 19,
-          "error_rate": 0.1053,
+          "count": 17,
+          "error_rate": 0.1176,
           "errors": 2
         },
         "green": {
           "auto_released": true,
-          "count": 0,
-          "error_rate": null,
+          "count": 2,
+          "error_rate": 0.0,
           "errors": 0
         },
         "red": {

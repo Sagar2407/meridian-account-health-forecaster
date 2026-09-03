@@ -144,7 +144,17 @@ class ThresholdStudy:
         )
 
     def sweep(self) -> list[BandOutcome]:
-        """Return the outcome for every candidate pair where amber <= green."""
+        """Return the outcome for every candidate pair where amber <= green.
+
+        Section 16.1's caps are defined against section 16.5's bands -- each
+        sits one hundredth below the band it holds a run under -- so a
+        candidate pair moves them too. Holding them fixed would measure
+        configurations the system refuses to construct: with green at 0.80 and
+        `cap_exhausted_retrieval_gap` left at 0.84, the cap is above the band
+        and every run it caps auto-releases, which is the opposite of what the
+        cap is for. `DecisionThresholds.__post_init__` rejects that set, so the
+        sweep would not merely be misleading, it would raise.
+        """
 
         outcomes: list[BandOutcome] = []
         for green in GREEN_CANDIDATES:
@@ -154,7 +164,12 @@ class ThresholdStudy:
                 outcomes.append(
                     self.outcome_at(
                         DecisionThresholds(
-                            green_minimum_confidence=green, amber_minimum_confidence=amber
+                            green_minimum_confidence=green,
+                            amber_minimum_confidence=amber,
+                            cap_exhausted_retrieval_gap=round(green - 0.01, 2),
+                            cap_repaired_verification=round(green - 0.01, 2),
+                            cap_critical_source_missing=round(amber - 0.01, 2),
+                            cap_unresolved_conflict=round(amber - 0.01, 2),
                         )
                     )
                 )

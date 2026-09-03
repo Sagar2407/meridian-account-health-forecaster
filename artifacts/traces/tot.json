@@ -1,13 +1,13 @@
 {
   "account_id": "ACC-1002",
-  "commit": "c35be79a0d0965468c0963a3ab93e8277c6ab40c",
+  "commit": "d1f12cafc5a2cf978845cfb2b79759991f9181a6",
   "kind": "tot",
   "label": "Conflicting evidence, bounded Tree-of-Thought",
   "offline": true,
   "question": "What is the renewal outlook for this account, and what drives it?",
-  "recorded_at": "2026-09-01T20:32:25+00:00",
+  "recorded_at": "2026-09-03T16:29:33+00:00",
   "run": {
-    "assessment_id": "ASMT-ACC-1002-0028",
+    "assessment_id": "ASMT-ACC-1002-0046",
     "blocked": null,
     "errors": [],
     "guardrails": [
@@ -309,12 +309,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 45,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.375+00:00"
+        "timestamp": "2026-09-03T16:29:40.690+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "request_validated",
-        "latency_ms": 0.636,
+        "latency_ms": 0.655,
         "node": "validate_request",
         "payload": {
           "outcome": "pass",
@@ -325,12 +325,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 46,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.375+00:00"
+        "timestamp": "2026-09-03T16:29:40.690+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "context_loaded",
-        "latency_ms": 3.023,
+        "latency_ms": 4.09,
         "node": "load_context",
         "payload": {
           "account_id": "ACC-1002",
@@ -343,12 +343,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 47,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.379+00:00"
+        "timestamp": "2026-09-03T16:29:40.694+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "plan_created",
-        "latency_ms": 0.066,
+        "latency_ms": 0.064,
         "node": "plan_sub_goals",
         "payload": {
           "fallback_reason": "no language-model provider is configured",
@@ -365,12 +365,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 48,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.379+00:00"
+        "timestamp": "2026-09-03T16:29:40.695+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "quantitative_completed",
-        "latency_ms": 39.89,
+        "latency_ms": 51.797,
         "node": "quantitative_lane",
         "payload": {
           "available": true,
@@ -384,12 +384,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 49,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.419+00:00"
+        "timestamp": "2026-09-03T16:29:40.747+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "retrieval_attempted",
-        "latency_ms": 106.53,
+        "latency_ms": 129.551,
         "node": "retrieval_lane",
         "payload": {
           "available": true,
@@ -413,7 +413,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 50,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.486+00:00"
+        "timestamp": "2026-09-03T16:29:40.837+00:00"
       },
       {
         "completion_tokens": 0,
@@ -430,7 +430,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 51,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.488+00:00"
+        "timestamp": "2026-09-03T16:29:40.839+00:00"
       },
       {
         "completion_tokens": 0,
@@ -455,7 +455,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 52,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.488+00:00"
+        "timestamp": "2026-09-03T16:29:40.839+00:00"
       },
       {
         "completion_tokens": 0,
@@ -471,12 +471,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 53,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.488+00:00"
+        "timestamp": "2026-09-03T16:29:40.839+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "conflict_detected",
-        "latency_ms": 0.054,
+        "latency_ms": 0.061,
         "node": "conflict_gate",
         "payload": {
           "baseline_accounts": 260,
@@ -498,12 +498,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 54,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.488+00:00"
+        "timestamp": "2026-09-03T16:29:40.839+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "tot_started",
-        "latency_ms": 0.126,
+        "latency_ms": 0.123,
         "node": "tot_adjudication",
         "payload": {
           "candidates": 4,
@@ -515,12 +515,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 55,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.491+00:00"
+        "timestamp": "2026-09-03T16:29:40.845+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "tot_completed",
-        "latency_ms": 1.026,
+        "latency_ms": 5.091,
         "node": "tot_adjudication",
         "payload": {
           "abstain_reason": "",
@@ -543,12 +543,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 56,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.491+00:00"
+        "timestamp": "2026-09-03T16:29:40.845+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "decision_drafted",
-        "latency_ms": 0.084,
+        "latency_ms": 0.051,
         "node": "tot_adjudication",
         "payload": {
           "agrees_with_model": true,
@@ -562,12 +562,12 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 57,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.491+00:00"
+        "timestamp": "2026-09-03T16:29:40.845+00:00"
       },
       {
         "completion_tokens": 0,
         "event": "output_verified",
-        "latency_ms": 0.288,
+        "latency_ms": 0.415,
         "node": "verify_output",
         "payload": {
           "attempts": 1,
@@ -580,7 +580,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 58,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.492+00:00"
+        "timestamp": "2026-09-03T16:29:40.846+00:00"
       },
       {
         "completion_tokens": 0,
@@ -601,7 +601,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 59,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.493+00:00"
+        "timestamp": "2026-09-03T16:29:40.847+00:00"
       },
       {
         "completion_tokens": 0,
@@ -609,7 +609,7 @@
         "latency_ms": 0.0,
         "node": "persist",
         "payload": {
-          "assessment_id": "ASMT-ACC-1002-0028",
+          "assessment_id": "ASMT-ACC-1002-0046",
           "persisted": true,
           "regression_ids": [],
           "review_case_id": null
@@ -618,7 +618,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 60,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.497+00:00"
+        "timestamp": "2026-09-03T16:29:40.852+00:00"
       },
       {
         "completion_tokens": 0,
@@ -633,7 +633,7 @@
         "run_id": "TRACE-ACC-1002",
         "sequence": 61,
         "thread_id": "TRACE-ACC-1002",
-        "timestamp": "2026-09-01T20:32:32.497+00:00"
+        "timestamp": "2026-09-03T16:29:40.852+00:00"
       }
     ]
   },

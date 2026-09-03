@@ -29,7 +29,7 @@ Three outcomes appear throughout:
 | Four specialised agents, parallel evidence lanes | 5 | Held | `graph/builder.py` fan-out |
 | Shared state carried across agents via MCP | 5 | **Changed** | Typed `ForecasterState` with explicit reducers |
 | Five guardrail stages; hard rules before probabilistic scorers | 6 | Held | `state["guardrails"]`, five stages per run |
-| Bands 0.85 / 0.70, tie band 0.10, frozen before held-out testing | 6 | Held | `graph/thresholds.py`, digest `5e23d7f9d9fef896` |
+| Bands 0.85 / 0.70, tie band 0.10, frozen before held-out testing | 6 | Changed in v2 | Green moved to 0.80 on development evidence; amber and the tie band held. `graph/thresholds.py`, digest `cbf44c84e4501881` |
 | Four reviewer actions; reason codes become regression cases | 6 | Held | `ReviewerDecision`, `artifacts/traces/human_review.json` |
 | LangSmith as the observability layer | 6 | **Changed** | Local tracing mandatory; LangSmith optional |
 | LLM judge for driver fidelity, validated against human review | 6 | **Not built** | No double-reviewed sample exists; no judge metric reported |
@@ -176,7 +176,7 @@ resolving a case creates a linked regression record in one transaction.
 
 The specified "thresholds are frozen before held-out testing" became a
 mechanism rather than a promise: `graph/thresholds.py` is the single frozen
-source, its numeric fields hash to digest `5e23d7f9d9fef896`, a test pins that
+source, its numeric fields hash to digest `cbf44c84e4501881`, a test pins that
 digest, and there is no runtime override.
 
 **Changed: observability.** stage 6 named LangSmith as the tracing layer. The build

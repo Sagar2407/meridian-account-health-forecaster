@@ -39,6 +39,7 @@ from meridian.contracts import (
     TraceEvent,
 )
 from meridian.data.paths import repository_root
+from meridian.graph.thresholds import THRESHOLDS
 
 API_CLIENT = repository_root() / "frontend" / "src" / "api.ts"
 
@@ -198,3 +199,25 @@ def test_the_review_case_type_knows_about_requested_data(
     """The stored case carries what a reviewer asked for; the queue should show it."""
 
     assert "requested_data" in _fields(declared["ReviewCase"])
+
+
+def test_the_gauge_ticks_mark_the_frozen_review_bands() -> None:
+    """A tick at the wrong band misreports the decision to the person reading it.
+
+    `Primitives.tsx` cannot import Python, so it restates the two bands. This is
+    the check that keeps the restatement honest. It exists because the gauge
+    went on drawing its tick at 0.85 after the green band moved to 0.80, which
+    would have shown a released answer sitting below the auto-release mark.
+    """
+
+    source = (repository_root() / "frontend" / "src" / "components" / "Primitives.tsx").read_text(
+        encoding="utf-8"
+    )
+    declared = re.search(r"export const REVIEW_BANDS = \[([^\]]+)\]", source)
+    assert declared, "Primitives.tsx no longer declares REVIEW_BANDS"
+
+    bands = [float(value) for value in declared.group(1).split(",")]
+    assert bands == [
+        THRESHOLDS.amber_minimum_confidence,
+        THRESHOLDS.green_minimum_confidence,
+    ], f"the gauge draws {bands}; the router uses {THRESHOLDS.digest()}"

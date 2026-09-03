@@ -15,8 +15,14 @@ evaluation page reads, and what documentation should cite.
 | test (held out) | 53 | named by `summary.json` |
 
 Both were produced offline at zero tokens against the frozen thresholds
-(digest `5e23d7f9d9fef896`, v1), which were fixed before the held-out split was
-first evaluated and have not changed since.
+(digest `cbf44c84e4501881`, **v2**), fixed on development evidence before the
+held-out split was evaluated under them, as section 22.7 requires.
+
+v1 was `5e23d7f9d9fef896`: green at 0.85 with the two band-relative caps at
+0.84. v2 moves green to 0.80 and those caps to 0.79 with it. The reason is in
+`docs/DECISIONS.md` under D-061; the short version is that the composed
+confidence runs about 0.19 below observed accuracy, so the old band was
+calibrated for a scale the system does not produce.
 
 ## These reproduce an earlier run
 

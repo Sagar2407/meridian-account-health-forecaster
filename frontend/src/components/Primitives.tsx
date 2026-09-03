@@ -70,9 +70,17 @@ export function EmptyNote({ children }: { children: ReactNode }) {
  *
  * The band thresholds are drawn on the arc rather than described beside it, so
  * a reader can see how close a number is to the next band. That is the thing a
- * bare percentage hides: 0.84 and 0.85 look almost identical and mean
+ * bare percentage hides: 0.79 and 0.80 look almost identical and mean
  * "provisional" and "auto-released".
+ *
+ * REVIEW_BANDS mirrors `meridian.graph.thresholds`, which is the only source of
+ * truth for them. It is duplicated here because the gauge is drawn before any
+ * request resolves, and `test_browser_contract.py` fails if the two drift: a
+ * gauge whose tick sits at the old band tells a reader a released answer was
+ * held back.
  */
+export const REVIEW_BANDS = [0.7, 0.8] as const
+
 export function ConfidenceGauge({
   confidence,
   route,
@@ -109,7 +117,7 @@ export function ConfidenceGauge({
           strokeLinecap="round"
           strokeDasharray={`${filled} ${circumference}`}
         />
-        {[0.7, 0.85].map((threshold) => {
+        {REVIEW_BANDS.map((threshold) => {
           const angle = Math.PI * (1 - threshold)
           return (
             <line
@@ -127,7 +135,8 @@ export function ConfidenceGauge({
         </text>
       </svg>
       <figcaption>
-        Evidence-aware confidence. Ticks mark the 0.70 and 0.85 review bands.
+        Evidence-aware confidence. Ticks mark the {REVIEW_BANDS[0].toFixed(2)}{' '}
+        and {REVIEW_BANDS[1].toFixed(2)} review bands.
       </figcaption>
     </figure>
   )

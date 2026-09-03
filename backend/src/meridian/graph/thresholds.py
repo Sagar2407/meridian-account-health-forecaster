@@ -24,7 +24,7 @@ from dataclasses import asdict, dataclass, field
 
 #: Bumped whenever any value below changes. The digest catches an accidental
 #: change; the version records a deliberate one.
-THRESHOLD_VERSION = "v1"
+THRESHOLD_VERSION = "v2"
 
 
 @dataclass(frozen=True)
@@ -39,11 +39,18 @@ class DecisionThresholds:
     # -- Section 16.1: the hard caps ---------------------------------------
     cap_critical_source_missing: float = 0.69
     cap_unresolved_conflict: float = 0.69
-    cap_exhausted_retrieval_gap: float = 0.84
-    cap_repaired_verification: float = 0.84
+    # Each cap sits one hundredth below a band edge, which is the mechanism
+    # rather than a coincidence: 0.69 puts a critically incomplete run under
+    # amber's 0.70 so it routes red, and these two put a run with a retrieval
+    # gap or a repaired verification under green so it cannot auto-release.
+    # They move with the bands -- `__post_init__` refuses a set where they do
+    # not -- because a cap above the band it is meant to sit under releases
+    # exactly the runs it exists to hold back.
+    cap_exhausted_retrieval_gap: float = 0.79
+    cap_repaired_verification: float = 0.79
 
     # -- Section 16.5: the human-review bands ------------------------------
-    green_minimum_confidence: float = 0.85
+    green_minimum_confidence: float = 0.80
     amber_minimum_confidence: float = 0.70
 
     #: Two outcomes closer than this are not distinguishable by this model on
@@ -55,12 +62,17 @@ class DecisionThresholds:
     version: str = THRESHOLD_VERSION
     rationale: str = field(
         default=(
-            "Section 16.1's recommended structure and section 16.5's bands, "
-            "unchanged from the plan. The development-split study in "
-            "artifacts/evaluation/threshold_study.csv measures what other bands "
-            "would release; no change has been made on that evidence, because "
-            "the alternative is to trade a measured escalation rate for an "
-            "unmeasured error rate."
+            "v2. Section 16.1's structure and weights are unchanged from the "
+            "plan. The green band moves from 0.85 to 0.80, and the two caps "
+            "that must sit below it move from 0.84 to 0.79 with it. The reason "
+            "is a measurement, on development data only, as section 22.7 "
+            "requires: the composed score is under-confident by 0.187, so runs "
+            "that were correct were being held for review by a band calibrated "
+            "for a scale the system does not produce. Thirty-eight development "
+            "runs scored 0.80-0.90 and every one of them was right. Moving the "
+            "band without moving the caps would have auto-released four runs "
+            "with an exhausted retrieval gap, which is the outcome section "
+            "16.1's caps exist to prevent."
         )
     )
 
@@ -101,6 +113,23 @@ class DecisionThresholds:
                 "the bands must be ordered 0 < amber < green <= 1, got "
                 f"amber={self.amber_minimum_confidence}, green={self.green_minimum_confidence}"
             )
+        # Section 16.1's caps only mean anything relative to section 16.5's
+        # bands. A cap at or above the band it is meant to hold a run under
+        # releases precisely the runs it exists to stop, and nothing else in
+        # the system would notice: the run looks like any other confident one.
+        amber = self.amber_minimum_confidence
+        green = self.green_minimum_confidence
+        for capped, limit, band_name, band in (
+            ("cap_critical_source_missing", self.cap_critical_source_missing, "amber", amber),
+            ("cap_unresolved_conflict", self.cap_unresolved_conflict, "amber", amber),
+            ("cap_exhausted_retrieval_gap", self.cap_exhausted_retrieval_gap, "green", green),
+            ("cap_repaired_verification", self.cap_repaired_verification, "green", green),
+        ):
+            if limit >= band:
+                raise ValueError(
+                    f"{capped}={limit} is not below {band_name}={band}, so a run it caps "
+                    "would route as though it had never been capped"
+                )
         for name, value in (
             ("cap_critical_source_missing", self.cap_critical_source_missing),
             ("cap_unresolved_conflict", self.cap_unresolved_conflict),

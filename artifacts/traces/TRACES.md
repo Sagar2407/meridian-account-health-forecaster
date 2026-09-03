@@ -6,11 +6,11 @@ called, so re-capturing costs nothing and the narratives are the deterministic
 ones. Accounts are found by scanning, not pinned, so a trace labelled *conflict*
 is one the conflict gate actually fired on.
 
-Captured at commit `c35be79a0d09`.
+Captured at commit `d1f12cafc5a2`.
 
 | Path | Account | Route | Outcome | Confidence | Nodes | Events |
 | --- | --- | --- | --- | --- | --- | --- |
-| fast_path | `ACC-1001` | amber | Churned | 0.8363 | 11 | 15 |
+| fast_path | `ACC-1001` | green | Churned | 0.8363 | 11 | 15 |
 | tot | `ACC-1002` | amber | Renewed | 0.9207 | 11 | 17 |
 | degraded | `ACC-1000` | red | none | -- | 8 | 12 |
 | human_review | `ACC-1000` | red | Churned | 0.6395 | 12 | 17 |
@@ -25,7 +25,7 @@ validate_request -> load_context -> plan_sub_goals -> quantitative_lane -> retri
 
 | Field | Value |
 | --- | --- |
-| Route | amber |
+| Route | green |
 | Outcome | Churned |
 | Confidence | 0.8363 |
 | Model calls | 0 |
@@ -69,7 +69,7 @@ validate_request -> load_context -> plan_sub_goals -> retrieval_lane -> quantita
 | Guardrail stages | intake, execution, evidence, output, routing |
 | Gaps | retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index` |
 | Verified metrics returned | 21 |
-| Review case | `CASE-ACC-1000-0012-01` |
+| Review case | `CASE-ACC-1000-0049-01` |
 
 ## human_review
 
@@ -90,4 +90,4 @@ validate_request -> load_context -> plan_sub_goals -> quantitative_lane -> retri
 | Citations | NOTE-200008, NOTE-200006, NOTE-200023, NOTE-200007, NOTE-200005, NOTE-200002, TCK-100007, NOTE-200001, NOTE-200026, NOTE-200003, KB-001, KB-029 |
 | Reviewer action | override (evidence_contradicts_outcome) |
 | Corrected outcome | Churned |
-| Review case | `CASE-ACC-1000-0013-01` |
+| Review case | `CASE-ACC-1000-0050-01` |

@@ -19,7 +19,7 @@ should not, and never claims a number it cannot support — and it
 | Local structured tracing | PASS | `meridian.graph.observability`; JSON Lines per run, with estimated cost and disposition |
 | Optional LangSmith | PASS | `LANGSMITH_TRACING=true` mirrors; a broken mirror is recorded and the run completes |
 | All five evaluation dimensions | PASS | `meridian_eval.dimensions`; 22.1, 22.2, 22.3, 22.5 computed, 22.4 read from the safety artifact |
-| Freeze thresholds before the held-out run | PASS | `meridian.graph.thresholds`, digest `5e23d7f9d9fef896` (v1), enforced by `test_thresholds.py` |
+| Freeze thresholds before the held-out run | PASS | `meridian.graph.thresholds`, digest `5e23d7f9d9fef896` (v1), enforced by `test_thresholds.py`. **Superseded by v2 (`cbf44c84e4501881`) after this phase; see D-060.** Every number in this document is a v1 measurement |
 | Markdown, JSON, CSV, PNG artifacts | PASS | `REPORT.md`, `results.json`, `runs.csv`, `threshold_study.csv`, two PNGs per run |
 | Reproducible directory tied to commit SHA | PASS | `artifacts/evaluation/<commit>-<timestamp>/` |
 | Document limitations honestly | PASS | Below, and in every report the harness writes |
@@ -37,7 +37,13 @@ fails if the report advertises an artifact the directory lacks.
 
 ## Results
 
-Both splits, offline (no provider), thresholds `5e23d7f9d9fef896`.
+Both splits, offline (no provider), thresholds `5e23d7f9d9fef896` (v1). These are
+the v1 measurements and are kept as this phase recorded them. Only the routing
+columns moved under v2: auto-release went 0.0290 to 0.0725 on development and
+0.0000 to 0.0377 held out, with zero errors among the released in both. Macro F1,
+ECE, citation and claim metrics are identical, because a threshold decides who
+sees a forecast, not what it says. Current numbers live in
+`artifacts/evaluation/summary.json`.
 
 | Measure | Development (207) | **Held-out test (53)** | Target |
 | --- | ---: | ---: | --- |
@@ -113,10 +119,15 @@ reliability bin on both splits sits below the diagonal, one bin of n=1 aside.
 That inverts what the finding implies. An under-confident score does not release
 answers it should have reviewed; it reviews answers it should have released.
 Thirty-eight development runs scored between 0.80 and 0.90 and **every one of
-them was correct**, while the green band starts at 0.85. Two of the hard caps
-compound it: `cap_exhausted_retrieval_gap` and `cap_repaired_verification` both
-pin confidence at 0.84, one hundredth below the auto-release threshold, so a run
-that touches either can never release no matter how strong its evidence is.
+them was correct**, while the green band starts at 0.85.
+
+That is what thresholds **v2** acts on: green moves to 0.80, and the two caps
+defined against it -- `cap_exhausted_retrieval_gap` and
+`cap_repaired_verification` -- move from 0.84 to 0.79 with it. Those caps sitting
+one hundredth below the band is the mechanism, not a defect: it is how section
+16.1 stops a run with a retrieval gap from auto-releasing. Moving the band and
+leaving them would have released four such runs. See D-061; the measurements
+below remain v1's.
 
 ## Verification
 

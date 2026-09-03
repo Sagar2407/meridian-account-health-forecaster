@@ -36,8 +36,15 @@ ABLATION_QUESTION = "What is the renewal outlook for this account, and what driv
 #: The archive predates the recomputation of section 8.3, so one metric moved.
 DRIVER_ALIASES: dict[str, str] = {"avg_csat": "avg_closed_csat_26w"}
 
-#: Routes a human never sees before the answer is used.
-AUTO_RELEASED_ROUTES = frozenset({"green", "amber"})
+#: Routes a human never sees before the answer is used. Green only, matching
+#: `meridian.serving.scan.AUTO_RELEASED_ROUTES`, which is what the running
+#: system uses. This set said `{"green", "amber"}` until section 16.5 was read
+#: against it: amber is "mark provisional and enter asynchronous review", so an
+#: amber answer *is* reviewed and counting it here overstated what reaches a
+#: user unchecked. The two constants share a name and must not diverge again --
+#: `test_tot_ablation.py` now asserts they are equal rather than merely
+#: plausible.
+AUTO_RELEASED_ROUTES = frozenset({"green"})
 
 
 @dataclass(frozen=True)

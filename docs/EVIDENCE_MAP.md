@@ -105,7 +105,7 @@ unusual and both are enforced by code:
   formats only from the result dictionary; there are no literal numbers in it.
   A metric that is not computed cannot appear.
 - **Thresholds were frozen before the held-out split was touched.**
-  `graph/thresholds.py` hashes to `5e23d7f9d9fef896`, a test pins that digest,
+  `graph/thresholds.py` hashes to `cbf44c84e4501881` (v2), a test pins that digest,
   and the threshold sweep runs on development data only (plan §22.7).
 
 ### Safety, reliability, and human oversight

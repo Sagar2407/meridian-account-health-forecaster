@@ -1,21 +1,21 @@
 {
   "abstentions": 1,
-  "auto_released": 0,
+  "auto_released": 1,
   "blocked": 0,
   "budget_exhausted": false,
   "completed": 6,
-  "concurrency_limit": 3,
-  "concurrency_observed": 3,
+  "concurrency_limit": 4,
+  "concurrency_observed": 4,
   "expansion_candidates": [
     "ACC-1052"
   ],
   "failed": 0,
-  "finished_at": "2026-09-01T20:45:22+00:00",
+  "finished_at": "2026-09-03T16:45:39+00:00",
   "horizon_days": 120,
   "model_call_budget": 200,
   "queued_for_review": 3,
   "review_load": {
-    "amber": 3,
+    "amber": 2,
     "red": 3
   },
   "risk_accounts": [
@@ -23,10 +23,10 @@
     "ACC-1010",
     "ACC-1096"
   ],
-  "scan_id": "SCAN-3f8dac095f4e",
+  "scan_id": "SCAN-f4b913f6653c",
   "scanned": 6,
   "skipped_for_budget": [],
-  "started_at": "2026-09-01T20:45:06+00:00",
+  "started_at": "2026-09-03T16:45:16+00:00",
   "status": "completed",
   "total_model_calls": 0,
   "total_tokens": 0

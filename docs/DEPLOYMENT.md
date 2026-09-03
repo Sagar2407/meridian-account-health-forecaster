@@ -114,12 +114,19 @@ comes up.
 The image now builds everything the served application reads, so a deployment
 starts `ok` rather than `degraded`. Verified by running it with no mounts and
 `HF_HUB_OFFLINE=1`: all four data subsystems ready, 15 endpoint checks green,
-and assessments returning forecasts with 10 to 12 citations each -- ACC-1042
-amber/Churned at 0.7991, ACC-1001 amber/Churned at 0.8363, ACC-1002
-amber/Renewed at 0.9207, matching the committed traces to four decimals.
+and assessments returning forecasts with 10 to 12 citations each. Under
+thresholds v2 (D-061): ACC-1001 **green**/Churned at 0.8363, ACC-1042
+amber/Churned at 0.7991, ACC-1002 amber/Renewed at 0.9207, ACC-1000 red/Renewed
+at 0.6395, ACC-1089 red with no label on an unresolved conflict -- matching the
+committed traces to four decimals.
 
-**That last clause is the one that matters, and it is worded that way because
-the first version of this claim was "assessments completing and opening review
+Two of those are worth reading together. ACC-1042 misses the green band by
+0.0009, and ACC-1002 clears it by 0.12 and is still held: confidence is one of
+section 16.5's conditions, and ACC-1002 fails a different one, stale sources. A
+band is not the whole router.
+
+**That verification names forecasts and citations, and it is worded that way
+because the first version of it said "assessments completing and opening review
 cases" -- which was true, and hid a broken deployment.** They completed by
 degrading: every run returned verified telemetry with no forecast and zero
 citations, because the runtime stage copied the account tables but not
@@ -255,8 +262,8 @@ the repository.
 ## Verified
 
 `make phase0-verify` on the locked images: formatting over 152 files, ruff,
-strict mypy over 151 source files, 659 backend container tests with 41 expected
-skips at 94.87% coverage, 98 frontend tests, the production frontend build, the
+strict mypy over 151 source files, 660 backend container tests with 42 expected
+skips at 94.86% coverage, 98 frontend tests, the production frontend build, the
 repository policy scan over 343 files, and both application health checks.
 
 Separately, against the production image itself (`make prod-build`,

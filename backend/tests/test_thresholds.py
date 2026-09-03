@@ -17,10 +17,13 @@ from meridian.graph.thresholds import (
     DecisionThresholds,
 )
 
-#: The digest of the thresholds as frozen for version v1. Written out rather
+#: The digest of the thresholds as frozen for version v2. Written out rather
 #: than computed, so that editing a threshold *and* the expectation together is
 #: a visible two-line diff rather than an invisible one.
-EXPECTED_DIGEST = "5e23d7f9d9fef896"
+#:
+#: v1 was ``5e23d7f9d9fef896``: green at 0.85 with the two band-relative caps at
+#: 0.84. Every metric published before that change was measured under it.
+EXPECTED_DIGEST = "cbf44c84e4501881"
 
 
 def test_the_frozen_digest_still_matches_the_frozen_values() -> None:
@@ -91,3 +94,25 @@ def test_the_thresholds_are_not_configurable_at_runtime() -> None:
 
     with pytest.raises(Exception):  # noqa: B017 - frozen dataclass raises FrozenInstanceError
         THRESHOLDS.green_minimum_confidence = 0.5  # type: ignore[misc]
+
+
+def test_a_cap_at_or_above_its_band_is_refused() -> None:
+    """A cap that does not sit below its band releases what it exists to hold.
+
+    This is the failure the check exists for, and it is silent without one:
+    moving green from 0.85 to 0.80 while leaving `cap_exhausted_retrieval_gap`
+    at 0.84 would have auto-released four development runs with an exhausted
+    retrieval gap, and each would have looked like any other confident run.
+    """
+
+    with pytest.raises(ValueError, match="is not below green"):
+        DecisionThresholds(green_minimum_confidence=0.80, cap_exhausted_retrieval_gap=0.84)
+
+    with pytest.raises(ValueError, match="is not below green"):
+        DecisionThresholds(green_minimum_confidence=0.80, cap_repaired_verification=0.80)
+
+    with pytest.raises(ValueError, match="is not below amber"):
+        DecisionThresholds(amber_minimum_confidence=0.70, cap_unresolved_conflict=0.70)
+
+    with pytest.raises(ValueError, match="is not below amber"):
+        DecisionThresholds(amber_minimum_confidence=0.70, cap_critical_source_missing=0.75)

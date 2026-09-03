@@ -8,6 +8,7 @@ unpaired one flatters whichever arm abstains more.
 
 import pytest
 
+from meridian.serving.scan import AUTO_RELEASED_ROUTES as SERVING_AUTO_RELEASED_ROUTES
 from meridian_eval.tot_ablation import (
     AUTO_RELEASED_ROUTES,
     DRIVER_ALIASES,
@@ -75,7 +76,11 @@ def test_escalation_counts_abstentions_and_red_routes() -> None:
     summary = _summarise("linear", records)
     assert summary.auto_released == 1
     assert summary.escalation_rate == pytest.approx(2 / 3)
-    assert "green" in AUTO_RELEASED_ROUTES and "red" not in AUTO_RELEASED_ROUTES
+    # Equality, not membership. The old assertion -- green in, red out -- held
+    # just as well for {"green", "amber"}, which is what this constant actually
+    # said while the serving path used {"green"}. Two definitions of
+    # "auto-released" under one name is how a metric quietly means two things.
+    assert AUTO_RELEASED_ROUTES == SERVING_AUTO_RELEASED_ROUTES
 
 
 def test_only_auto_released_errors_count_against_the_error_rate() -> None:
