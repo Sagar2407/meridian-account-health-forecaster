@@ -203,18 +203,35 @@ and citation it writes is replayed against the verified evidence before release.
 **Docker Compose v2 and GNU Make are the only hard prerequisites.** Every gate runs in containers,
 so no host Python or Node toolchain is required.
 
-First extract the committed synthetic dataset (see [The dataset](#the-dataset) for what it is):
+Build and run the single-container image. It carries its own data (see [The dataset](#the-dataset)
+for what that data is):
+
+```bash
+make prod-build       # builds the data, the index, and the model into the image
+make prod-up          # http://localhost:8080
+```
+
+That is the whole setup. No unzipping, no `.env`, no API key, and no
+`make bootstrap`: the image builds everything the application reads from the committed
+`meridian-account-health.zip`, so it runs with no mounts and no external services. Allow about ten
+minutes for the first build — almost all of it embedding 17,140 documents for the retrieval index —
+and seconds for later ones, since it is a cached layer. Assessments take about a second.
+
+`make bootstrap` is still the right command if you want those artifacts **on the host**, for
+`make assess`, the evaluation harnesses, or the browser suite:
 
 ```bash
 unzip meridian-account-health.zip -d data/raw/
-```
-
-Then start the application:
-
-```bash
 cp .env.example .env
-docker compose up --build
+make bootstrap        # sanitized tables, retrieval index, calibrated forecaster, demo runs
 ```
+
+No API key is required. Without one the system runs its deterministic path end to end, spends nothing,
+and says so in its own stated limitations.
+
+`docker compose up --build` builds and runs the same code as a two-container development stack on
+ports 5173 and 8000. It deliberately mounts no data, so use it for working on the code, not for
+seeing the system work.
 
 Native development additionally needs Python 3.11 or 3.12, uv 0.12, Node.js 22.12 or newer, and
 pnpm 11. With those installed:
@@ -229,14 +246,7 @@ Open the UI at `http://localhost:5173`, the API health endpoint at
 `http://localhost:8000/api/health`, and interactive API documentation at
 `http://localhost:8000/docs`. `make dev` is the documented one-command startup after setup.
 
-To run the same foundation in containers:
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-Both containers have explicit health checks, and the frontend waits for a healthy API.
+Both development containers have explicit health checks, and the frontend waits for a healthy API.
 
 To generate both dependency lockfiles and run the complete Phase 0 acceptance suite through Docker:
 
@@ -244,7 +254,10 @@ To generate both dependency lockfiles and run the complete Phase 0 acceptance su
 make phase0-verify
 ```
 
-The command leaves the verified application running so the UI remains available.
+The command leaves the stack running, but that stack is the gate's own: compose mounts no data, so
+`/api/health` reports `degraded`, every subsystem reads `absent`, and the UI shows a Degraded banner.
+That is the health endpoint working, not a failure. For an application with the data actually
+mounted, use `make prod-up` on `http://localhost:8080` as in [Quick start](#quick-start).
 
 ## Quality gates
 

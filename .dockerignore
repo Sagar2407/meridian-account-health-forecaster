@@ -10,12 +10,25 @@ frontend/dist
 frontend/coverage
 frontend/test-results
 frontend/playwright-report
+# `data/` and `models/` are build outputs and stay out of the build context
+# entirely. The image does not copy them from the host -- it builds them, in the
+# `databuild` stage, from `meridian-account-health.zip`.
+#
+# That is not a stylistic preference. `.gitignore` excludes these paths, so they
+# do not exist in a clone, and a hosting platform builds from a clone. Copying
+# them from the host would produce an image that builds on the machine that
+# happens to have run `make bootstrap` and fails everywhere else -- which is
+# precisely the shape of bug that only shows up on the deployment.
 data
+models
+
 # `artifacts` is NOT excluded: it is committed, it is under a megabyte, and
 # `GET /api/evaluations/{name}` reads it. Without it a deployment reports every
 # evaluation as never run while the repository publishes their numbers.
-models
+
 logs
 *.docx
+# Every zip except the source archive, which the `databuild` stage extracts.
 *.zip
+!meridian-account-health.zip
 .env

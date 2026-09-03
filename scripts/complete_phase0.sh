@@ -90,5 +90,18 @@ curl --fail --silent --show-error http://localhost:5173 >/dev/null
 
 echo
 echo "Phase 0 verification passed."
-echo "UI:       http://localhost:5173"
-echo "API docs: http://localhost:8000/docs"
+echo
+# This stack is the quality gate, not a demo. Compose mounts no data by design
+# (`.dockerignore` excludes `data/` and `models/`), so every subsystem reports
+# absent and the UI shows a "Degraded" banner. Saying only "UI: localhost:5173"
+# here sent people to a deliberately empty application and left them debugging
+# a health warning that was working correctly.
+echo "The stack now running is the gate's own: no dataset, no model, no index,"
+echo "so /api/health reports \"degraded\" and the UI shows a Degraded banner."
+echo "That is expected here and is not a failure."
+echo
+echo "  Gate stack (degraded by design)   http://localhost:5173"
+echo "  API docs                          http://localhost:8000/docs"
+echo
+echo "For a working application with the data mounted, run:"
+echo "  make prod-build && make prod-up   http://localhost:8080"

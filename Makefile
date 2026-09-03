@@ -106,12 +106,18 @@ prod-build: ## Build the single-container production image (Docker).
 	docker build -f Dockerfile -t meridian:local .
 
 prod-up: ## Run the production image the way Render will, on port 8080.
+	@# No mounts. The image carries the source tables, the retrieval index, the
+	@# derived tables, the split, and the forecaster, so this runs exactly as a
+	@# hosting platform would run it -- which is the point of the target, and
+	@# was not true while it depended on bind mounts the platform has no
+	@# equivalent of.
+	@#
+	@# The application writes its assessment history into the container's own
+	@# layer, so each `make prod-up` starts from an empty queue.
 	docker run --rm -p 8080:8080 \
 	  --env PORT=8080 \
 	  --env MERIDIAN_DEMO_MODE=true \
 	  --env MERIDIAN_CORS_ORIGINS=http://localhost:8080 \
-	  --mount type=bind,src=$(PWD)/data,dst=/app/data,readonly \
-	  --mount type=bind,src=$(PWD)/models,dst=/app/models,readonly \
 	  --name meridian-prod meridian:local
 
 prod-down: ## Stop the local production container.
