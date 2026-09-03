@@ -22,6 +22,23 @@ fi
 
 mkdir -p "$cache_directory/uv" "$cache_directory/mpl" "$cache_directory/hf"
 
+# Model configuration is forwarded so one run can name its own provider and
+# model without editing `.env` -- which is what makes "swap the model" a command
+# rather than a file edit.
+#
+# Only variables that are actually set are passed. `--env NAME=` sets the
+# variable to the empty string inside the container, and pydantic-settings reads
+# an empty string as a value rather than as absent, so an unset variable
+# forwarded this way fails validation on every `Literal` field instead of
+# falling back to `.env`.
+llm_environment=()
+for name in MERIDIAN_LLM_PROVIDER MERIDIAN_LLM_MODEL MERIDIAN_LLM_BASE_URL \
+            MERIDIAN_LLM_STRUCTURED_OUTPUT MERIDIAN_LLM_API_KEY; do
+  if [[ -n "${!name:-}" ]]; then
+    llm_environment+=(--env "$name=${!name}")
+  fi
+done
+
 exec docker run --rm \
   --user "$(id -u):$(id -g)" \
   --env UV_CACHE_DIR=/workspace/.phase0-cache/uv \
@@ -34,6 +51,9 @@ exec docker run --rm \
   --env FASTEMBED_CACHE_PATH=/workspace/.phase0-cache/hf \
   --env MYPY_CACHE_DIR=/workspace/.phase0-cache/mypy \
   --env MERIDIAN_REQUIRE_DATASET="${MERIDIAN_REQUIRE_DATASET:-}" \
+  `# Expanded so that an empty array is nothing rather than an unbound` \
+  `# variable, which "set -u" would otherwise treat as an error.` \
+  ${llm_environment[@]+"${llm_environment[@]}"} \
   --mount "type=bind,src=$project_directory,dst=/workspace" \
   --workdir /workspace \
   ghcr.io/astral-sh/uv:0.12.7-python3.12-trixie-slim \

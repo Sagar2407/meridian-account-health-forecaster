@@ -33,8 +33,11 @@ _SKELETONS: dict[str, str] = {
     "ollama": (
         "the Ollama adapter is not implemented. Ollama exposes an "
         "OpenAI-compatible endpoint, so MERIDIAN_LLM_PROVIDER=openai_compatible "
-        "with MERIDIAN_LLM_BASE_URL=http://localhost:11434/v1 is likely to work "
-        "today."
+        "with MERIDIAN_LLM_BASE_URL=http://localhost:11434/v1 works today; from "
+        "inside a container use http://host.docker.internal:11434/v1. Ollama "
+        "ignores the api key, so set MERIDIAN_LLM_API_KEY to any non-empty "
+        "string. MERIDIAN_LLM_STRUCTURED_OUTPUT defaults to auto, which steps "
+        "down to a weaker JSON mode if the server rejects strict schemas."
     ),
     "disabled": (
         "language-model features are switched off (MERIDIAN_LLM_PROVIDER=disabled). "
@@ -112,4 +115,5 @@ def build_generator(settings: Settings | None = None) -> StructuredGenerator:
         model=active.llm_model,
         base_url=active.llm_base_url,
         timeout_seconds=active.llm_timeout_seconds,
+        structured_output=active.llm_structured_output,
     )

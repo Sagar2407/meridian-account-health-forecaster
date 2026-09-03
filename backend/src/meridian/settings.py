@@ -39,6 +39,20 @@ class Settings(BaseSettings):
     llm_model: str = "anthropic/claude-sonnet-4.5"
     llm_base_url: str = "https://openrouter.ai/api/v1"
     llm_timeout_seconds: float = Field(default=60.0, gt=0, le=600)
+    #: How to ask for JSON.
+    #:
+    #: Hosted frontier models enforce a JSON Schema server-side, which is the
+    #: strongest option and the default. Small open-weight models and the
+    #: servers that host them often support only `json_object`, or nothing at
+    #: all, and reject the stricter request outright -- which used to fail the
+    #: whole call rather than degrade.
+    #:
+    #: `auto` asks for the strongest and steps down when the server refuses,
+    #: remembering what worked. Correctness does not depend on the choice:
+    #: `generate_structured` validates every reply against the Pydantic model
+    #: whatever the server promised, so a weaker mode loses server-side
+    #: enforcement, not verification.
+    llm_structured_output: Literal["auto", "json_schema", "json_object", "prompt"] = "auto"
     # `OPENAI_API_KEY` is accepted as a second name for historical reasons: it
     # is what this project's .env has always used, and in it that variable
     # holds an OpenRouter key rather than an OpenAI one. The base URL, not the

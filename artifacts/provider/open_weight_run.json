@@ -1,0 +1,470 @@
+{
+  "abstained": false,
+  "assessment_id": "ASMT-ACC-1042-0019",
+  "blocked": null,
+  "errors": [],
+  "result": {
+    "account_id": "ACC-1042",
+    "citations": [
+      {
+        "account_id": "ACC-1042",
+        "doc_date": "2025-07-21",
+        "doc_id": "NOTE-201067",
+        "excerpt": "[Escalation / Save Play] SummitBrands Holdings\n\nEscalation logged for SummitBrands Holdings. The core issue is SummitBrands Holdings announced layoffs affecting an estimated 4% of staff, compounded by eroding confidence. Action plan agreed with Fatima Marino; we are tracking leading indicators weekly and will reassess renewal posture in 30 days.",
+        "parent_id": "NOTE-201067",
+        "retrieval_score": 0.777729,
+        "signal": "adverse",
+        "source_type": "csm_note",
+        "sub_goal": "renewal_history",
+        "subtype": "Escalation / Save Play"
+      },
+      {
+        "account_id": "ACC-1042",
+        "doc_date": "2025-12-02",
+        "doc_id": "NOTE-201068",
+        "excerpt": "[Renewal Prep] SummitBrands Holdings\n\nRenewal prep for SummitBrands Holdings. Renewal outlook: at risk. Realistically a coin flip or worse as things stand. Strategy: lead with value realized on Analytics, address the risks head-on, and protect the renewal even if it means a short-term concession. Decision-maker is Fatima Marino; timeline is roughly one quarter out.",
+        "parent_id": "NOTE-201068",
+        "retrieval_score": 0.799815,
+        "signal": "neutral",
+        "source_type": "csm_note",
+        "sub_goal": "renewal_history",
+        "subtype": "Renewal Prep"
+      },
+      {
+        "account_id": "ACC-1042",
+        "doc_date": "2025-03-19",
+        "doc_id": "NOTE-201047",
+        "excerpt": "[Quarterly Business Review] SummitBrands Holdings\n\nSummitBrands Holdings is at serious risk. Usage of Analytics dropped sharply and the relationship has become strained. This is a red account heading into renewal.",
+        "parent_id": "NOTE-201047",
+        "retrieval_score": 0.787455,
+        "signal": "neutral",
+        "source_type": "csm_note",
+        "sub_goal": "renewal_history",
+        "subtype": "Quarterly Business Review"
+      },
+      {
+        "account_id": "ACC-1042",
+        "doc_date": "2024-11-23",
+        "doc_id": "NOTE-201045",
+        "excerpt": "[Onboarding Kickoff] SummitBrands Holdings\n\nOnboarding kickoff for SummitBrands Holdings went well. We scoped the Analytics rollout, assigned an internal owner, and agreed on enablement dates. Fatima Marino is bought in; the open question is whether the practitioner team has the bandwidth to ramp quickly.",
+        "parent_id": "NOTE-201045",
+        "retrieval_score": 0.759685,
+        "signal": "neutral",
+        "source_type": "csm_note",
+        "sub_goal": "renewal_history",
+        "subtype": "Onboarding Kickoff"
+      },
+      {
+        "account_id": "ACC-1042",
+        "doc_date": "2025-08-16",
+        "doc_id": "NOTE-201059",
+        "excerpt": "[Monthly Touchpoint] SummitBrands Holdings\n\nTouchpoint: SummitBrands Holdings remains a serious concern. Weekly active users have declined and session depth is thinning. Advanced features like Data warehouse export have been effectively abandoned.",
+        "parent_id": "NOTE-201059",
+        "retrieval_score": 0.764371,
+        "signal": "neutral",
+        "source_type": "csm_note",
+        "sub_goal": "renewal_history",
+        "subtype": "Monthly Touchpoint"
+      },
+      {
+        "account_id": null,
+        "doc_date": null,
+        "doc_id": "KB-003",
+        "excerpt": "**30 days out.** Get commercial alignment internally, send the quote, and pressure-test objections. Time-to-renewal matters: less runway on a shaky account raises risk.",
+        "parent_id": "KB-003",
+        "retrieval_score": 0.750477,
+        "signal": "neutral",
+        "source_type": "knowledge_base",
+        "sub_goal": "playbook_guidance",
+        "subtype": "playbook"
+      },
+      {
+        "account_id": null,
+        "doc_date": null,
+        "doc_id": "KB-019",
+        "excerpt": "- **segment** \u2014 `Strategic`, `Enterprise`, or `Mid-Market`; drives ACV, seat, and product-count norms and the level of white-glove attention.\n- **acv_usd** \u2014 annual contract value. High ACV raises the stakes and the bar for human review on risk.\n- **licensed_seats** \u2014 seats licensed across products; utilization vs this cap is an expansion signal.\n- **contract_term_months** \u2014 12/24/36; longer terms correlate with commitment.\n- **contract_start_date** \u2014 initial start; drives tenure and onboarding timing.\n- **renewal_date** \u2014 the upcoming renewal decision date.\n- **forecast_as_of_date** \u2014 `renewal_date` minus 90 days; the cutoff for feature computation (respect it to avoid leakage).\n- **num_products / product_breadth** \u2014 count of owned modules; more breadth is stickier.\n- **sponsor_status** \u2014 `strong` / `stable` / `new` / `lost`; a core relationship signal.\n- **restricted evaluation score / calibrated renewal-risk estimate / renewal result** \u2014 the latent score, its probability form, and the realized label.",
+        "parent_id": "KB-019",
+        "retrieval_score": 0.749253,
+        "signal": "neutral",
+        "source_type": "knowledge_base",
+        "sub_goal": "playbook_guidance",
+        "subtype": "glossary"
+      }
+    ],
+    "cited_doc_ids": [
+      "NOTE-201067",
+      "NOTE-201068",
+      "NOTE-201047",
+      "NOTE-201045",
+      "NOTE-201059",
+      "KB-003",
+      "KB-019"
+    ],
+    "confidence": 0.717888,
+    "confidence_breakdown": {
+      "agreement_score": 0.6,
+      "applied_caps": [],
+      "calibrated_probability": 0.743411,
+      "confidence": 0.717888,
+      "coverage_score": 0.716667,
+      "raw_confidence": 0.717888
+    },
+    "counterevidence": [],
+    "cutoff": "2025-12-02",
+    "distribution": {
+      "Churned": 0.743411,
+      "Contracted": 0.231927,
+      "Expanded": 0.0,
+      "Renewed": 0.024662
+    },
+    "drivers": [
+      {
+        "contribution": 2.787589,
+        "description": "Mean CSAT across closed tickets; 3.5 when the window has none.",
+        "direction": "supports",
+        "feature": "avg_closed_csat_26w",
+        "value": 1.75
+      },
+      {
+        "contribution": 1.941755,
+        "description": "Mean CSM note sentiment, kept separate from ticket sentiment.",
+        "direction": "supports",
+        "feature": "avg_note_sentiment_26w",
+        "value": -0.495556
+      },
+      {
+        "contribution": 1.573835,
+        "description": "Count of headwind external events.",
+        "direction": "supports",
+        "feature": "adverse_events_2q",
+        "value": 1.0
+      },
+      {
+        "contribution": 1.502939,
+        "description": "Escalations divided by observed active weeks inside the 26-week window. The archive divides by the whole observed history (plan section 8.3).",
+        "direction": "supports",
+        "feature": "support_escalation_rate",
+        "value": 0.153846
+      },
+      {
+        "contribution": 0.962231,
+        "description": "Mean ticket sentiment. Named explicitly because the archive's avg_sentiment is ticket-only despite ambiguous wording (section 8.3).",
+        "direction": "supports",
+        "feature": "avg_ticket_sentiment_26w",
+        "value": -0.4016
+      },
+      {
+        "contribution": -0.793664,
+        "description": "P1 or P2 tickets still Open or Pending Customer at the cutoff.",
+        "direction": "opposes",
+        "feature": "open_high_priority_count",
+        "value": 1.0
+      }
+    ],
+    "limitations": [
+      "One high-priority ticket is still open, indicating potential retention effort",
+      "The model outcome is fixed and cannot be altered regardless of evidence strength",
+      "While most metrics strongly indicate churn (low CSAT, negative sentiment, adverse events, escalations), the presence of open_high_priority_count = 1 provides counterevidence suggesting some active management of the account. This partial mitigation reduces the overall consistency of the churn prediction.",
+      "Evidence was not available for: evidence:support_ticket"
+    ],
+    "model_name": "liquid/lfm-2.5-2.6b:free",
+    "narrative_source": "model",
+    "outcome": "Churned",
+    "rationale": "Multiple strong indicators support the churn outcome: low average closed CSAT (1.75), negative note sentiment (-0.495556), one adverse event in Q2, moderate escalation rate (0.153846), and negative ticket sentiment (-0.4016). However, there is counterevidence showing one high-priority ticket (open_high_priority_count = 1) remains open or pending customer, which suggests some engagement activity that partially mitigates the churn risk.",
+    "recommended_action": "Conduct a targeted outreach to the remaining high-priority ticket to assess its status and provide additional value. Simultaneously, intensify retention efforts including strategic check-ins, addressing the identified risks from the Quarterly Business Review, and leveraging the playbook guidance (KB-003) to prepare for renewal discussions.",
+    "route": "amber",
+    "route_reason": "confidence 0.72 is below 0.85",
+    "selected_by": "linear"
+  },
+  "review_case_id": null,
+  "route": "amber",
+  "run_id": "RUN-ae95d586df37",
+  "thread_id": "RUN-ae95d586df37",
+  "total_tokens": 7382,
+  "trace": [
+    {
+      "completion_tokens": 0,
+      "event": "run_started",
+      "latency_ms": 0.0,
+      "node": "validate_request",
+      "payload": {
+        "account_id": "ACC-1042",
+        "mode": "interactive",
+        "question": "What is the renewal outlook for this account, and what drives it?",
+        "question_digest": "c6fe49492a87",
+        "requested_as_of": null,
+        "requester_role": "csm"
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 1,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:04.428+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "request_validated",
+      "latency_ms": 2.654,
+      "node": "validate_request",
+      "payload": {
+        "outcome": "pass",
+        "reason_codes": [],
+        "rule_ids": []
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 2,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:04.428+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "context_loaded",
+      "latency_ms": 28.611,
+      "node": "load_context",
+      "payload": {
+        "account_id": "ACC-1042",
+        "effective_cutoff": "2025-12-02",
+        "high_value": false,
+        "prior_assessments": 5,
+        "segment": "Mid-Market"
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 3,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:04.467+00:00"
+    },
+    {
+      "completion_tokens": 406,
+      "event": "plan_created",
+      "latency_ms": 7005.45,
+      "node": "plan_sub_goals",
+      "payload": {
+        "fallback_reason": null,
+        "model": "liquid/lfm-2.5-2.6b:free",
+        "source": "model",
+        "sub_goals": [
+          "renewal_history",
+          "playbook_guidance"
+        ]
+      },
+      "prompt_tokens": 377,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 4,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:11.473+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "quantitative_completed",
+      "latency_ms": 800.452,
+      "node": "quantitative_lane",
+      "payload": {
+        "available": true,
+        "critical_gaps": [],
+        "metrics": 21,
+        "model_probability": 0.743411,
+        "observed_weeks": 13,
+        "predicted_outcome": "Churned"
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 5,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:12.279+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "retrieval_attempted",
+      "latency_ms": 3209.126,
+      "node": "retrieval_lane",
+      "payload": {
+        "available": true,
+        "citations": 5,
+        "covered": [
+          "renewal_history"
+        ],
+        "guidance": 2,
+        "retries": 0,
+        "sub_goals": [
+          "renewal_history"
+        ],
+        "unavailable_reason": null,
+        "uncovered": []
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 6,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:14.689+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "evidence_screened",
+      "latency_ms": 0.0,
+      "node": "merge_evidence",
+      "payload": {
+        "outcome": "pass",
+        "quarantined": 0,
+        "reasons": [],
+        "rule_ids": []
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 7,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:14.691+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "evidence_merged",
+      "latency_ms": 0.0,
+      "node": "merge_evidence",
+      "payload": {
+        "context": 4,
+        "counterevidence": 0,
+        "guidance": 2,
+        "missing_sources": [
+          "evidence:support_ticket"
+        ],
+        "round": 1,
+        "stale_sources": [],
+        "supporting": 1
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 8,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:14.691+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "coverage_evaluated",
+      "latency_ms": 0.0,
+      "node": "merge_evidence",
+      "payload": {
+        "reason": "every planned sub-goal produced evidence",
+        "round": 1,
+        "verdict": "sufficient"
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 9,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:14.691+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "conflict_evaluated",
+      "latency_ms": 0.106,
+      "node": "conflict_gate",
+      "payload": {
+        "baseline_accounts": 260,
+        "conflict_types": [],
+        "reasons": [],
+        "rule_ids": [],
+        "severity": "none",
+        "triggered": false
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 10,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:52:17.081+00:00"
+    },
+    {
+      "completion_tokens": 3896,
+      "event": "decision_drafted",
+      "latency_ms": 45706.112,
+      "node": "fast_adjudication",
+      "payload": {
+        "applied_caps": [],
+        "citations": 7,
+        "confidence": 0.717888,
+        "counterevidence": 0,
+        "fallback_reason": null,
+        "narrative_source": "model",
+        "outcome": "Churned",
+        "regenerated": false,
+        "within_budget": true
+      },
+      "prompt_tokens": 2703,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 11,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:53:02.795+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "output_verified",
+      "latency_ms": 2.403,
+      "node": "verify_output",
+      "payload": {
+        "attempts": 1,
+        "citations": 7,
+        "failures": [],
+        "numeric_claims": 4,
+        "passed": true
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 12,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:53:02.816+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "decision_routed",
+      "latency_ms": 0.0,
+      "node": "assign_route",
+      "payload": {
+        "codes": [
+          "confidence_below_green"
+        ],
+        "confidence": 0.717888,
+        "high_value": false,
+        "outcome": "Churned",
+        "reason": "confidence 0.72 is below 0.85",
+        "route": "amber"
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 13,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:53:02.827+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "decision_persisted",
+      "latency_ms": 0.0,
+      "node": "persist",
+      "payload": {
+        "assessment_id": "ASMT-ACC-1042-0019",
+        "persisted": true,
+        "regression_ids": [],
+        "review_case_id": null
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 14,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:53:02.850+00:00"
+    },
+    {
+      "completion_tokens": 0,
+      "event": "run_completed",
+      "latency_ms": 0.0,
+      "node": "persist",
+      "payload": {
+        "abstained": false,
+        "route": "amber"
+      },
+      "prompt_tokens": 0,
+      "run_id": "RUN-ae95d586df37",
+      "sequence": 15,
+      "thread_id": "RUN-ae95d586df37",
+      "timestamp": "2026-09-03T03:53:02.850+00:00"
+    }
+  ]
+}
