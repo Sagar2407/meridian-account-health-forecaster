@@ -381,6 +381,13 @@ export type ReviewCase = {
   corrected_outcome: string | null
   /** What a reviewer asked for when they resolved the case with a data request. */
   requested_data: RequestedData[]
+  /**
+   * The account's commercial terms, which the server orders the queue by.
+   * Null when the case outlives the account it was raised against.
+   */
+  acv_usd: number | null
+  renewal_date: string | null
+  days_to_renewal: number | null
 }
 
 export type ReviewCard = {

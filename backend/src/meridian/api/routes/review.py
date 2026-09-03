@@ -18,7 +18,9 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+from meridian.api.dependencies import RuntimeDependency
 from meridian.contracts import RequestedData, ReviewAction, ReviewerDecision, ReviewReasonCode
+from meridian.data.repository import UnknownAccountError
 from meridian.memory.store import (
     MAX_QUEUE_LIMIT,
     AssessmentStore,
@@ -62,6 +64,13 @@ class ReviewCaseSummary(BaseModel):
     note: str | None = None
     corrected_outcome: str | None = None
     requested_data: tuple[RequestedData, ...] = ()
+    #: The commercial terms the queue is ordered by. They are optional because a
+    #: case outlives the account it was raised against: an account dropped from
+    #: the portfolio still has cases, and a queue that refused to list them
+    #: would hide exactly the work nobody has done yet.
+    acv_usd: float | None = None
+    renewal_date: str | None = None
+    days_to_renewal: int | None = None
 
     @classmethod
     def of(cls, case: ReviewCase) -> "ReviewCaseSummary":
@@ -151,6 +160,36 @@ class ReviewDecisionResponse(BaseModel):
     regression: RegressionCaseView | None = None
 
 
+#: Route order for the queue. Section 20.5 asks for route first, and red is the
+#: only route that must be looked at, so it leads.
+_ROUTE_RANK = {"red": 0, "amber": 1, "green": 2}
+
+#: Sorts after any real `days_to_renewal`, including one long past its date.
+_MISSING_RENEWAL = 1_000_000
+
+
+def _priority(row: ReviewCaseSummary) -> tuple[int, float, int, str, str]:
+    """Return the sort key from plan section 20.5.
+
+    Route, then ACV, then renewal proximity, then age. Each key is negated or
+    not so that a plain ascending sort puts the most urgent case first: the
+    reddest route, the largest contract, the nearest renewal, the oldest case.
+
+    A case whose account is gone has no ACV and no renewal date. It sorts after
+    every case that has them, rather than being treated as a zero-value account
+    with a renewal in the distant past, which would bury it, or as an infinitely
+    urgent one, which would float it to the top of a queue on missing data.
+    """
+
+    return (
+        _ROUTE_RANK.get(row.route, len(_ROUTE_RANK)),
+        -(row.acv_usd if row.acv_usd is not None else float("-inf")),
+        row.days_to_renewal if row.days_to_renewal is not None else _MISSING_RENEWAL,
+        row.created_at,
+        row.case_id,
+    )
+
+
 @router.get(
     "/review-cases",
     response_model=list[ReviewCaseSummary],
@@ -158,12 +197,43 @@ class ReviewDecisionResponse(BaseModel):
 )
 def list_cases(
     store: StoreDependency,
+    runtime: RuntimeDependency,
     case_status: Annotated[Literal["open", "resolved", "all"], Query(alias="status")] = "open",
     limit: Annotated[int, Query(ge=1, le=MAX_QUEUE_LIMIT)] = 50,
 ) -> list[ReviewCaseSummary]:
-    """Return red cases waiting for a person, newest first."""
+    """Return the cases waiting for a person, most urgent first.
 
-    return [ReviewCaseSummary.of(case) for case in store.review_queue(case_status, limit)]
+    Section 20.5 asks for priority ordering by route, ACV, renewal proximity,
+    and age. Only the first and last of those live on a case row; the other two
+    are the account's commercial terms, so the queue is joined against the
+    repository here and ordered afterwards.
+
+    The whole candidate set is fetched and `limit` is applied last, because
+    applying it first would return the newest `limit` cases and then order those
+    -- so the oldest untouched red case on the largest account, which is exactly
+    what the ordering exists to surface, would never appear.
+    """
+
+    rows = [_with_terms(case, runtime) for case in store.review_queue(case_status, MAX_QUEUE_LIMIT)]
+    rows.sort(key=_priority)
+    return rows[:limit]
+
+
+def _with_terms(case: ReviewCase, runtime: RuntimeDependency) -> ReviewCaseSummary:
+    """Return the queue row joined to its account's commercial terms."""
+
+    row = ReviewCaseSummary.of(case)
+    try:
+        profile = runtime.repository.profile(case.account_id)
+    except UnknownAccountError:
+        return row
+    return row.model_copy(
+        update={
+            "acv_usd": profile.acv_usd,
+            "renewal_date": profile.renewal_date.isoformat(),
+            "days_to_renewal": (profile.renewal_date - profile.forecast_as_of_date).days,
+        }
+    )
 
 
 @router.get(

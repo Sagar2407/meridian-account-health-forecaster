@@ -336,6 +336,9 @@ export const reviewCase: ReviewCase = {
   note: null,
   corrected_outcome: null,
   requested_data: [],
+  acv_usd: 412000,
+  renewal_date: '2026-11-30',
+  days_to_renewal: 121,
 }
 
 export const reviewCard: ReviewCard = {

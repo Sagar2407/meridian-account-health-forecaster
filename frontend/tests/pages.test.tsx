@@ -314,7 +314,12 @@ describe('RunPage', () => {
 })
 
 describe('ReviewPage', () => {
-  it('lists open cases red first', async () => {
+  it('keeps the order the server sent', async () => {
+    // The server orders by route, ACV, renewal proximity, then age (plan
+    // section 20.5). The page used to re-sort by route and age, which would
+    // silently discard the two commercial keys, so this asserts the queue is
+    // rendered exactly as delivered -- including an order a client-side sort
+    // by route would have changed.
     stubApi((url) => {
       if (url.includes('/api/review-cases?')) {
         return [
@@ -332,7 +337,68 @@ describe('ReviewPage', () => {
     )
 
     const items = await screen.findAllByRole('button', { pressed: false })
-    expect(items[0]).toHaveTextContent('red')
+    expect(items[0]).toHaveTextContent('amber')
+    expect(items[1]).toHaveTextContent('red')
+  })
+
+  it('shows the contract value and renewal the queue is ordered by', async () => {
+    stubApi((url) => {
+      if (url.includes('/api/review-cases?')) return [reviewCase]
+      return undefined
+    })
+
+    render(
+      <MemoryRouter>
+        <ReviewPage />
+      </MemoryRouter>,
+    )
+
+    const items = await screen.findAllByRole('button', { pressed: false })
+    expect(items[0]).toHaveTextContent('$412,000 · renews in 121d')
+  })
+
+  it('says nothing about terms for a case whose account is gone', async () => {
+    stubApi((url) => {
+      if (url.includes('/api/review-cases?')) {
+        return [
+          {
+            ...reviewCase,
+            acv_usd: null,
+            renewal_date: null,
+            days_to_renewal: null,
+          },
+        ]
+      }
+      return undefined
+    })
+
+    render(
+      <MemoryRouter>
+        <ReviewPage />
+      </MemoryRouter>,
+    )
+
+    const items = await screen.findAllByRole('button', { pressed: false })
+    expect(items[0]).not.toHaveTextContent('renews in')
+    expect(items[0]).toHaveTextContent('ACC-1042')
+  })
+
+  it('marks an overdue renewal as overdue rather than negative', async () => {
+    stubApi((url) => {
+      if (url.includes('/api/review-cases?')) {
+        return [{ ...reviewCase, days_to_renewal: -9 }]
+      }
+      return undefined
+    })
+
+    render(
+      <MemoryRouter>
+        <ReviewPage />
+      </MemoryRouter>,
+    )
+
+    const items = await screen.findAllByRole('button', { pressed: false })
+    expect(items[0]).toHaveTextContent('renewal 9d overdue')
   })
 
   it('shows the decision card for the selected case', async () => {

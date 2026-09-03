@@ -50,13 +50,27 @@ const OUTCOMES = [
   'insufficient_evidence',
 ]
 
-/** Red before amber, then oldest first: the queue a person should work down. */
-function priority(a: ReviewCase, b: ReviewCase): number {
-  const rank = (item: ReviewCase) =>
-    item.route === 'red' ? 0 : item.route === 'amber' ? 1 : 2
-  const byRoute = rank(a) - rank(b)
-  if (byRoute !== 0) return byRoute
-  return a.created_at.localeCompare(b.created_at)
+const money = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+})
+
+/**
+ * Describe why a case sits where it does.
+ *
+ * The server orders the queue by route, then contract value, then renewal
+ * proximity, then age (plan section 20.5). Showing the middle two turns an
+ * order the reviewer cannot see into one they can check.
+ */
+function terms(item: ReviewCase): string | null {
+  if (item.acv_usd === null) return null
+  const value = money.format(item.acv_usd)
+  if (item.days_to_renewal === null) return value
+  if (item.days_to_renewal < 0) {
+    return `${value} · renewal ${Math.abs(item.days_to_renewal)}d overdue`
+  }
+  return `${value} · renews in ${item.days_to_renewal}d`
 }
 
 export function ReviewPage() {
@@ -82,7 +96,7 @@ export function ReviewPage() {
   const loadQueue = useCallback(() => {
     void fetchReviewQueue('open')
       .then((items) => {
-        setCases([...items].sort(priority))
+        setCases(items)
         setError(null)
       })
       .catch((cause: unknown) =>
@@ -220,6 +234,9 @@ export function ReviewPage() {
                   <RouteBadge route={item.route} />
                   <span className="queue-item__account">{item.account_id}</span>
                   <span className="queue-item__reason">{item.reason}</span>
+                  {terms(item) ? (
+                    <span className="queue-item__meta">{terms(item)}</span>
+                  ) : null}
                   <span className="queue-item__meta">{item.created_at}</span>
                   {item.requested_data.length > 0 ? (
                     <span className="queue-item__meta">
