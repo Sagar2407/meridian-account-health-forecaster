@@ -1,0 +1,64 @@
+{
+  "by_family": {
+    "account": {
+      "ndcg": 0.6205369184,
+      "precision_at_5": 0.296969697,
+      "recall_at_5": 0.9595959596,
+      "reciprocal_rank": 0.6893939394
+    },
+    "conflicting_signal": {
+      "ndcg": 0.2950068268,
+      "precision_at_5": 0.3,
+      "recall_at_5": 0.625,
+      "reciprocal_rank": 0.36875
+    },
+    "knowledge_base": {
+      "ndcg": 0.9572165548,
+      "precision_at_5": 0.484375,
+      "recall_at_5": 0.96875,
+      "reciprocal_rank": 0.953125
+    },
+    "point_in_time": {
+      "ndcg": null,
+      "precision_at_5": null,
+      "recall_at_5": null,
+      "reciprocal_rank": null
+    }
+  },
+  "chunking_ablation": [
+    {
+      "chunks": 17140,
+      "graded_queries": 139.0,
+      "mean_returned": 4.6049382716,
+      "mrr": 0.7316546763,
+      "ndcg": 0.6793103546,
+      "precision_at_5": 0.3402877698,
+      "recall_at_5": 0.9424460432,
+      "strategy": "parent_child"
+    },
+    {
+      "chunks": 12037,
+      "graded_queries": 139.0,
+      "mean_returned": 4.6049382716,
+      "mrr": 0.7943645084,
+      "ndcg": 0.7217253568,
+      "precision_at_5": 0.3510791367,
+      "recall_at_5": 0.928057554,
+      "strategy": "fixed_length"
+    }
+  ],
+  "conflict_coverage": 0.25,
+  "duplicate_parent_citations": 0.0,
+  "empty_results": 0.0,
+  "forbidden_parent_citations": 0.0,
+  "graded_queries": 139.0,
+  "mean_returned": 4.604938271604938,
+  "mrr": 0.7316546762589928,
+  "ndcg": 0.6793103545959887,
+  "post_cutoff_citations": 0.0,
+  "precision_at_5": 0.3402877697841727,
+  "queries": 243.0,
+  "recall_at_5": 0.9424460431654677,
+  "safety_violations": 0,
+  "wrong_account_citations": 0.0
+}

@@ -9,6 +9,7 @@ Without that file the endpoint reported this evaluation as never run while the
 CSVs sat beside it.
 """
 
+import argparse
 import json
 import math
 import sys
@@ -36,10 +37,35 @@ from meridian_eval.retrieval_benchmark import (  # noqa: E402
 ARTIFACTS = REPOSITORY_ROOT / "artifacts" / "retrieval"
 
 
-def main() -> int:
+def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
+    """Return the command-line options."""
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--full-corpus",
+        action="store_true",
+        help=(
+            "Run the chunking ablation over all 260 accounts instead of the 18 "
+            "benchmark accounts. Adds roughly twenty minutes, because both arms "
+            "embed the corpus. The published result is the default run; this "
+            "answers whether the small-corpus gap survives at full scale."
+        ),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=ARTIFACTS,
+        help="Directory for the result files (default: artifacts/retrieval).",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
     """Benchmark the served index, then compare chunking strategies."""
 
-    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    options = parse_arguments(argv)
+    artifacts = options.output
+    artifacts.mkdir(parents=True, exist_ok=True)
     repository = RuntimeRepository()
     encoder = TextEncoder()
 
@@ -49,7 +75,7 @@ def main() -> int:
     # code builds today, not whatever index happens to be on disk.
     service = RetrievalService(load_verified_index(repository), repository, encoder)
     outcomes = run_benchmark(service, queries)
-    outcomes.to_csv(ARTIFACTS / "benchmark_results.csv", index=False)
+    outcomes.to_csv(artifacts / "benchmark_results.csv", index=False)
     headline = summarise(outcomes)
     for key, value in headline.items():
         print(f"      {key:28s} {value:10.4f}")
@@ -59,14 +85,19 @@ def main() -> int:
         ["recall_at_5", "precision_at_5", "reciprocal_rank", "ndcg"]
     ].mean()
     print(by_family.to_string())
-    by_family.to_csv(ARTIFACTS / "benchmark_by_family.csv")
+    by_family.to_csv(artifacts / "benchmark_by_family.csv")
 
     print("\n[3/3] Chunking ablation: parent-child against fixed length")
     # Both arms are built over the benchmark accounts plus the knowledge base
     # rather than all 260 accounts. Embedding the full corpus twice would add
-    # twenty minutes without changing the comparison: what matters is that the
-    # corpus, encoder, filters, top-k, and queries are identical across arms.
-    ablation_accounts = golden_assessment_accounts()
+    # twenty minutes without changing what the comparison controls for: the
+    # corpus, encoder, filters, top-k, and queries are identical across arms
+    # either way. `--full-corpus` runs the wider one, because "the gap is small
+    # and the corpus is small" is a fair objection to answer with a measurement
+    # rather than an argument.
+    ablation_accounts = (
+        repository.account_ids() if options.full_corpus else golden_assessment_accounts()
+    )
     parents = build_parent_documents(repository, ablation_accounts)
     print(f"      corpus: {len(parents)} documents from {len(ablation_accounts)} accounts")
     with tempfile.TemporaryDirectory() as workspace:
@@ -82,7 +113,7 @@ def main() -> int:
         "mean_returned",
     ]
     print(frame[columns].to_string(index=False))
-    frame.to_csv(ARTIFACTS / "chunking_ablation.csv", index=False)
+    frame.to_csv(artifacts / "chunking_ablation.csv", index=False)
 
     violations = (
         headline["wrong_account_citations"]
@@ -100,7 +131,7 @@ def main() -> int:
     summary["safety_violations"] = int(violations)
     summary["by_family"] = json.loads(by_family.to_json(orient="index"))
     summary["chunking_ablation"] = json.loads(frame[columns].to_json(orient="records"))
-    (ARTIFACTS / "retrieval_benchmark.json").write_text(
+    (artifacts / "retrieval_benchmark.json").write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(
