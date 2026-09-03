@@ -19,6 +19,12 @@ COPY backend ./backend
 COPY evaluation ./evaluation
 # The curated demo runs, so the development stack behaves like production.
 COPY config ./config
+# The command-line entry points. They are here so the quality gate can lint and
+# format them: `scripts/` is fifteen files of shipped code that went unchecked
+# for exactly this reason -- ruff cannot check a directory the image does not
+# contain, so `ruff check backend evaluation` was the whole scope by default
+# rather than by decision. They are not importable by anything served.
+COPY scripts ./scripts
 
 RUN uv sync --locked --extra dev
 

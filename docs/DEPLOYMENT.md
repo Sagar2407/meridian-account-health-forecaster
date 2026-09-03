@@ -266,9 +266,9 @@ the repository.
 
 ## Verified
 
-`make phase0-verify` on the locked images: formatting over 152 files, ruff,
-strict mypy over 151 source files, 660 backend container tests with 42 expected
-skips at 94.86% coverage, 98 frontend tests, the production frontend build, the
+`make phase0-verify` on the locked images: formatting over 167 files, ruff,
+strict mypy over 151 source files, 670 backend container tests with 32 expected
+skips at 94.87% coverage, 98 frontend tests, the production frontend build, the
 repository policy scan over 343 files, and both application health checks.
 
 Separately, against the production image itself (`make prod-build`,

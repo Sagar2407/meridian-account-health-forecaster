@@ -2,8 +2,17 @@
 """Record the curated runs the public demo replays (plan section 24.3).
 
 Four runs, chosen by what they demonstrate rather than by account id: a
-straightforward fast-path assessment, one whose evidence conflicts, one the
-system declines to label, and one an intake guardrail refuses.
+fast-path assessment, one whose evidence conflicts, one the system declines to
+label, and one an intake guardrail refuses.
+
+The fast path is the one slot with a *preference* rather than just a match. It
+exists to show an answer the system released on its own, so a green run
+demonstrates it and a run the router sent to a human does not -- the first
+matching account was ACC-1000, routed red, which made the opening card of the
+public demo a fast path that produced no forecast. So the scan keeps looking for
+a green one and falls back to the first match if there is none. The other three
+slots take the first match: an amber conflict and a red abstention are the
+outcomes those slots are *for*.
 
 The accounts are **found, not hard-coded**. Which account conflicts depends on
 its evidence, and an id pinned here would silently stop demonstrating what it
@@ -87,6 +96,33 @@ def _classify(run: AssessmentRun) -> str | None:
     return "conflict" if run.events("conflict_detected") else "fast_path"
 
 
+#: The fast path is the only slot that prefers one run over another; see the
+#: module docstring for why. Everything else takes the first match.
+PREFERRED_ROUTE = {"fast_path": "green"}
+
+
+def _is_better(existing: "CachedRun | None", route: str, kind: str) -> bool:
+    """Return whether this run should take the slot from what is already in it."""
+
+    if existing is None:
+        return True
+    preferred = PREFERRED_ROUTE.get(kind)
+    return preferred is not None and existing.route != preferred and route == preferred
+
+
+def _slots_are_filled(recorded: "dict[str, CachedRun]") -> bool:
+    """Return whether scanning further could still improve the cache."""
+
+    scanned_kinds = {"fast_path", "conflict", "insufficient_evidence"}
+    if not scanned_kinds <= set(recorded):
+        return False
+    return all(
+        recorded[kind].route == preferred
+        for kind, preferred in PREFERRED_ROUTE.items()
+        if kind in recorded
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Find one run of each kind and write the cache."""
 
@@ -131,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     for account_id in accounts:
-        if {"fast_path", "conflict", "insufficient_evidence"} <= set(recorded):
+        if _slots_are_filled(recorded):
             break
         run = run_assessment(
             graph,
@@ -139,7 +175,9 @@ def main(argv: list[str] | None = None) -> int:
             run_id=f"DEMO-{account_id}",
         )
         kind = _classify(run)
-        if kind is None or kind in recorded or kind == "guardrail_refusal":
+        if kind is None or kind == "guardrail_refusal":
+            continue
+        if not _is_better(recorded.get(kind), str(run.route), kind):
             continue
         recorded[kind] = CachedRun(
             kind=kind,

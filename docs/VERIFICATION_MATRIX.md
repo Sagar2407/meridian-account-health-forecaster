@@ -122,10 +122,17 @@ evaluations with a reason; its remaining deliverable, a recorded demo, is a
 deliverable rather than a gate, and `docs/PHASE_11_STATUS.md` keeps it open.
 
 The latest `make phase0-verify` rebuilt both locked images and passed formatting
-over 152 files, lint, strict typing over 151 source files, 660 backend tests with
-42 expected skips at 94.86% coverage, 98 frontend tests, the production frontend
+over 167 files, lint, strict typing over 151 source files, 670 backend tests with
+32 expected skips at 94.87% coverage, 98 frontend tests, the production frontend
 build, the repository policy scan over 343 files, and both live container health
-checks. The browser suite passes 42 tests -- 24 journeys, 12 WCAG audits, and 6
+checks.
+
+Formatting covers 167 files rather than 152, and 10 more tests run, because the
+backend image now carries `scripts/`. It did not before, so `ruff check backend
+evaluation` was the widest scope that could work rather than a decision, and
+`test_evaluation_artifacts.py` -- which checks that every published evaluation
+artifact has a producing script and exists -- skipped its whole module in the
+gate. The browser suite passes 42 tests -- 24 journeys, 12 WCAG audits, and 6
 visual comparisons -- with none skipped.
 
 The gate mounts the extracted archive, so those 42 skips are not data-layer

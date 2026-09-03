@@ -243,8 +243,7 @@ def _render(traces: dict[str, dict[str, Any]], missing: list[str], commit: str) 
             "",
             f"## {kind}",
             "",
-            f"{label}. Account `{trace['account_id']}`, "
-            f"`artifacts/traces/{kind}.json`.",
+            f"{label}. Account `{trace['account_id']}`, `artifacts/traces/{kind}.json`.",
             "",
             "```text",
             " -> ".join(summary["node_path"]),
@@ -327,62 +326,62 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     runtime = offline_runtime(repository, retrieval_available=True)
-    with tempfile.TemporaryDirectory() as scratch:
-        with sqlite_checkpointer(Path(scratch) / "traces.sqlite3") as saver:
-            graph = build_graph(runtime, checkpointer=saver)
-            for account_id in accounts:
-                if {"fast_path", "tot", "human_review"} <= set(traces):
-                    break
-                run = run_assessment(
-                    graph,
-                    AssessmentRequest(account_id=account_id, question=QUESTION),
-                    run_id=f"TRACE-{account_id}",
-                    pause_on_red=True,
+    with (
+        tempfile.TemporaryDirectory() as scratch,
+        sqlite_checkpointer(Path(scratch) / "traces.sqlite3") as saver,
+    ):
+        graph = build_graph(runtime, checkpointer=saver)
+        for account_id in accounts:
+            if {"fast_path", "tot", "human_review"} <= set(traces):
+                break
+            run = run_assessment(
+                graph,
+                AssessmentRequest(account_id=account_id, question=QUESTION),
+                run_id=f"TRACE-{account_id}",
+                pause_on_red=True,
+            )
+            if run.awaiting_review:
+                if "human_review" in traces:
+                    continue
+                interrupt = run.interrupt
+                assert interrupt is not None
+                # The correction must differ from what the run proposed.
+                # An override to the same label is not an override, and a
+                # trace captioned "reviewer disagreed" that shows agreement
+                # is worse than no trace at all.
+                corrected = next(
+                    outcome for outcome in OUTCOME_CLASSES if outcome != interrupt.proposed_outcome
                 )
-                if run.awaiting_review:
-                    if "human_review" in traces:
-                        continue
-                    interrupt = run.interrupt
-                    assert interrupt is not None
-                    # The correction must differ from what the run proposed.
-                    # An override to the same label is not an override, and a
-                    # trace captioned "reviewer disagreed" that shows agreement
-                    # is worse than no trace at all.
-                    corrected = next(
-                        outcome
-                        for outcome in OUTCOME_CLASSES
-                        if outcome != interrupt.proposed_outcome
-                    )
-                    resumed = resume_assessment(
-                        graph,
-                        run.thread_id,
-                        ReviewerDecision(
-                            case_id=interrupt.case_id,
-                            reviewer="trace-capture",
-                            action="override",
-                            reason_code="evidence_contradicts_outcome",
-                            note=(
-                                "Captured for the final report: the reviewer replaces the "
-                                "proposed outcome so the trace shows a resolved case and "
-                                "its linked regression record."
-                            ),
-                            corrected_outcome=corrected,
+                resumed = resume_assessment(
+                    graph,
+                    run.thread_id,
+                    ReviewerDecision(
+                        case_id=interrupt.case_id,
+                        reviewer="trace-capture",
+                        action="override",
+                        reason_code="evidence_contradicts_outcome",
+                        note=(
+                            "Captured for the final report: the reviewer replaces the "
+                            "proposed outcome so the trace shows a resolved case and "
+                            "its linked regression record."
                         ),
-                    )
-                    traces["human_review"] = record(resumed, "human_review", commit, stamp)
-                    print(
-                        f"  captured human_review: {account_id} "
-                        f"(paused on {interrupt.case_id}, resumed)",
-                        file=sys.stderr,
-                    )
-                    continue
-                if run.result is None or run.abstained:
-                    continue
-                kind = "tot" if run.events("conflict_detected") else "fast_path"
-                if kind in traces:
-                    continue
-                traces[kind] = record(run, kind, commit, stamp)
-                print(f"  captured {kind}: {account_id} ({run.route})", file=sys.stderr)
+                        corrected_outcome=corrected,
+                    ),
+                )
+                traces["human_review"] = record(resumed, "human_review", commit, stamp)
+                print(
+                    f"  captured human_review: {account_id} "
+                    f"(paused on {interrupt.case_id}, resumed)",
+                    file=sys.stderr,
+                )
+                continue
+            if run.result is None or run.abstained:
+                continue
+            kind = "tot" if run.events("conflict_detected") else "fast_path"
+            if kind in traces:
+                continue
+            traces[kind] = record(run, kind, commit, stamp)
+            print(f"  captured {kind}: {account_id} ({run.route})", file=sys.stderr)
 
     args.output.mkdir(parents=True, exist_ok=True)
     for kind, trace in traces.items():

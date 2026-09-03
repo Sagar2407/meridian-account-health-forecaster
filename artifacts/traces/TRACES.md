@@ -6,7 +6,7 @@ called, so re-capturing costs nothing and the narratives are the deterministic
 ones. Accounts are found by scanning, not pinned, so a trace labelled *conflict*
 is one the conflict gate actually fired on.
 
-Captured at commit `d1f12cafc5a2`.
+Captured at commit `63e9d7f423fb`.
 
 | Path | Account | Route | Outcome | Confidence | Nodes | Events |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -69,7 +69,7 @@ validate_request -> load_context -> plan_sub_goals -> retrieval_lane -> quantita
 | Guardrail stages | intake, execution, evidence, output, routing |
 | Gaps | retrieval unavailable: the retrieval index is unavailable (captured deliberately for the degraded-path trace); build it with `make index` |
 | Verified metrics returned | 21 |
-| Review case | `CASE-ACC-1000-0049-01` |
+| Review case | `CASE-ACC-1000-0053-01` |
 
 ## human_review
 
@@ -90,4 +90,4 @@ validate_request -> load_context -> plan_sub_goals -> quantitative_lane -> retri
 | Citations | NOTE-200008, NOTE-200006, NOTE-200023, NOTE-200007, NOTE-200005, NOTE-200002, TCK-100007, NOTE-200001, NOTE-200026, NOTE-200003, KB-001, KB-029 |
 | Reviewer action | override (evidence_contradicts_outcome) |
 | Corrected outcome | Churned |
-| Review case | `CASE-ACC-1000-0050-01` |
+| Review case | `CASE-ACC-1000-0054-01` |

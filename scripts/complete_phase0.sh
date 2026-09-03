@@ -71,8 +71,8 @@ docker compose run --rm --no-deps \
   --volume "$project_directory/data:/app/data:ro" \
   --env MERIDIAN_REQUIRE_DATASET=1 \
   backend sh -c '
-  uv run --locked ruff check backend evaluation &&
-  uv run --locked ruff format --check backend evaluation &&
+  uv run --locked ruff check backend evaluation scripts &&
+  uv run --locked ruff format --check backend evaluation scripts &&
   uv run --locked mypy &&
   uv run --locked pytest
 '

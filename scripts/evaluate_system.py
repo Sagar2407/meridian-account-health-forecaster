@@ -32,8 +32,8 @@ from meridian.graph.runtime import GraphRuntime  # noqa: E402
 from meridian.graph.thresholds import THRESHOLDS  # noqa: E402
 from meridian.settings import Settings, get_settings  # noqa: E402
 from meridian_eval.report import assemble, publish_summary, write  # noqa: E402
-from meridian_eval.resume_check import run_resume_check  # noqa: E402
 from meridian_eval.repository import EvaluationRepository  # noqa: E402
+from meridian_eval.resume_check import run_resume_check  # noqa: E402
 from meridian_eval.system_run import collect_runs  # noqa: E402
 
 GUARDRAIL_ARTIFACT = REPOSITORY_ROOT / "artifacts" / "safety" / "guardrail_eval.json"

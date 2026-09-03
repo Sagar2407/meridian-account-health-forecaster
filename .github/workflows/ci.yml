@@ -63,8 +63,8 @@ jobs:
 
       - name: Lint and format check
         run: |
-          uv run ruff check backend evaluation
-          uv run ruff format --check backend evaluation
+          uv run ruff check backend evaluation scripts
+          uv run ruff format --check backend evaluation scripts
       - name: Type check
         run: uv run mypy
       # MERIDIAN_REQUIRE_DATASET=1 turns a missing archive into a hard error, so
