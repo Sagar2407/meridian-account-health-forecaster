@@ -24,9 +24,17 @@
 
   --ink: #1f2430;
   --ink-muted: #5a6270;
-  --ink-faint: #767e8c;
+  /* Meta text -- timestamps, latencies, eyebrows, citation sources. It was
+     #767e8c, which is 4.09:1 on white and 3.82:1 on the sunken surface, so it
+     failed WCAG AA everywhere it appeared. That is what the axe audit in
+     `e2e/accessibility.spec.ts` found; the structural checks could not, because
+     nothing about the markup was wrong. This clears 4.5:1 on all three
+     surfaces. */
+  --ink-faint: #69707d;
 
-  --status-green: #1b7f4b;
+  /* 4.43:1 against its own pill background, just under AA. The other three
+     status pairs already cleared it; this is the only one that moved. */
+  --status-green: #1a7c49;
   --status-green-bg: #e6f4ec;
   --status-amber: #8a5a00;
   --status-amber-bg: #fdf1dc;

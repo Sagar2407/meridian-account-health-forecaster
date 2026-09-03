@@ -42,6 +42,13 @@ echo "[2/3] Starting the stack and waiting for both health checks"
 "${compose[@]}" up -d --wait backend frontend
 
 echo "[3/3] Running the browser journeys"
-"${compose[@]}" run --rm e2e
+# Arguments are forwarded to Playwright, so an intended visual change can be
+# accepted with `./scripts/run_e2e.sh --update-snapshots` rather than by hand-
+# editing baselines or deleting them and hoping the next run is right.
+"${compose[@]}" run --rm e2e sh -c "corepack enable &&
+  cd /workspace &&
+  corepack pnpm install --frozen-lockfile --store-dir /workspace/.phase0-cache/pnpm-store &&
+  cd frontend &&
+  pnpm exec playwright test $*"
 
 echo "End-to-end journeys passed."
